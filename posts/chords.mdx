@@ -1,0 +1,74 @@
+---
+title: Chords and Scales
+date: '2020-03-27'
+tags: ['music theory']
+description: Let's use the SVG Piano to display chords.
+---
+
+import { ChordType } from "@tonaljs/tonal"
+import ChordDisplay from "../components/music/ChordDisplay.tsx"
+import ScaleDisplay from "../components/music/ScaleDisplay.tsx"
+
+## Chords
+
+Let's use the SVG Piano to display chords. My favourite lib for music theory in javascript is [tonal](https://github.com/tonaljs/tonal).
+It comes with a dictionary that contains all more or less common chords. We will use that to build a simple chord selection.
+To get the notes of a chord on a certain root, we can do it like this:
+
+```js
+// we can get all chord symbols with ChordType.names()
+function getChordNotes(tonic, symbol) {
+  return ChordType.get(symbol).intervals.map(interval =>
+    Note.transpose(tonic, interval)
+  )
+}
+```
+
+If we combine this with our svg piano, and some mouse events + colorization + labels, we can build this:
+
+<ChordDisplay />
+
+## Scales + Step Chords
+
+Tonal also knows scales:
+
+```js
+function getScaleWithNumerals(root, name) {
+  const scale = Scale.get(`${root} ${name}`)
+  const numerals = scale.intervals.map(
+    interval => RomanNumeral.get(Interval.get(interval)).name
+  )
+  return { ...scale, numerals }
+}
+```
+
+It would be cool to trigger step chords with the mouse.
+A step chord is nothing but a every other note in the scale starting from any note in the scale:
+
+```js
+// variables obtained from getScaleWithNumerals:
+// notes = pitches in scale
+// intervals = intervals of scale
+function getStepChord(root, count = 3) {
+  let chordNotes = [root]
+  for (let i = 1; i < count; ++i) {
+    const lastNote = chordNotes[chordNotes.length - 1]
+    const index = notes.indexOf(Note.get(lastNote).pc)
+    const nextIndex = index + 2
+    let nextInterval = intervals[nextIndex % intervals.length]
+    if (nextIndex > intervals.length - 1) {
+      nextInterval = Interval.add(nextInterval, "8P")
+    }
+    // make next interval relative to current root
+    nextInterval = Interval.substract(nextInterval, intervals[index])
+    const nextNote = Note.transpose(lastNote, nextInterval)
+    chordNotes.push(nextNote)
+  }
+  return chordNotes
+}
+```
+
+Disabling all keys that are not in scale + applying coloring (blue = scale note, yellow = played note).
+Make sure you try more than one note to let the magic happen!
+
+<ScaleDisplay />

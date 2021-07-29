@@ -1,0 +1,147 @@
+---
+title: The Harmonic Series & Additive Synthesis
+date: '2020-04-20'
+tags: ['tuning', 'music theory']
+description: Let's understand the harmonic series by looking at monochords.
+---
+
+import Switch from "@material-ui/core/Switch"
+import Partials from "../components/synthesis/Partials.tsx"
+import { State } from "react-powerplug"
+import { Harmonics } from "../components/tuning/Harmonics.tsx"
+import Keyboard from "../components/music/Keyboard.tsx"
+import { FrequencyPlot } from "../components/tuning/FrequencyPlot.tsx"
+import Divider from "@material-ui/core/Divider"
+import Monochord from "../components/tuning/Monochord.tsx"
+import { InlineMath, BlockMath } from "react-katex"
+
+Let's understand the harmonic series by looking at a monochord:
+
+<Monochord draggable={true} />
+
+You can play it by hovering over it with the mouse.
+The length / pitch can be adjusted by dragging the right circle.
+
+## Overtones of the Harmonic Series
+
+Generally, frequencies that are higher than a certain fundamental frequency are called overtones.
+Strings that are fixed on both ends will produce a set of sine wave overtones that are whole number multiples of the fundamental frequency.
+This subset of overtones is called the harmonic series:
+
+<Monochord label={1} harmonic={1} amplitude={1} base={220} />
+<Monochord label={2} harmonic={2} amplitude={1} base={220} />
+<Monochord label={3} harmonic={3} amplitude={1} base={220} />
+<Monochord label={4} harmonic={4} amplitude={1} base={220} />
+<Monochord label={5} harmonic={5} amplitude={1} base={220} />
+<Monochord label={6} harmonic={6} amplitude={1} base={220} />
+<Monochord label={7} harmonic={7} amplitude={1} base={220} />
+<Monochord label={8} harmonic={8} amplitude={1} base={220} />
+
+Those are the first 8 harmonics of a fundamental frequency of 220Hz.
+The first string vibrates 220 times per second while the strings below vibrate with 2, 3, 4, 5, 6, 7 and 8 times 220Hz.
+We could of course use any other fundamental frequency or add more overtones.
+The fundamental frequency and its multiples are also called partials.
+
+you can see harmonics on ropes here:
+
+- https://www.youtube.com/watch?v=-n1d1rycvj4
+- https://www.youtube.com/watch?v=no7ZPPqtZEg
+
+### Timbre
+
+When a physical object vibrates, its harmonic overtones will all sound at once, at different amplitudes.
+Generally, the higher the frequency, the quieter the amplitude will be.
+The relation of the different harmonics is called timbre.
+It gives any instrument its unique character.
+Depending on the shape and material of the instrument, some partials will be amplified, while some will be dampened.
+The sum of all sinewave partials will produce a more complex waveform.
+
+## Additive Synthesis of Common Waveforms
+
+Let's look at the harmonics of some common waveforms.
+Each waveform is represented with a bar chart of the partial amplitudes and a graphical plot of all partials + their sum (green).
+The waves are made audible by using additive synthesis, which means playing all sine wave partials at the same time.
+You can change the number of partials by dragging the slider.
+
+import Waveform from "../components/synthesis/Waveform.ts"
+
+### Sawtooth
+
+Sawtooth waves have a really sharp timbre. For example, all bowed instruments produce sawtooth waves.
+The friction between the bow and the string will move the string in the direction of the bow.
+At some point, the force of the string will be larger than the friction, which will all of a sudden pull the string back again.
+This back and fourth ends up looking like a sawtooth motion:
+
+<iframe
+  width="560"
+  height="315"
+  src="https://www.youtube.com/embed/6JeyiM0YNo4"
+  frameBorder="0"
+  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+  allowFullScreen
+></iframe>
+
+We can recreate this waveform by adding harmonic partials with amplitudes of:
+
+<InlineMath>{`A = \\frac{1}{n*\\pi}`}</InlineMath>
+
+where n is the partial number
+
+<Partials generator={Waveform.saw} />
+
+### Triangle
+
+Triangle waves can be produced by plucking a string exactly at the center:
+
+<iframe
+  width="560"
+  height="315"
+  src="https://www.youtube.com/embed/Qr_rxqwc1jE"
+  frameBorder="0"
+  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+  allowFullScreen
+></iframe>
+
+It contains only odd partials, with an amplitude of
+
+<InlineMath>{`A = \\frac{4}{(n*\\pi)^2}`}</InlineMath>
+
+where n is the partial number
+
+<Partials generator={Waveform.triangle} />
+
+### Square
+
+A perfect square wave cannot be produced in an analog way, thus they have a digital and unnatural hard feel.
+With less harmonics, they are similar to reed instruments, as they only have odd partials. You can imagine a reed bouncing back and forth, closing and opening the air canal:
+
+<iframe
+  width="560"
+  height="315"
+  src="https://www.youtube.com/embed/UMvuThaOqjw"
+  frameBorder="0"
+  allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+  allowFullScreen
+></iframe>
+
+So every even number of bounces, the canal is closed, which leads to no overtone being generated.
+The square wave amplitudes are defined by
+
+<InlineMath>{`A = \\frac{2}{n*\\pi}`}</InlineMath>
+
+where n is the partial number
+
+<Partials generator={Waveform.square} />
+
+### Observations
+
+1. If we add new harmonics, we first hear them as seperate pitches, but soon they blend into the overall sound. This happens because our ears are so used to the harmonic series that we perceive multiple harmonics as a single pitch.
+2. Reducing the number of harmonics is like applying a low pass filter, without using one.
+3. The waveforms all have an "organ-like" quality, as they do not morph over time. In the real world, harmonics will move independently, creating a more organic feel.
+4. In addition to the timbre morphing, the overall envelope of the sound is another important characteristic that is not contained in the timbre, for example the harsh hitting of a mallet vs the soft bowing of a string.
+
+### Further Reading
+
+- [Waveforms in the DSP Guide](https://www.dspguide.com/ch13/4.htm)
+- [Introduction to Additive Synthesis](https://www.soundonsound.com/techniques/introduction-additive-synthesis)
+- [Physics of Musical Instruments](https://www.amazon.de/Physics-Musical-Instruments-Neville-Fletcher/dp/0387983740)

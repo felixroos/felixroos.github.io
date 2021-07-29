@@ -1,0 +1,472 @@
+// this has been copied from svg-piano/keyboard.js
+// TODO: update npm package to be compatible => compile with tsc or similar
+
+// https://de.wikipedia.org/wiki/Datei:Pianoteilung.svg
+export const keyboard = [
+  {
+    pitches: ['C', 'B#'],
+    upperOffset: 0,
+    upperWidth: 15.05,
+  },
+  {
+    pitches: ['Db', 'C#'],
+    upperOffset: 0,
+    upperWidth: 12.7,
+  },
+  {
+    pitches: ['D'],
+    upperOffset: 4.15,
+    upperWidth: 15.3,
+  },
+  {
+    pitches: ['Eb', 'D#'],
+    upperOffset: 0,
+    upperWidth: 12.7,
+  },
+  {
+    pitches: ['E'],
+    upperOffset: 8.55,
+    upperWidth: 15.05,
+  },
+  {
+    pitches: ['F', 'E#'],
+    upperOffset: 0,
+    upperWidth: 13.95,
+  },
+  {
+    pitches: ['Gb', 'F#'],
+    upperOffset: 0,
+    upperWidth: 12.7,
+  },
+  {
+    pitches: ['G'],
+    upperOffset: 3.05,
+    upperWidth: 14.2,
+  },
+  {
+    pitches: ['Ab', 'G#'],
+    upperOffset: 0,
+    upperWidth: 12.7,
+  },
+  {
+    pitches: ['A'],
+    upperOffset: 6.35,
+    upperWidth: 14.2,
+  },
+  {
+    pitches: ['Bb', 'A#'],
+    upperOffset: 0,
+    upperWidth: 12.7,
+  },
+  {
+    pitches: ['B', 'Cb'],
+    upperOffset: 9.65,
+    upperWidth: 13.95,
+  },
+];
+
+export const accidentals = [1, 3, 6, 8, 10];
+
+export const _defaultOptions = {
+  scaleX: 1,
+  scaleY: 1,
+  lowerWidth: 23.6,
+  palette: ['#39383D', '#F2F2EF'],
+  stroke: '#39383D',
+  strokeWidth: 1,
+  offsetY: 2,
+  offsetX: 0,
+  upperHeight: 100,
+  lowerHeight: 45,
+  keyCount: 88,
+  range: ['A0', 'C8'],
+  topLabels: false,
+}; // visibleKeys
+
+export function defaultOptions(options) {
+  if (options.range) {
+    options = {
+      ...options,
+      ...rangeOptions(options.range),
+    };
+  }
+  return Object.assign({}, _defaultOptions, options);
+}
+
+/** computes keyCount and keyOffset from range array ([SPN,SPN]) */
+export function rangeOptions(range) {
+  const pitches = range.map((note) => note.slice(0, -1));
+  const first = keyboard.find((key) => key.pitches.includes(pitches[0]));
+  const last = keyboard.find((key) => key.pitches.includes(pitches[1]));
+  const offsetLeft = keyboard.indexOf(first);
+  const offsetRight = 12 - keyboard.indexOf(last);
+  const octaves = range.map((note) => parseInt(note.slice(note.length - 1)));
+  const keyCount = (octaves[1] - octaves[0] + 1) * 12 - offsetLeft - offsetRight + 1;
+  return { keyCount, keyOffset: offsetLeft };
+}
+
+export function getKeySizes(options) {
+  const { lowerHeight, upperHeight, lowerWidth, strokeWidth, palette, stroke } = defaultOptions(options);
+  return keyboard.map((key, index) =>
+    Object.assign(key, {
+      // add black/white specific props > black keys have no lower part
+      upperHeight,
+      lowerHeight: accidentals.includes(index) ? 0 : lowerHeight,
+      lowerWidth: accidentals.includes(index) ? key.upperWidth : lowerWidth,
+      fill: accidentals.includes(index) ? palette[0] : palette[1],
+      contrast: accidentals.includes(index) ? palette[1] : palette[0],
+      stroke,
+      strokeWidth,
+    })
+  );
+}
+
+export function renderKeys(options) {
+  options = defaultOptions(options);
+  const keySizes = getKeySizes(options);
+  const { keyCount, scaleY, scaleX, visibleKeys, lowerWidth, strokeWidth, keyOffset, colorize } = options;
+
+  return Array(keyCount + keyOffset)
+    .fill(0)
+    .map((key, index, _keys) => keySizes[index % 12])
+    .map((key, index, _keys) => {
+      const octave = getOctave(index, options.range);
+      const notes = key.pitches.map((pitch) => pitch + octave);
+      return {
+        index,
+        notes,
+        scaleX,
+        scaleY,
+        fill: getColorization(notes, colorize) || key.fill,
+        contrast: key.contrast,
+        strokeWidth: key.strokeWidth,
+        stroke: key.stroke,
+        upperHeight: key.upperHeight * scaleY,
+        lowerHeight: key.lowerHeight * scaleY,
+        upperWidth: upperWidth(key, index, keyOffset, keyCount) * scaleX,
+        lowerWidth: key.lowerWidth * scaleX,
+        upperOffset: upperOffset(key, index, keyOffset) * scaleX,
+        visible: !visibleKeys || !!key.pitches.find((pitch) => visibleKeys.includes(pitch)),
+        offsetX: getKeyOffset(index, _keys, lowerWidth, keyOffset) * scaleX + Math.ceil(strokeWidth / 2),
+      };
+    })
+    .filter((key) => key.index >= keyOffset);
+}
+
+export function renderSVG(options) {
+  options = defaultOptions(options);
+  const keys = renderKeys(options);
+  const dimensions = totalDimensions(options);
+  return {
+    svg: {
+      width: dimensions[0],
+      height: dimensions[1],
+    },
+    children: keys.map((key) => {
+      if (!key.visible) {
+        return;
+      }
+      let circle, text;
+      const label = options.labels ? key.notes.find((n) => !!Object.keys(options.labels).includes(n)) : '';
+
+      if (label) {
+        const textElements = getTextElements(key, options.topLabels);
+        circle = textElements.circle;
+        text = textElements.text;
+        text.value = options.labels[label];
+      }
+      const points = getPoints(key);
+      return {
+        key,
+        polygon: {
+          points: points.map((p) => p.join(',')).join(' '),
+          style: {
+            fill: key.fill,
+            stroke: key.stroke,
+            strokeWidth: key.strokeWidth,
+          },
+        },
+        circle,
+        text,
+      };
+    }),
+  };
+}
+
+export function getOctave(index, range) {
+  const overflow = Math.floor(index / 12);
+  const octaves = range.map((note) => parseInt(note.slice(note.length - 1)));
+  const octave = overflow + octaves[0];
+  return octave;
+}
+
+export function getColorization(notes, colorize) {
+  if (!colorize) {
+    return null;
+  }
+  const match = colorize.find((color) => !!color.keys.find((key) => notes.includes(key)));
+  return match ? match.color : null;
+}
+
+export function upperWidth(key, index, offset, keyCount) {
+  const isFirst = (index) => index === offset;
+  const isLast = (index) => index === keyCount + offset - 1;
+  if (isFirst(index)) {
+    return key.upperWidth + key.upperOffset;
+  }
+  if (isLast(index)) {
+    return key.lowerWidth - key.upperOffset;
+  }
+  return key.upperWidth;
+}
+
+function upperOffset(key, index, keyOffset) {
+  const isFirst = (index) => index === keyOffset;
+  if (isFirst(index)) {
+    return 0;
+  }
+  return key.upperOffset;
+}
+
+export function whiteIndex(index) {
+  return (
+    Array(index % 12)
+      .fill(0)
+      .filter((_, i) => !accidentals.includes(i)).length +
+    Math.floor(index / 12) * 7
+  );
+}
+
+export function getKeyOffset(index, keys, lowerWidth, keyOffset = 0) {
+  const wi = whiteIndex(index);
+  const oi = whiteIndex(keyOffset);
+  let firstOffset = keys[keyOffset].upperOffset;
+  if (accidentals.includes(keyOffset % 12)) {
+    const whiteKeyBefore = keyboard[(keyOffset + 12 - 1) % 12];
+    firstOffset -= lowerWidth - (whiteKeyBefore.upperWidth + whiteKeyBefore.upperOffset);
+  }
+  return !accidentals.includes(index % 12)
+    ? wi * lowerWidth - oi * lowerWidth
+    : keys.slice(keyOffset, index).reduce((sum, _key, _index) => sum + _key.upperWidth, 0) + firstOffset;
+}
+
+export function totalDimensions(options) {
+  const { scaleX, scaleY, lowerWidth, keyCount, lowerHeight, upperHeight, strokeWidth } = defaultOptions(options);
+  return [scaleX * lowerWidth * whiteIndex(keyCount + 1), (lowerHeight + upperHeight) * scaleY].map((c) =>
+    Math.round(c + strokeWidth * 2)
+  ); // >svg adds stroke around actual widths
+}
+
+export function getPoints(key) {
+  const { upperOffset, offsetX, offsetY, upperHeight, lowerHeight, upperWidth, lowerWidth } = defaultOptions(key);
+  const totalHeight = lowerHeight + upperHeight;
+  return [
+    [upperOffset + offsetX, offsetY],
+    [upperOffset + offsetX, upperHeight + offsetY],
+    [offsetX, upperHeight + offsetY],
+    [offsetX, totalHeight + offsetY],
+    [lowerWidth + offsetX, totalHeight + offsetY],
+    [lowerWidth + offsetX, upperHeight + offsetY],
+    [upperWidth + upperOffset + offsetX, upperHeight + offsetY],
+    [upperWidth + upperOffset + offsetX, offsetY],
+  ];
+}
+
+export function getTextElements(key, top = false, fill = 'white') {
+  const { offsetX, upperHeight, lowerHeight, upperOffset, upperWidth, strokeWidth } = defaultOptions(key);
+  const radius = (key.scaleX * (12.7 - strokeWidth * 2)) / 2;
+  const w = key.lowerWidth || key.upperWidth;
+  const x = top ? offsetX + upperWidth / 2 + upperOffset : offsetX + w / 2;
+  const y = top ? radius * 2 : upperHeight + lowerHeight - radius;
+  return {
+    circle: {
+      cx: x,
+      cy: y - radius / 3,
+      r: radius,
+      fill,
+      stroke: key.stroke,
+      strokeWidth: key.strokeWidth,
+    },
+    text: {
+      x,
+      y,
+      textAnchor: 'middle',
+      fontSize: radius,
+      fontFamily: 'helvetica',
+    },
+  };
+}
+
+export function renderPiano(container, options) {
+  const rendered = renderSVG(options);
+
+  const xmlns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(xmlns, 'svg');
+  svg.setAttributeNS(null, 'style', 'margin:0');
+  svg.setAttributeNS(null, 'width', rendered.svg.width + '');
+  svg.setAttributeNS(null, 'height', rendered.svg.height + '');
+
+  rendered.children.forEach((elements) => {
+    const { key, polygon, circle, text } = elements;
+    const p = document.createElementNS(xmlns, 'polygon');
+    p.setAttributeNS(null, 'points', polygon.points);
+    p.setAttributeNS(null, 'fill', polygon.style.fill);
+    p.setAttributeNS(null, 'stroke', polygon.style.stroke);
+    p.setAttributeNS(null, 'stroke-width', polygon.style.strokeWidth);
+    p.setAttributeNS(
+      null,
+      'class',
+      key.notes.reduce((classes, note, index) => classes + (index ? ' ' : '') + 'key-' + note, '')
+    );
+    svg.appendChild(p);
+    if (circle) {
+      const c = document.createElementNS(xmlns, 'circle');
+      c.setAttributeNS(null, 'cx', circle.cx);
+      c.setAttributeNS(null, 'cy', circle.cy);
+      c.setAttributeNS(null, 'r', circle.r);
+      c.setAttributeNS(null, 'fill', circle.fill);
+      c.setAttributeNS(null, 'stroke', circle.stroke);
+      c.setAttributeNS(null, 'stroke-width', circle.strokeWidth);
+      svg.appendChild(c);
+    }
+
+    if (text) {
+      const t = document.createElementNS(xmlns, 'text');
+      t.setAttributeNS(null, 'x', text.x);
+      t.setAttributeNS(null, 'y', text.y);
+      t.setAttributeNS(null, 'text-anchor', text.textAnchor);
+      t.setAttributeNS(null, 'font-size', text.fontSize);
+      t.setAttributeNS(null, 'font-family', text.fontFamily);
+      t.innerHTML = text.value;
+      svg.appendChild(t);
+    }
+  });
+  container.appendChild(svg);
+}
+
+// new svg shizzle
+
+function setAttributes(el, attributes) {
+  Object.entries(attributes).forEach(([attribute, value]) => {
+    el.setAttributeNS(null, attribute, value);
+  });
+}
+
+function transformPath(el, { scale, translateX, translateY }) {
+  const path = el.attributes.d;
+  const tokenized = path
+    .split(/([MLHV]?)(\d+(?:\.\d+)?)(Z?)/g)
+    .filter((token) => !!token)
+    .map((token, i, tokens) => {
+      let float = parseFloat(token);
+      if (!isNaN(float)) {
+        if (scale) {
+          float = float *= scale;
+        }
+        const isY = i > 0 && tokens[i - 1] === ',';
+        if (translateX && !isY) {
+          float += translateX;
+        }
+        if (translateY && isY) {
+          float += translateY;
+        }
+        return String(float);
+      }
+      return token;
+    });
+  /* console.log('tokenized', tokenized);
+  console.log('joined', tokenized.join('')); */
+  el.attributes.d = tokenized.join('');
+  return el;
+}
+function transformRect(el, { scale, translateX, translateY }) {
+  if (scale) {
+    el.attributes.x = el.attributes.x * scale;
+    el.attributes.y = el.attributes.y * scale;
+    el.attributes.width = el.attributes.width * scale;
+    el.attributes.height = el.attributes.height * scale;
+  }
+  if (translateX) {
+    el.attributes.x += translateX;
+  }
+  if (translateY) {
+    el.attributes.x += translateY;
+  }
+  return el;
+}
+function transformElement(el, transforms) {
+  if (el.name === 'path') {
+    return transformPath(el, transforms);
+  } else if (el.name === 'rect') {
+    return transformRect(el, transforms);
+  }
+}
+
+export function renderNew(container, json) {
+  // console.log('render new', container, json);
+  const xmlns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(xmlns, 'svg');
+  // setAttributes(svg);
+  // svg.setAttributeNS(null, 'style', 'margin:0');
+  svg.setAttributeNS(null, 'height', '200');
+  svg.setAttributeNS(null, 'width', '800');
+  // svg.setAttributeNS(null, 'viewBox', json.attributes.viewBox);
+
+  const renderOctave = (i, b = 15.007) => {
+    json.children.forEach((_child) => {
+      let child = { ..._child, attributes: { ..._child.attributes } };
+      child = transformElement(child, { scale: 1, translateX: i * 12 * b });
+      child.attributes.id = child.attributes.id + i;
+      const el = document.createElementNS(xmlns, child.name);
+      setAttributes(el, child.attributes);
+      svg.appendChild(el);
+    });
+  };
+  renderOctave(0);
+  renderOctave(1);
+  renderOctave(2);
+  renderOctave(3);
+
+  container.appendChild(svg);
+
+  /* 
+
+  rendered.children.forEach(elements => {
+    const { key, polygon, circle, text } = elements;
+    const p = document.createElementNS(xmlns, 'polygon');
+    p.setAttributeNS(null, 'points', polygon.points);
+    p.setAttributeNS(null, 'fill', polygon.style.fill);
+    p.setAttributeNS(null, 'stroke', polygon.style.stroke);
+    p.setAttributeNS(null, 'stroke-width', polygon.style.strokeWidth);
+    p.setAttributeNS(
+      null,
+      'class',
+      key.notes.reduce(
+        (classes, note, index) => classes + (index ? ' ' : '') + 'key-' + note,
+        ''
+      )
+    );
+    svg.appendChild(p);
+    if (circle) {
+      const c = document.createElementNS(xmlns, 'circle');
+      c.setAttributeNS(null, 'cx', circle.cx);
+      c.setAttributeNS(null, 'cy', circle.cy);
+      c.setAttributeNS(null, 'r', circle.r);
+      c.setAttributeNS(null, 'fill', circle.fill);
+      c.setAttributeNS(null, 'stroke', circle.stroke);
+      c.setAttributeNS(null, 'stroke-width', circle.strokeWidth);
+      svg.appendChild(c);
+    }
+
+    if (text) {
+      const t = document.createElementNS(xmlns, 'text');
+      t.setAttributeNS(null, 'x', text.x);
+      t.setAttributeNS(null, 'y', text.y);
+      t.setAttributeNS(null, 'text-anchor', text.textAnchor);
+      t.setAttributeNS(null, 'font-size', text.fontSize);
+      t.setAttributeNS(null, 'font-family', text.fontFamily);
+      t.innerHTML = text.value;
+      svg.appendChild(t);
+    }
+  });*/
+}

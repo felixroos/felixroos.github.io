@@ -1,0 +1,39 @@
+export class Permutation {
+  static isEqual(collectionA, collectionB) {
+    return collectionA.sort().join("-") === collectionB.sort().join("-")
+  }
+  static search<T>(
+    finder: (path: T[], solutions: T[][]) => T[],
+    validator: (path: T[], solutions: T[][]) => boolean,
+    concatFn = (_path: T[], _candidate: T): T[] => [
+      ..._path,
+      _candidate,
+    ],
+    path: T[] = [],
+    solutions: T[][] = []
+  ): T[][] {
+    // get candidates for current path
+    const candidates = finder(path, solutions)
+
+    // runs current path through validator to either get a new solution or nothing
+    if (validator(path, solutions)) {
+      solutions.push(path)
+    }
+    // if no candidates found, we cannot go deeper => either solution or dead end
+    if (!candidates.length) {
+      return solutions
+    }
+    // go deeper
+    return candidates.reduce(
+      (_, candidate) =>
+        Permutation.search(
+          finder,
+          validator,
+          concatFn,
+          concatFn(path, candidate),
+          solutions
+        ),
+      []
+    )
+  }
+}

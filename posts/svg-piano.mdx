@@ -1,0 +1,307 @@
+---
+title: SVG Piano
+date: '2020-03-26'
+tags: ['code', 'web audio']
+description: "Let's talk about virtual keyboards: They are good to visualize chords as a static image and melodies as an animation."
+---
+
+![Herbie Hancock](https://stuartmemo.com/qwerty-hancock/qwerty-hancock.png)
+
+Let's talk about (virtual) keyboards:
+
+- They are good to visualize chords as a static image
+- ...and melodies as an animation.
+- they are understood by most musicians
+
+I recently made a little npm lib called [svg-piano](https://www.npmjs.com/package/svg-piano).
+Though there are a number of
+[piano](https://stuartmemo.com/qwerty-hancock/)
+[components](https://www.kevinqi.com/react-piano/)
+[out there](https://github.com/hienpd/svg-piano)
+most of them are either incorrectly sized or not hackable enough.
+Talkin about [correct sizing](https://www.mathpages.com/home/kmath043.htm), [this one](https://github.com/regginos/piano)
+is the best i've found so far, but still its not on npm and its generating svg nodes directly, making it not so hackable.
+
+What I wanted to achieve with my [svg-piano lib](https://www.npmjs.com/package/svg-piano):
+
+- npm installable
+- no dependencies
+- minimal boilerplate code
+
+## Usage with React
+
+The lib comes with the method [renderSVG](https://github.com/felixroos/svg-piano/blob/0.3.1/keyboard.js#L174),
+which dumps all needed svg element props into a json, which can be plugged directly to any rendering:
+
+```jsx
+import React from 'react';
+import { renderSVG } from 'svg-piano';
+
+export default function Keyboard({ options }) {
+  const { svg, children } = renderSVG(options);
+  return (
+    <svg {...svg}>
+      {children.map(({ polygon, circle, text, key }, index) => [
+        polygon && <polygon {...polygon} key={'p' + index} />,
+        circle && <circle {...circle} key={'c' + index} />,
+        text && (
+          <text {...text} key={'t' + index}>
+            {text.value}
+          </text>
+        ),
+      ])}
+    </svg>
+  );
+}
+```
+
+The children elements contain:
+
+- polygon: The actual key
+- text: Text label
+- circle: Background for text
+
+Usage:
+
+```jsx
+<Keyboard
+  options={{
+    range: ['A0', 'C8'],
+    scaleX: 0.5,
+    scaleY: 0.5,
+  }}
+/>
+```
+
+import Keyboard from '../components/music/Keyboard.tsx';
+
+<Keyboard
+  options={{
+    range: ['A0', 'C8'],
+    scaleX: 0.5,
+    scaleY: 0.5,
+  }}
+/>
+
+---
+
+## Adding Mouse Events
+
+Let's add some mouse events to trigger attack / release. We can use 'react-use-gesture' to handle the mouse events:
+
+```js
+const active = useRef([]);
+const [colorized, setColorized] = useState([]);
+const onDrag = useGesture({
+  onDragStart: ({ down, args: [key] }) => down && activate(key),
+  onHover: ({ down, active, args: [key] }) => {
+    if (active && down) {
+      activate(key);
+    }
+    if (!active) {
+      deactivate(key);
+    }
+  },
+});
+const activate = (key) => {
+  if (!colorized.includes(key.notes[0])) {
+    active.current = [...active.current, key.notes[0]];
+    onAttack && onAttack(key);
+  }
+  setColorized(active.current);
+};
+const deactivate = (key) => {
+  if (colorized.includes(key.notes[0])) {
+    active.current = active.current.filter((n) => n !== key.notes[0]);
+    onRelease && onRelease(key);
+  }
+  setColorized(active.current);
+};
+```
+
+> I had to useRef as an extra layer to always have the latest active keys. Using state directly did not work for me, but maybe this can be done better.
+
+Then we need to pass the colorization:
+
+```js
+const { svg, children } = renderSVG({
+  ...options,
+  colorize: [...(options.colorize || []), { keys: colorized, color: 'red' }],
+});
+```
+
+...and pass the mouse events to the key polygon:
+
+```js
+<polygon
+  {...polygon}
+  key={'p' + index}
+  {...onDrag(key)}
+  onMouseUp={() => deactivate(key)}
+  onClick={() => onClick && onClick(key)}
+/>
+```
+
+We also need the mouse up event, as we need use the key and passing args to useGesture's onMouseUp is not possible.
+
+## Adding a Synth
+
+Using [Tone.js](https://tonejs.github.io/), we now can make the keys playable:
+
+import { Synth, PolySynth } from 'tone';
+import canUseDOM from '../components/canUseDOM.ts';
+
+export const synth = canUseDOM() && new Synth({ volume: -12 }).toDestination();
+export const poly =
+  canUseDOM() && new PolySynth({ maxPolyphony: 6, voice: Synth, options: { volume: -12 } }).toDestination();
+
+```jsx
+import { Synth } from "tone"
+const synth = new Synth({ volume: -6 }).toDestination()
+
+<Keyboard
+  options={{range: ["C3", "C5"]}}
+  onAttack={key => {
+    console.log('attt',key);
+    // synth && synth.triggerAttack(key.notes[0])
+  }}
+  onRelease={key => synth && synth.triggerRelease([key.notes[0]])}
+/>
+```
+
+<Keyboard
+  options={{ range: ['C3', 'C5'] }}
+  onAttack={(key) => synth && synth.triggerAttack(key.notes[0])}
+  onRelease={(key) => synth && synth.triggerRelease()}
+/>
+
+---
+
+## Adding keyboard support
+
+To control our keyboard from the computer keyboard, lets add another custom hook:
+
+```js
+import { useEffect } from 'react';
+
+export function useKeyEvents({ downHandler, upHandler }) {
+  useEffect(() => {
+    window.addEventListener('keydown', downHandler);
+    window.addEventListener('keyup', upHandler);
+    return () => {
+      window.removeEventListener('keydown', downHandler);
+      window.removeEventListener('keyup', upHandler);
+    };
+  }, [downHandler, upHandler]);
+}
+```
+
+... and use it inside Keyboard.js:
+
+```js
+// + add keyControl to props
+useKeyEvents({
+  downHandler: (e) => keyControl && keyControl[e.key] && activate({ notes: [keyControl[e.key]] }),
+  upHandler: (e) => keyControl && keyControl[e.key] && deactivate({ notes: [keyControl[e.key]] }),
+});
+```
+
+in action:
+
+```jsx
+<Keyboard
+  onAttack={(key) => poly && poly.triggerAttack(key.notes[0])}
+  onRelease={(key) => poly && poly.triggerRelease([key.notes[0]])}
+  keyControl={{
+    a: 'C3',
+    w: 'C#3',
+    s: 'D3',
+    e: 'D#3',
+    d: 'E3',
+    f: 'F3',
+    t: 'F#3',
+    g: 'G3',
+    z: 'G#3',
+    h: 'A3',
+    u: 'A#3',
+    j: 'B3',
+    k: 'C4',
+  }}
+  options={{
+    range: ['C3', 'C4'],
+    scaleX: 1.5,
+    scaleY: 1.5,
+    labels: {
+      C3: 'A',
+      'C#3': 'W',
+      D3: 'S',
+      'D#3': 'E',
+      E3: 'D',
+      F3: 'F',
+      'F#3': 'T',
+      G3: 'G',
+      'G#3': 'Z',
+      A3: 'H',
+      'A#3': 'U',
+      B3: 'J',
+      C4: 'K',
+    },
+  }}
+/>
+```
+
+Now type:
+
+```js
+ffef a afuhf
+```
+
+<Keyboard
+  onAttack={(key) => poly && poly.triggerAttack(key.notes[0])}
+  onRelease={(key) => poly && poly.triggerRelease([key.notes[0]])}
+  keyControl={{
+    a: 'C3',
+    w: 'C#3',
+    s: 'D3',
+    e: 'D#3',
+    d: 'E3',
+    f: 'F3',
+    t: 'F#3',
+    g: 'G3',
+    z: 'G#3',
+    h: 'A3',
+    u: 'A#3',
+    j: 'B3',
+    k: 'C4',
+  }}
+  options={{
+    range: ['C3', 'C4'],
+    scaleX: 1.5,
+    scaleY: 1.5,
+    labels: {
+      C3: 'A',
+      'C#3': 'W',
+      D3: 'S',
+      'D#3': 'E',
+      E3: 'D',
+      F3: 'F',
+      'F#3': 'T',
+      G3: 'G',
+      'G#3': 'Z',
+      A3: 'H',
+      'A#3': 'U',
+      B3: 'J',
+      C4: 'K',
+    },
+  }}
+/>
+
+Thats it for today..
+
+## Further Ideas
+
+- [x] Redo mouse events with https://use-gesture.netlify.com/docs/state, see Monochord for usage
+- Use https://www.react-spring.io/ for animated colorization fade
+- use midi input
+  - https://www.newline.co/@waterplea/jam-on-your-midi-keyboard-in-angular--6c16e1e0?utm_campaign=NG-Newsletter&utm_medium=email&utm_source=NG-Newsletter_327
+  - https://github.com/stephband/midi

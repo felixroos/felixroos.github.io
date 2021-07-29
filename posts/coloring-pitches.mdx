@@ -1,0 +1,188 @@
+---
+title: Coloring Pitches
+date: '2020-04-01'
+tags: ['code', 'd3']
+description: Let's play with colors. Vizualization loves color. To map musical notes to color, we can do various things.
+---
+
+import { TinyColor } from '@ctrl/tinycolor';
+import { ColorKeyboard } from '../components/coloring-pitches/ColorKeyboard.tsx';
+import { noteColor, noteLightness, rainbow, sinebow } from '../components/coloring-pitches/noteColor.ts';
+
+<ColorKeyboard
+  options={{ scaleX: 0.5, scaleY: 0.5, range: ['C0', 'C7'] }}
+  colorizer={(note) => sinebow(note).desaturate(20).toHexString()}
+/>
+
+Let's play with colors. Vizualization loves color. To map musical notes to color, we can do various things.
+
+## rainbow with hsl
+
+One simple approach is using the hsl color, dividing the 360 degrees through 12 pitches:
+
+```ts
+import { TinyColor } from '@ctrl/tinycolor';
+import { Note } from '@tonaljs/tonal';
+
+export function noteColor(note: string, rotate = 0): TinyColor {
+  return new TinyColor({
+    h: Math.floor((rotate + (Note.chroma(note) / 12) * 360) % 360),
+    s: 100,
+    l: 50,
+  });
+}
+```
+
+If we throw that into the svg-piano:
+
+```js
+import { Range } from '@tonaljs/tonal';
+
+export function ColorKeyboard({ options, colorizer = noteColor }) {
+  options = { range: ['C3', 'C4'], ...options };
+  return (
+    <Keyboard
+      options={{
+        ...options,
+        colorize: Range.chromatic(options.range).map((note) => ({
+          keys: [note],
+          color: colorizer(note).toHexString(),
+        })),
+      }}
+    />
+  );
+}
+```
+
+<ColorKeyboard options={{ scaleX: 1, scaleY: 1, range: ['C2', 'C6'] }} />
+
+If this is too aggressive for you, read on..
+
+## Using d3-scale-chromatic
+
+After just scratching the surface of color research, I found out that there is a universe of color nerds out there, most of them coming from the data viz world.
+The best color scales for this purpose I found so far are the [cyclical scales of d3-scale-chromatic](https://github.com/d3/d3-scale-chromatic#cyclical).
+
+### sinebow
+
+<ColorKeyboard
+  options={{ scaleX: 1, scaleY: 1, range: ['C2', 'C6'] }}
+  colorizer={(note) => sinebow(note).toHexString()}
+/>
+
+### Less angry rainbow
+
+<ColorKeyboard
+  options={{ scaleX: 1, scaleY: 1, range: ['C2', 'C6'] }}
+  colorizer={(note) => rainbow(note).toHexString()}
+/>
+
+I like this one the most
+
+## Note height as lightening factor
+
+import { State, Toggle } from 'react-powerplug';
+
+<State initial={{ offset: 60, width: 1.4, rotation: 180, saturation: 80 }}>
+  {({ state, setState }) => (
+    <>
+      <label>
+        <input
+          min="0"
+          max="360"
+          type="range"
+          value={state.rotation}
+          step="1"
+          onChange={(e) => setState({ rotation: parseInt(e.target.value) })}
+        />
+        rotation {state.rotation}
+      </label>
+      <br />
+      <label>
+        <input
+          min="0"
+          max="100"
+          type="range"
+          value={state.offset}
+          step="1"
+          onChange={(e) => setState({ ...state, offset: parseInt(e.target.value) })}
+        />
+        center {state.offset}
+      </label>
+      <br />
+      <label>
+        <input
+          min="0.1"
+          max="3.0"
+          type="range"
+          value={state.width}
+          step="0.1"
+          onChange={(e) => setState({ ...state, width: parseFloat(e.target.value) })}
+        />
+        width {state.width}
+      </label>
+      <br />
+      <label>
+        <input
+          min="0"
+          max="100"
+          type="range"
+          value={state.saturation}
+          step="1"
+          onChange={(e) => setState({ ...state, saturation: parseInt(e.target.value) })}
+        />
+        saturation {state.saturation}
+      </label>
+      <br />
+      <p>angry rainbow</p>
+      <ColorKeyboard
+        options={{ scaleX: 1, scaleY: 1, range: ['C2', 'C6'] }}
+        colorizer={(note) =>
+          noteColor(note, state.rotation)
+            .desaturate(100 - state.saturation)
+            .lighten(noteLightness(note, state.offset, 1 / state.width))
+            .toHexString()
+        }
+      />
+      <p>sinebow</p>
+      <ColorKeyboard
+        options={{ scaleX: 1, scaleY: 1, range: ['C2', 'C6'] }}
+        colorizer={(note) =>
+          rainbow(note, state.rotation)
+            .desaturate(100 - state.saturation)
+            .lighten(noteLightness(note, state.offset, 1 / state.width))
+            .toHexString()
+        }
+      />
+      <p>less angry rainbow</p>
+      <ColorKeyboard
+        options={{ scaleX: 1, scaleY: 1, range: ['C2', 'C6'] }}
+        colorizer={(note) =>
+          sinebow(note, state.rotation)
+            .desaturate(100 - state.saturation)
+            .lighten(noteLightness(note, state.offset, 1 / state.width))
+            .toHexString()
+        }
+      />
+    </>
+  )}
+</State>
+
+## Next Steps
+
+Thats enough for today. More ideas for the future:
+
+- colorize based on the circle of fifths instead of chromatically
+- mix chord colors out of individual note colors
+- use non cyclic color scales for things like interval "spice" or voicing diff
+
+## Links from the colorsphere
+
+- https://krazydad.com/tutorials/makecolors.php
+- http://basecase.org/env/on-rainbows
+- https://mycarta.wordpress.com/2013/02/21/perceptual-rainbow-palette-the-method/
+- https://github.com/gka/chroma.js
+- https://github.com/d3/d3-color
+- https://bl.ocks.org/mbostock/310c99e53880faec2434
+- https://bl.ocks.org/mbostock/310c99e53880faec2434
+- http://whitneymusicbox.org/

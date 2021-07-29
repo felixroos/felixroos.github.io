@@ -1,0 +1,242 @@
+---
+title: Animating React Components
+date: '2020-04-19'
+tags: ['code', 'react']
+description: Let's make a react component that can be used to animate anything.
+---
+
+import { Plot } from '../components/plotting-functions/Plot.tsx';
+import AnimationFrame from '../components/common/AnimationFrame.tsx';
+import Fab from '@material-ui/core/Fab';
+import PlayArrowIcon from '@material-ui/icons/PlayArrow';
+import StopIcon from '@material-ui/icons/Stop';
+import CircularProgress from '@material-ui/core/CircularProgress';
+import LinearProgress from '@material-ui/core/LinearProgress';
+import { State } from 'react-powerplug';
+
+Let's make a react component that can be used to animate anything directly inside MDX files:
+
+<AnimationFrame autostart>
+  {({ time }) => {
+    const t = time.fromStart / 250;
+    return (
+      <Plot
+        functions={[(x) => Math.sin(3 * x) * Math.sin(t / 2), (x) => Math.sin(2 * x) * Math.sin(t / 3)]}
+        range={{ x: [0, Math.PI], y: [-1, 1] }}
+        height={200}
+        strokeWidth={4}
+        hideXAxis={true}
+      />
+    );
+  }}
+</AnimationFrame>
+
+The above Animation uses a component called AnimationFrame which wraps the Plot component from last post:
+
+```js
+<AnimationFrame autostart>
+  {({ time }) => {
+    const t = time.fromStart / 250;
+    return (
+      <Plot
+        functions={[(x) => Math.sin(3 * x) * Math.sin(t / 2), (x) => Math.sin(2 * x) * Math.sin(t / 3)]}
+        range={{ x: [0, Math.PI], y: [-1, 1] }}
+        height={200}
+        strokeWidth={4}
+        hideXAxis={true}
+      />
+    );
+  }}
+</AnimationFrame>
+```
+
+## AnimationFrame component
+
+The AnimationFrame component is relatively straightforward as it essentially just uses a custom hook called useFrame:
+
+```js
+export default function AnimationFrame(props) {
+  const [time, setTime] = useState({
+    fromStart: 0,
+    fromFirstStart: 0,
+    progress: 0,
+    delta: null,
+  });
+  const frame = useFrame(setTime, props.autostart);
+  return props.children({ ...frame, time });
+}
+```
+
+## useFrame
+
+The more interesting useFrame hook:
+
+```js
+
+export default function useFrame(callback, autostart = false) {
+  const requestRef = useRef<number>();
+  const previousTimeRef = useRef<number>();
+  const startTimeRef = useRef<number>();
+  const stopTimeRef = useRef<number>(0);
+  const maxTimeRef = useRef<number>();
+  const [isRunning, setIsRunning] = useState(autostart);
+
+  const animate = time => {
+    if (!startTimeRef.current) {
+      startTimeRef.current = time;
+    }
+    if (previousTimeRef.current != undefined) {
+      const delta = time - previousTimeRef.current
+      const fromStart = time - startTimeRef.current;
+      callback({
+        time,
+        delta,
+        fromStart,
+        fromFirstStart: fromStart + stopTimeRef.current,
+        stopTime: stopTimeRef.current,
+        progress: maxTimeRef.current ? fromStart / maxTimeRef.current : 0
+      });
+      if (maxTimeRef.current && fromStart >= maxTimeRef.current) {
+        stop();
+        maxTimeRef.current = null;
+        return;
+      }
+    }
+    previousTimeRef.current = time;
+    requestRef.current = requestAnimationFrame(animate);
+  }
+
+  function start(maxTime?) {
+    if (isRunning) {
+      stop();
+    }
+    if (maxTime) {
+      maxTimeRef.current = maxTime;
+    }
+    requestRef.current = requestAnimationFrame(animate);
+    setIsRunning(true);
+  }
+
+  function stop() {
+    if (previousTimeRef.current && startTimeRef.current) {
+      stopTimeRef.current = previousTimeRef.current - startTimeRef.current + stopTimeRef.current;
+    }
+    cancelAnimationFrame(requestRef.current);
+    startTimeRef.current = 0;
+    requestRef.current = null;
+    setIsRunning(false)
+  }
+  function toggle() {
+    if (!requestRef.current) {
+      start()
+    } else {
+      stop();
+    }
+  }
+
+  React.useEffect(() => {
+    autostart && start();
+    return () => stop()
+  }, []); // Make sure the effect runs only once
+  return { start, stop, toggle, isRunning };
+}
+```
+
+In its essence, it takes a callback that is repeatedly invoked inside [requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame).
+When start is called, the animation begins.
+
+### Perspectives on time
+
+The callback is passed different perspectives on time:
+
+- time: total time elapsed since document creation (default requestAnimation param)
+- delta: time elapsed since last frame e.g. 17ms for 60fps
+- fromStart: time elapsed since animation was started
+- fromFirstStart: time elapsed since animation was started the first time
+- stopTime: the last time the animation was stopped
+
+fromStart and fromFirstStart should be the most interesting for most use cases:
+
+<AnimationFrame>
+  {({ toggle, time, isRunning, start }) => {
+    return (
+      <>
+        <Fab onClick={() => toggle()}>{!isRunning ? <PlayArrowIcon /> : <StopIcon />}</Fab>
+        {time && (
+          <>
+            <p>
+              time.fromStart: <span style={{ color: 'yellow' }}>{Math.round(time.fromStart / 10) / 100}s</span>
+            </p>
+            <p>
+              time.fromFirstStart: <span style={{ color: 'green' }}>{Math.round(time.fromFirstStart / 10) / 100}s</span>
+            </p>
+            <p>
+              time.delta: {Math.round(time.delta)}ms = {Math.round(1000 / time.delta)}fps
+            </p>
+            {time && (
+              <Plot
+                range={{ x: [0, Math.PI], y: [0, 1] }}
+                height={330}
+                functions={[
+                  (x) => Math.abs(Math.sin(x + time.fromFirstStart / 1000)),
+                  (x) => Math.abs(Math.sin(x + time.fromStart / 1000)),
+                ]}
+                colors={['green', 'yellow']}
+              />
+            )}
+            <svg width={100} height={300}>
+              <circle
+                cy={300 - Math.abs(Math.sin(time.fromStart / 1000)) * (300 - 20) - 10}
+                cx={40}
+                r={10}
+                fill={'yellow'}
+              />
+              <circle
+                cy={300 - Math.abs(Math.sin(time.fromFirstStart / 1000)) * (300 - 20) - 10}
+                cx={10}
+                r={10}
+                fill={'green'}
+              />
+            </svg>
+          </>
+        )}
+        <br />
+      </>
+    );
+  }}
+</AnimationFrame>
+
+### progress
+
+We can turn the continuus animation to a timed one by passing a maxTime to the start method.
+If doing so, the callback param _progress_ will contain a number between 0 and 1.
+
+<AnimationFrame>
+  {({ toggle, time, isRunning, start, stop }) => (
+    <>
+      <Fab onClick={() => start(1000)}>{!isRunning ? <PlayArrowIcon /> : <StopIcon />}</Fab>
+      <h1 style={{ opacity: time.progress }}>{Math.round(time.progress * 100)}%</h1>
+    </>
+  )}
+</AnimationFrame>
+
+## React Animation libs
+
+Of course, there are several libs for animating in the react world:
+
+- https://reactcommunity.org/react-transition-group/
+- https://www.react-spring.io/
+- https://github.com/nearform/react-animation
+
+But they are mainly focused on one time animations rather than on infinite time flow.
+Only react spring would allow never ending animations using a spring tension of 0, but still
+the values are sprining between number bounds that are only indirectly controllable via spring constants.
+
+## d3-transition
+
+When using d3, we could use d3-transition, but this is only possible in combination with d3-selection, which I try to avoid, as I want to control the DOM from React as direct as possible.
+Also, like with the libs above, it is not really elegant to do [infinite animations](https://bl.ocks.org/d3noob/bf44061b1d443f455b3f857f82721372)
+
+## TBD
+
+- check out https://github.com/d3/d3-timer

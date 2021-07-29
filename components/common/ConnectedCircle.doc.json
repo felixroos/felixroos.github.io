@@ -1,0 +1,581 @@
+{
+  "description": "",
+  "displayName": "ConnectedCircle",
+  "methods": [],
+  "props": {
+    "nodes": {
+      "required": true,
+      "tsType": {
+        "name": "Array",
+        "elements": [
+          {
+            "name": "signature",
+            "type": "object",
+            "raw": "{\n  id: NodeIdentifier;\n  value: number;\n  fill?: string;\n  label: string;\n  distance?: number;\n  radius?: number;\n  [key: string]: any;\n}",
+            "signature": {
+              "properties": [
+                {
+                  "key": "id",
+                  "value": {
+                    "name": "any",
+                    "required": true
+                  }
+                },
+                {
+                  "key": "value",
+                  "value": {
+                    "name": "number",
+                    "required": true
+                  }
+                },
+                {
+                  "key": "fill",
+                  "value": {
+                    "name": "string",
+                    "required": false
+                  }
+                },
+                {
+                  "key": "label",
+                  "value": {
+                    "name": "string",
+                    "required": true
+                  }
+                },
+                {
+                  "key": "distance",
+                  "value": {
+                    "name": "number",
+                    "required": false
+                  }
+                },
+                {
+                  "key": "radius",
+                  "value": {
+                    "name": "number",
+                    "required": false
+                  }
+                },
+                {
+                  "key": {
+                    "name": "string"
+                  },
+                  "value": {
+                    "name": "any",
+                    "required": true
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "raw": "Node[]"
+      },
+      "description": "elements with values between 0 and 1 for circular position."
+    },
+    "links": {
+      "required": false,
+      "tsType": {
+        "name": "Array",
+        "elements": [
+          {
+            "name": "signature",
+            "type": "object",
+            "raw": "{\n  source: NodeIdentifier;\n  target: NodeIdentifier;\n  value?: T;\n  stroke?: string;\n  strokeWidth?: number;\n}",
+            "signature": {
+              "properties": [
+                {
+                  "key": "source",
+                  "value": {
+                    "name": "any",
+                    "required": true
+                  }
+                },
+                {
+                  "key": "target",
+                  "value": {
+                    "name": "any",
+                    "required": true
+                  }
+                },
+                {
+                  "key": "value",
+                  "value": {
+                    "name": "any",
+                    "required": false
+                  }
+                },
+                {
+                  "key": "stroke",
+                  "value": {
+                    "name": "string",
+                    "required": false
+                  }
+                },
+                {
+                  "key": "strokeWidth",
+                  "value": {
+                    "name": "number",
+                    "required": false
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "raw": "Link<any>[]"
+      },
+      "description": "lines between two nodes"
+    },
+    "sets": {
+      "required": false,
+      "tsType": {
+        "name": "Array",
+        "elements": [
+          {
+            "name": "signature",
+            "type": "object",
+            "raw": "{\n  set: NodeIdentifier[];\n  stroke?: string;\n  offset?: number;\n}",
+            "signature": {
+              "properties": [
+                {
+                  "key": "set",
+                  "value": {
+                    "name": "Array",
+                    "elements": [
+                      {
+                        "name": "any"
+                      }
+                    ],
+                    "raw": "NodeIdentifier[]",
+                    "required": true
+                  }
+                },
+                {
+                  "key": "stroke",
+                  "value": {
+                    "name": "string",
+                    "required": false
+                  }
+                },
+                {
+                  "key": "offset",
+                  "value": {
+                    "name": "number",
+                    "required": false
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "raw": "Set[]"
+      },
+      "description": "lines between multiple nodes"
+    },
+    "r": {
+      "required": true,
+      "tsType": {
+        "name": "number"
+      },
+      "description": "radius of the circle"
+    },
+    "nodeRadius": {
+      "required": false,
+      "tsType": {
+        "name": "number"
+      },
+      "description": "radius of each node"
+    },
+    "size": {
+      "required": false,
+      "tsType": {
+        "name": "number"
+      },
+      "description": "sizzz"
+    },
+    "margin": {
+      "required": false,
+      "tsType": {
+        "name": "number"
+      },
+      "description": ""
+    },
+    "fontSize": {
+      "required": false,
+      "tsType": {
+        "name": "number"
+      },
+      "description": ""
+    },
+    "onClick": {
+      "required": false,
+      "tsType": {
+        "name": "signature",
+        "type": "function",
+        "raw": "(item: { link?: Link<any>; set?: Set; node?: Node }) => void",
+        "signature": {
+          "arguments": [
+            {
+              "name": "item",
+              "type": {
+                "name": "signature",
+                "type": "object",
+                "raw": "{ link?: Link<any>; set?: Set; node?: Node }",
+                "signature": {
+                  "properties": [
+                    {
+                      "key": "link",
+                      "value": {
+                        "name": "signature",
+                        "type": "object",
+                        "raw": "{\n  source: NodeIdentifier;\n  target: NodeIdentifier;\n  value?: T;\n  stroke?: string;\n  strokeWidth?: number;\n}",
+                        "signature": {
+                          "properties": [
+                            {
+                              "key": "source",
+                              "value": {
+                                "name": "any",
+                                "required": true
+                              }
+                            },
+                            {
+                              "key": "target",
+                              "value": {
+                                "name": "any",
+                                "required": true
+                              }
+                            },
+                            {
+                              "key": "value",
+                              "value": {
+                                "name": "any",
+                                "required": false
+                              }
+                            },
+                            {
+                              "key": "stroke",
+                              "value": {
+                                "name": "string",
+                                "required": false
+                              }
+                            },
+                            {
+                              "key": "strokeWidth",
+                              "value": {
+                                "name": "number",
+                                "required": false
+                              }
+                            }
+                          ]
+                        },
+                        "required": false
+                      }
+                    },
+                    {
+                      "key": "set",
+                      "value": {
+                        "name": "signature",
+                        "type": "object",
+                        "raw": "{\n  set: NodeIdentifier[];\n  stroke?: string;\n  offset?: number;\n}",
+                        "signature": {
+                          "properties": [
+                            {
+                              "key": "set",
+                              "value": {
+                                "name": "Array",
+                                "elements": [
+                                  {
+                                    "name": "any",
+                                    "required": true
+                                  }
+                                ],
+                                "raw": "NodeIdentifier[]",
+                                "required": true
+                              }
+                            },
+                            {
+                              "key": "stroke",
+                              "value": {
+                                "name": "string",
+                                "required": false
+                              }
+                            },
+                            {
+                              "key": "offset",
+                              "value": {
+                                "name": "number",
+                                "required": false
+                              }
+                            }
+                          ]
+                        },
+                        "required": false
+                      }
+                    },
+                    {
+                      "key": "node",
+                      "value": {
+                        "name": "signature",
+                        "type": "object",
+                        "raw": "{\n  id: NodeIdentifier;\n  value: number;\n  fill?: string;\n  label: string;\n  distance?: number;\n  radius?: number;\n  [key: string]: any;\n}",
+                        "signature": {
+                          "properties": [
+                            {
+                              "key": "id",
+                              "value": {
+                                "name": "any",
+                                "required": true
+                              }
+                            },
+                            {
+                              "key": "value",
+                              "value": {
+                                "name": "number",
+                                "required": true
+                              }
+                            },
+                            {
+                              "key": "fill",
+                              "value": {
+                                "name": "string",
+                                "required": false
+                              }
+                            },
+                            {
+                              "key": "label",
+                              "value": {
+                                "name": "string",
+                                "required": true
+                              }
+                            },
+                            {
+                              "key": "distance",
+                              "value": {
+                                "name": "number",
+                                "required": false
+                              }
+                            },
+                            {
+                              "key": "radius",
+                              "value": {
+                                "name": "number",
+                                "required": false
+                              }
+                            },
+                            {
+                              "key": {
+                                "name": "string"
+                              },
+                              "value": {
+                                "name": "any",
+                                "required": true
+                              }
+                            }
+                          ]
+                        },
+                        "required": false
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ],
+          "return": {
+            "name": "void"
+          }
+        }
+      },
+      "description": ""
+    },
+    "onHover": {
+      "required": false,
+      "tsType": {
+        "name": "signature",
+        "type": "function",
+        "raw": "(item: { link?: Link<any>; set?: Set; node?: Node }) => void",
+        "signature": {
+          "arguments": [
+            {
+              "name": "item",
+              "type": {
+                "name": "signature",
+                "type": "object",
+                "raw": "{ link?: Link<any>; set?: Set; node?: Node }",
+                "signature": {
+                  "properties": [
+                    {
+                      "key": "link",
+                      "value": {
+                        "name": "signature",
+                        "type": "object",
+                        "raw": "{\n  source: NodeIdentifier;\n  target: NodeIdentifier;\n  value?: T;\n  stroke?: string;\n  strokeWidth?: number;\n}",
+                        "signature": {
+                          "properties": [
+                            {
+                              "key": "source",
+                              "value": {
+                                "name": "any",
+                                "required": true
+                              }
+                            },
+                            {
+                              "key": "target",
+                              "value": {
+                                "name": "any",
+                                "required": true
+                              }
+                            },
+                            {
+                              "key": "value",
+                              "value": {
+                                "name": "any",
+                                "required": false
+                              }
+                            },
+                            {
+                              "key": "stroke",
+                              "value": {
+                                "name": "string",
+                                "required": false
+                              }
+                            },
+                            {
+                              "key": "strokeWidth",
+                              "value": {
+                                "name": "number",
+                                "required": false
+                              }
+                            }
+                          ]
+                        },
+                        "required": false
+                      }
+                    },
+                    {
+                      "key": "set",
+                      "value": {
+                        "name": "signature",
+                        "type": "object",
+                        "raw": "{\n  set: NodeIdentifier[];\n  stroke?: string;\n  offset?: number;\n}",
+                        "signature": {
+                          "properties": [
+                            {
+                              "key": "set",
+                              "value": {
+                                "name": "Array",
+                                "elements": [
+                                  {
+                                    "name": "any",
+                                    "required": true
+                                  }
+                                ],
+                                "raw": "NodeIdentifier[]",
+                                "required": true
+                              }
+                            },
+                            {
+                              "key": "stroke",
+                              "value": {
+                                "name": "string",
+                                "required": false
+                              }
+                            },
+                            {
+                              "key": "offset",
+                              "value": {
+                                "name": "number",
+                                "required": false
+                              }
+                            }
+                          ]
+                        },
+                        "required": false
+                      }
+                    },
+                    {
+                      "key": "node",
+                      "value": {
+                        "name": "signature",
+                        "type": "object",
+                        "raw": "{\n  id: NodeIdentifier;\n  value: number;\n  fill?: string;\n  label: string;\n  distance?: number;\n  radius?: number;\n  [key: string]: any;\n}",
+                        "signature": {
+                          "properties": [
+                            {
+                              "key": "id",
+                              "value": {
+                                "name": "any",
+                                "required": true
+                              }
+                            },
+                            {
+                              "key": "value",
+                              "value": {
+                                "name": "number",
+                                "required": true
+                              }
+                            },
+                            {
+                              "key": "fill",
+                              "value": {
+                                "name": "string",
+                                "required": false
+                              }
+                            },
+                            {
+                              "key": "label",
+                              "value": {
+                                "name": "string",
+                                "required": true
+                              }
+                            },
+                            {
+                              "key": "distance",
+                              "value": {
+                                "name": "number",
+                                "required": false
+                              }
+                            },
+                            {
+                              "key": "radius",
+                              "value": {
+                                "name": "number",
+                                "required": false
+                              }
+                            },
+                            {
+                              "key": {
+                                "name": "string"
+                              },
+                              "value": {
+                                "name": "any",
+                                "required": true
+                              }
+                            }
+                          ]
+                        },
+                        "required": false
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          ],
+          "return": {
+            "name": "void"
+          }
+        }
+      },
+      "description": ""
+    },
+    "label": {
+      "required": false,
+      "tsType": {
+        "name": "string"
+      },
+      "description": ""
+    }
+  }
+}

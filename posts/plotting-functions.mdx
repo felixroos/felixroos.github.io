@@ -1,0 +1,147 @@
+---
+title: Plotting Functions with React and d3.js
+date: '2020-04-18'
+tags: ['code', 'd3']
+description: As the basis of many upcoming visualizations.
+---
+
+import { Plot } from '../components/common/Plot.tsx';
+import { select } from 'd3-selection';
+import { scaleLinear } from 'd3-scale';
+import { FunctionPlotA, FunctionPlotB } from '../components/common/FunctionPlot.tsx';
+
+As the basis of many upcoming visualizations, I will use libraries of [the huge d3 ecosystem](https://github.com/d3/d3/blob/master/API.md).
+For many applications, for example to animate vibrating strings, it want to plot functions:
+
+<Plot functions={[(x) => Math.sin(x), (x) => Math.cos(x)]} range={{ x: [-Math.PI, Math.PI], y: [-1, 1] }} />
+
+The code:
+
+```js
+<Plot functions={[(x) => Math.sin(x), (x) => Math.cos(x)]} range={{ x: [-Math.PI, Math.PI], y: [-1, 1] }} />
+```
+
+## Combining d3 and react
+
+As d3 has its own API for handling the DOM, we could theoretically do the job without React.
+But as I want to be able to use components in MDX files directly, React needs to be at least a wrapper for d3.
+
+### With d3-selection
+
+So now let's just use React as a wrapper and let d3 handle the DOM inside the svg element, by using its jquery-like API [d3-selection](https://github.com/d3/d3-selection).
+
+By using most of the code from [here](https://observablehq.com/@d3/continuous-scales#visualizeScale) and pasting it into the [ref callback](https://reactjs.org/docs/refs-and-the-dom.html#callback-refs), we can operate directly on the svg element:
+
+```js
+import React from 'react';
+import { scaleLinear } from 'd3-scale';
+import { select } from 'd3-selection';
+import { axisBottom, axisLeft } from 'd3-axis';
+
+export default function FunctionPlot({ f, width, margin, height, range }) {
+  margin = margin || 40;
+  width = width || 400;
+  height = height || 300;
+  range = range || { x: [-1, 1], y: [-1, 1] };
+  return (
+    <svg
+      ref={(el) => {
+        const svg = select(el)
+            .attr('width', width + 20)
+            .attr('height', height + 20),
+          x = scaleLinear()
+            .domain(range.x)
+            .range([margin, width - margin]),
+          y = scaleLinear()
+            .domain(range.y)
+            .range([height - margin, margin]),
+          g = svg.append('g'),
+          line = [];
+        for (let i = margin + 1e-6; i < width - margin; i += 1) {
+          const X = x.invert(i),
+            Y = f(X),
+            j = y(Y);
+          line.push([i, j]);
+        }
+        g.append('path')
+          .attr('d', 'M' + line.join('L'))
+          .style('stroke', 'steelblue')
+          .style('fill', 'none');
+        g.append('g').attr('transform', `translate(${margin},0)`).call(axisLeft(y));
+        g.append('g')
+          .attr('transform', `translate(0,${y(0)})`)
+          .call(axisBottom(x));
+      }}
+    ></svg>
+  );
+}
+```
+
+and using it:
+
+```js
+<FunctionPlot f={(x) => Math.sin(x)} range={{ x: [-4, 4], y: [-1, 1] }} />
+```
+
+<FunctionPlotA f={(x) => Math.sin(x)} range={{ x: [-4, 4], y: [-1, 1] }} />
+
+Other d3 APIs used:
+
+- [d3-scale](https://observablehq.com/@d3/introduction-to-d3s-scales?collection=@d3/d3-scale) for a convenient translation of the function value range to the pixels dimensions on screen
+- [d3-axis](https://github.com/d3/d3-axis) for easy-to-use x and y axis
+
+### With JSX
+
+As React is already a pretty good lib to handle the DOM efficiently, we can (mostly) spare d3-selection and render the SVG elements in JSX:
+
+```js
+export function FunctionPlot({ f, width, margin, height, range }) {
+  margin = margin || 40;
+  width = width || 400;
+  height = height || 300;
+  range = range || { x: [-1, 1], y: [-1, 1] };
+  const line = [],
+    x = scaleLinear()
+      .domain(range.x)
+      .range([margin, width - margin]),
+    y = scaleLinear()
+      .domain(range.y)
+      .range([height - margin, margin]);
+  for (let i = margin + 1e-6; i < width - margin; i += 1) {
+    const X = x.invert(i),
+      Y = f(X),
+      j = y(Y);
+    line.push([i, j]);
+  }
+  return (
+    <svg width={width + 20} height={height + 20}>
+      <g>
+        <path d={`M${line.join('L')}`} stroke="steelblue" fill="none" />
+        <g transform={`translate(${margin},0)`} ref={(g) => select(g).call(axisLeft(y))} />
+        <g transform={`translate(0,${y(0)})`} ref={(g) => select(g).call(axisBottom(x))} />
+      </g>
+    </svg>
+  );
+}
+```
+
+Now the .select / .append calls have been refactored to JSX. I like this code much more as it looks flatter and lets me manipulate the svg elements directly as JSX without using a wide API surface of chaining methods.
+
+The output is exactly the same:
+
+<FunctionPlotB f={(x) => Math.sin(x)} range={{ x: [-4, 4], y: [-1, 1] }} />
+
+You may have noticed that the axes are still rendered using ref callback + d3-selection.
+This is because the axes methods are generators that output a subtree of DOM nodes.
+If we wanted to avoid using d3-selection completely, we could implement our own axis component using [scale.ticks](https://observablehq.com/@d3/scale-ticks).
+
+But for my use case, the above approach is perfectly fine.
+
+I am really excited by d3 and the way it is organized in small modules, letting me pick only the parts I need! It will be a big part of upcoming visualizations on this blog.
+
+## More d3 Resources
+
+- https://observablehq.com/collection/@d3/learn-d3
+- https://medium.com/@enjalot/how-do-you-learn-d3-js-ccffc151419b
+- https://medium.com/@enjalot/the-hitchhikers-guide-to-d3-js-a8552174733a
+- https://bost.ocks.org/mike/
