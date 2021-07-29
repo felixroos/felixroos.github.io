@@ -1,0 +1,122 @@
+---
+title: DIY Monochord
+date: '2020-05-07'
+tags: ['diy', 'tuning', 'music theory']
+description: After fiddling around with digital monochords and cheap web audio sounds, I decided to give my build a physical monochord from scrap wood.
+---
+
+import ReactAudioPlayer from 'react-audio-player';
+import Card from '@material-ui/core/Card';
+import CardActionArea from '@material-ui/core/CardActionArea';
+import CardMedia from '@material-ui/core/CardMedia';
+import CardContent from '@material-ui/core/CardContent';
+import Typography from '@material-ui/core/Typography';
+
+export const harmonics = [
+  './audio/1st Harmonic.m4a',
+  './audio/2nd Harmonic.m4a',
+  './audio/3rd Harmonic.m4a',
+  './audio/4th Harmonic.m4a',
+  './audio/5th Harmonic.m4a',
+  './audio/6th Harmonic.m4a',
+  './audio/7th Harmonic.m4a',
+  './audio/8th Harmonic.m4a',
+  './audio/9th Harmonic.m4a',
+  './audio/10th Harmonic.m4a',
+];
+export const intervals = [
+  './audio/Unison.m4a',
+  './audio/Octave.m4a',
+  './audio/Fifth.m4a',
+  './audio/Fourth.m4a',
+  './audio/Third.m4a',
+];
+
+After fiddling around with digital monochords and cheap web audio sounds,
+I decided to give my build a physical monochord from scrap wood to test if the real world is actually as I imagine it to be, and to give my ears a rest from beep noises.
+
+## Construction
+
+Here you can see how I made the tuning peg with a conic piece of wood:
+
+![Monochord Peg Open](./img/monochord0.jpg)
+
+To elevate the string, I limed the bridge into a dent I made with a round file.
+This is how it looks like with the peg and string in position:
+
+![Monochord Peg Closed](./img/monochord1.jpg)
+
+On the other side, I made another bridge and fixed the string with two nails:
+
+![Monochord Bridge](./img/monochord3.jpg)
+
+To adjust the length ratio on the string, I clamped a little wooden triangle under it:
+
+![Monochord Finished](./img/monochord2.jpg)
+
+I also pinned a sheet of paper under the string marked certain ratios / pitches.
+
+## Observations
+
+As I now have made Monochords in the mathematically clean virtual world and the grimy real world, here are some real world string observations:
+
+### String Tension
+
+At first, I compared the pitch of the open string with the pitch of the exact halves, and noticed that the pitch of the halves was a semitone higher, even though the halves themselves had the same pitch (confirming it was really the half and no measurement error).
+The reason for this lays in the fact that the little woodpiece increases the string height, and with it the tension, which heightens the overall pitch.
+
+The open string sounds like this:
+
+<ReactAudioPlayer type="audio/x-m4a" src="./audio/Open.m4a" controls />
+
+And the both halves:
+
+<ReactAudioPlayer type="audio/x-m4a" src="./audio/Unison.m4a" controls />
+
+The "problem" goes away if I press the string down on a piece of wood that has just the height of the string, similar to a guitar.
+
+On the other hand, the triangle has a better handling as I don't need to hold it while playing; also I don't need to play with the open string at all, so the triangle is ok.
+
+### Vibrato
+
+If I pluck the string on one side and periodically press the other side down, a vibrato is created.
+
+<ReactAudioPlayer type="audio/x-m4a" src="./audio/Vibrato.m4a" controls />
+
+### Playing Harmonics
+
+If the string is dampened at the exact center, the fundamental frequency will not sound, as its maximum amplitude is at the center.
+The center is also the minimum amplitude of the second harmonic. Generally, if the string is dampened at the minimum amplitude of a partial, we can hear that partial the loudest.
+
+I recorded the first 10 harmonics, using a strong mallet hit while dampening with my finger, and then quickly releasing it after the hit:
+
+<div>
+  {harmonics.map((harmonic, i) => (
+    <ReactAudioPlayer key={i} type="audio/x-m4a" src={harmonic} controls loop={true} />
+  ))}
+</div>
+
+### Playing intervals
+
+When playing both parts of the divided strings together, intervals can be played.
+
+<div>
+  {intervals.map((interval, i) => (
+    <ReactAudioPlayer key={i} type="audio/x-m4a" src={interval} controls loop={false} />
+  ))}
+</div>
+
+Note that lower pitch gets lower as the upper pitch gets higher. The average pitch will always stay the same. If we think of the unison as C4, the notes are:
+
+| Interval | Lower | Higher |
+| -------- | :---: | -----: |
+| Unison   |  C4   |     C4 |
+| Third    |  Bb3  |     D4 |
+| Fifth    |  ~A3  |    ~E4 |
+| Octave   |  G3   |     G4 |
+
+## Wrap up
+
+Those are just some observations after building. I will write about the reasons in another post.
+Also I want to record more (with better sound quality) and analyze the frequency spectrum.
+Overall, building the Monochord was easier than I thought, needing only a few tools, scrap wood and a guitar string.

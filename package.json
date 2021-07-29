@@ -13,12 +13,6 @@
     "test": "jest",
     "test-all": "yarn lint && yarn type-check && yarn test"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged",
-      "pre-push": "yarn run type-check"
-    }
-  },
   "lint-staged": {
     "*.@(ts|tsx)": [
       "yarn lint",
@@ -46,7 +40,9 @@
     "next-mdx-remote": "^3.0.2",
     "next-themes": "^0.0.15",
     "npm": "^7.20.3",
+    "ramda": "^0.27.1",
     "react": "^17.0.2",
+    "react-audio-player": "^0.17.0",
     "react-color": "^2.19.3",
     "react-d3-tree": "^3.1.1",
     "react-dom": "^17.0.2",
@@ -60,8 +56,11 @@
     "remark-gfm": "^1.0.0",
     "remark-html-katex": "^3.0.0",
     "remark-math": "^4.0.0",
+    "rhythmical": "^0.1.6",
     "svg-piano": "^0.3.1",
-    "tone": "^14.7.77"
+    "tone": "^14.7.77",
+    "vexflow": "^3.0.9",
+    "zippa": "^0.3.1"
   },
   "devDependencies": {
     "@testing-library/react": "^11.2.5",

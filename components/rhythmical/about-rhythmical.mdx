@@ -1,0 +1,51 @@
+import PianoRoll from '../components/rhythmical/PianoRoll.tsx';
+import RhythmicalTree from '../components/rhythmical/components/RhythmicalTree.tsx';
+import { rhythmicalScore } from '../components/score/score-utils.ts';
+import { Score } from '../components/score/Score.tsx';
+import { renderRhythmObject } from '../components/rhythmical/rhythmical.ts';
+
+## About rhythmical
+
+In short, rhythmical is a small lib that transforms a nested array of primitives (typically note strings) to a flat array of note events:
+
+```js
+Rhythm.render(
+  ['C4', ['E4', 'G4'], 'B4', 'D5'],
+  4
+).map(({ value, time, duration }) => [value, time, duration]);
+```
+
+We can visualize the nested array `['C4', ['E4', 'G4'], 'B4', 'D5']` like this:
+
+<RhythmicalTree rhythm={['C4', ['E4', 'G4'], 'B4', 'D5']} height={150} />
+
+This is what we get as output:
+
+```js
+[
+  ['C4', 0, 1],
+  ['E4', 1, 0.5],
+  ['G4', 1.5, 0.5],
+  ['B4', 2, 1],
+  ['D5', 3, 1]
+];
+```
+
+That flat output can easily be played back with [Tone.js](https://github.com/Tonejs/Tone.js) or anything that works like MIDI. Or we can render a piano roll:
+
+<PianoRoll
+  noteRange={['C4', 'D5']}
+  events={renderRhythmObject([['C4', ['E4', 'G4'], 'B4', 'D5']])}
+/>
+
+... or as a score:
+
+<Score
+  width={600}
+  height={100}
+  staves={renderRhythmObject([['C4', ['E4', 'G4'], 'B4', 'D5']])}
+/>
+
+In my opinion, this is the closest to human way to represent rhythm as a data structure + it is also really easy to understand. The format is strongly influenced by [TidalCycles](https://tidalcycles.org/).
+
+To find out more, you can either read the [README](https://github.com/felixroos/rhythmical#rhythmical) or check out the (still experimental) [REPL](https://felixroos.github.io/rhythmical/).

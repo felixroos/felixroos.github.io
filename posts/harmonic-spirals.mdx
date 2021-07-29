@@ -1,0 +1,302 @@
+---
+title: Harmonic Spirals
+date: '2020-05-09'
+tags: ['tuning', 'music theory']
+description: Let's create some harmonic spirals by winding the number line.
+---
+
+import Button from '@material-ui/core/Button';
+import Spiral, { animateSpiral } from '../components/common/Spiral.tsx';
+import { easeCubicIn } from 'd3-ease';
+import HarmonicSpiral from '../components/tuning/HarmonicSpiral.tsx';
+import SpiralSettings from '../components/common/SpiralSettings.tsx';
+import { State } from 'react-powerplug';
+import Slider from '@material-ui/core/Slider';
+import Grid from '@material-ui/core/Grid';
+import { Note } from '@tonaljs/tonal';
+import { InlineMath, BlockMath } from 'react-katex';
+import AnimationFrame from '../components/common/AnimationFrame.tsx';
+import { angle, frequencyColor, equivalence, clamp, nearestPitch, edo12 } from '../components/tuning/tuning.ts';
+import SimplePopover from '../components/common/Popover';
+import * as Tone from 'tone';
+import canUseDOM from '../components/canUseDOM.ts';
+import { harp } from '../components/common/harp.ts';
+
+Let's create some harmonic spirals. We can create one by winding the number line like this:
+
+<AnimationFrame>
+  {({ start, time, isRunning }) => (
+    <State
+      initial={{
+        zoom: 0.11,
+        spin: 0,
+        precision: 4,
+        min: 0,
+        max: 5,
+        strokeWidth: 3,
+        base: Note.freq('Ab1'),
+        fontSize: 10,
+        compression: 1,
+        logarithmic: false,
+        hideLabels: false,
+        hideLines: false
+      }}
+    >
+      {({ state, setState }) => {
+        let { zoom, spin, compression, linearity, hideLines } = state;
+        const animated = {...props, ...animateSpiral(state, time.progress, easeCubicIn)};
+        return (
+          <>
+            <Button color="primary" onClick={() => start(16000)}>
+              {!isRunning ? 'Play Animation' : 'Stop Animation'}
+            </Button>
+            <br />
+            <div
+              style={{
+                overflow: 'auto',
+                maxWidth: 900,
+                maxHeight: 700,
+                position: 'relative'
+              }}
+            >
+              <HarmonicSpiral
+                width={600}
+                height={600}
+                stroke="gray"
+                {...state}
+                {...animated}
+                getRadius={(angle, maxRadius, zoom) => {
+                  if (state.logarithmic) {
+                    const compensation = 41;
+                    return (
+                      Math.pow(2, Math.abs(angle)) *
+                      Math.abs(state.zoom * compensation)
+                    );
+                  }
+                  return angle * maxRadius * zoom;
+                }}
+                onTrigger={(partial) =>
+                  harp.triggerAttackRelease(partial * state.base, 1)
+                }
+              />
+              {time.progress > 0.99 && (
+                <div style={{ position: 'absolute', left: 10, bottom: 30 }}>
+                  <SimplePopover placement="left-start">
+                    <div style={{ width: 300 }}>
+                      <SpiralSettings state={state} setState={setState} />
+                      <br />
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={state.logarithmic}
+                          onChange={(e) =>
+                            setState({ logarithmic: e.target.checked })
+                          }
+                        />
+                        Logarithmic
+                      </label>
+                      <br />
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={!state.hideLabels}
+                          onChange={(e) =>
+                            setState({ hideLabels: !e.target.checked })
+                          }
+                        />
+                        Labels
+                      </label>
+                      <br />
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={!state.hideLines}
+                          onChange={(e) =>
+                            setState({ hideLines: !e.target.checked })
+                          }
+                        />
+                        Lines
+                      </label>
+                    </div>
+                  </SimplePopover>
+                </div>
+              )}
+            </div>
+          </>
+        );
+      }}
+    </State>
+)}
+
+</AnimationFrame>
+
+- you can think of this as a number line with a twist
+- starting at 1 (root pitch) in the center, we map one full rotation (=360 degrees) to the multiplication of 2 (octaves)
+- each line starts at an odd number representing the beginning of a new pitch color
+- the line extends to infinity, crossing the spiral at octaves of the color
+- all natural numbers will be part of a line
+- the whole image is a dense visualization of the harmonic series from the perspective of octaves
+- it gets even more accurate (but not as compact) if we use a logarithmic spiral
+  - its radius gets two times bigger on every rotation.
+  - its growth represents the behaviour of frequencies, as we go up the harmonic series.
+
+## 3 Limit Spiral
+
+Instead of the harmonic series, we can also display the ratios of any tuning system.
+
+The following spiral displays stacked fourths, which can be seen as a 3 limit system.
+
+<details>
+  <summary>Click to expand why I chose fourths instead of fifths</summary>
+
+I picked fourths, as they grow slower in pitch, compared to fifths.
+This benefits our ears when listening to the non octave reduced pitches
+
+Here is why stacked fourths are just a form of 3-limit:
+
+<InlineMath>{`{(\\frac{4}{3}})^n = 2^{2n} * 3^{-n}`}</InlineMath>
+
+</details>
+
+<State
+  initial={{
+    zoom: 0.8,
+    spin: 0,
+    precision: 1,
+    min: 1,
+    max: 6,
+    strokeWidth: 2,
+    base: Note.freq('A2'),
+    fontSize: 12,
+    reduce: false,
+    temper: false,
+  }}
+>
+  {({ state, setState }) => {
+    const generator = 4 / 3;
+    const notes = 54;
+    const octaveRadius = 60;
+    let ratios = Array.from({ length: notes }, (_, i) => Math.pow(generator, i));
+    const show12EDO = true;
+    const eq = state.temper ? 2 : equivalence(Math.pow(generator, 12), 2);
+    const comma = 1 - equivalence(Math.pow(generator, 12), 2) / 2;
+    // const comma = 1 - equivalence(Math.pow(generator, 12), 2);
+    if (state.temper) {
+      ratios = ratios.map((ratio, i) => ratio * (1 + (comma * i) / 12));
+    }
+    if (state.reduce) {
+      ratios = ratios.map((ratio, i) => {
+        return clamp(ratio, Math.pow(eq, Math.floor((i - 1) / 12))); // ;
+        //return equivalence(ratio, Math.pow(eq, Math.floor((i - 1) / 12)));
+        //return equivalence(ratio, 2) * Math.pow(2, Math.floor(i / 12));
+      });
+    }
+    return (
+      <>
+        <div
+          style={{
+            overflow: 'auto',
+            maxWidth: 900,
+            maxHeight: 700,
+            position: 'relative',
+          }}
+        >
+          <Spiral
+            width={600}
+            height={600}
+            stroke="gray"
+            {...state}
+            getRadius={(angle, maxRadius, zoom) => zoom * angle * octaveRadius}
+            lines={[]
+              .concat(
+                show12EDO
+                  ? Array.from({ length: 12 }, (_, i) => [
+                      0,
+                      angle(Math.pow(2, i / 12) * Math.pow(2, state.max)),
+                      'gray',
+                    ])
+                  : []
+              )
+              .concat(
+                ratios.map((ratio, i) => [
+                  angle(ratio * 2),
+                  angle(ratio * Math.pow(2, state.max)),
+                  frequencyColor(ratio * state.base),
+                ])
+              )}
+            labels={ratios.map((ratio, i) => ({
+              label: i + '',
+              angle: angle(ratio * 2),
+              fill: frequencyColor(ratio * state.base),
+              color: 'black',
+            }))}
+            onTrigger={(i) => harp.triggerAttackRelease(ratios[i] * state.base, 1)}
+          />
+          <div style={{ position: 'absolute', left: 10, bottom: 30 }}>
+            <SimplePopover placement="left-start">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={state.reduce}
+                  onChange={(e) => setState({ reduce: e.target.checked })}
+                />
+                Octave Reduced
+              </label>
+              <br />
+              <label>
+                <input
+                  type="checkbox"
+                  checked={state.temper}
+                  onChange={(e) => setState({ temper: e.target.checked })}
+                />
+                Tempered
+              </label>
+              <br />
+              <br />
+              <div style={{ width: 300 }}>
+                <SpiralSettings state={state} setState={setState} />
+              </div>
+            </SimplePopover>
+          </div>
+        </div>
+      </>
+    );
+  }}
+</State>
+
+- The numbers are the powers of 4/3 (which is the ratio of a pure fourth)
+- The gray lines show where equal tempered notes would intersect the spiral
+- You can see that the further we go up, the error between equal temperament and stacked fourths gets bigger
+- In the settings, we can apply octave reduction to bring each 12 notes into one octave, creating a chromatic spiral
+- When octave reduced, we can see the "error" in the curvature of the (almost) octaves
+- If we check the tempered box, all fourths are comma corrected,
+  - for example, the 12ths power iss added one full comma, the 24th power 2 etc (and all in between get logs of 2, see code for details)
+- The temperament leads to really complex ratios
+  - We can also see a slight error of the temperment, I am not sure if this is a problem of Javascript or a problem of the algorithm
+
+<details>
+  <summary>Unsolved: Comma Temperament vs Equal Temperament</summary>
+
+- We know that when applying fractions/factors of the comma (which is rational), all resulting tempered ratios remain rational.
+- In contrast, standard equal temperament is generated with multiples of the 12th root of 2, which is irrational
+- The question: What's the difference between "comma temperament" and standard equal temperament
+- There has to be some error in the "comma temperament" that I am not seeing right now
+
+</details>
+
+## Further Reading
+
+- [Erv Wilson Harmonic Spirals](http://www.anaphoria.com/harm-subharm.pdf)
+- [tonespiral](https://jhhl.net/TS/tonespiral.html)
+
+<details>
+  <summary>TBD</summary>
+
+- find unified way to generate those linear scales from generator interval + number of notes + number of notes per octave?!
+  - e.g. generate(4/3, 25, 13) => stacks 24 fourths and packs each 13 fourths into one octave
+  - or generate(3/2, 25, 12) => stacks 25 fifths and packs each 12 fifths into one octave
+- find way to animate between temperment and non temperment
+- find out why tempering Pythagorean tuning results in 12edo (or seems to)
+  - at the first thought I cannot see where the irrationality comes from, as the comma is also just a fraction
+
+</details>

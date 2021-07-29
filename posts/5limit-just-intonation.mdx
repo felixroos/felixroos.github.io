@@ -1,0 +1,425 @@
+---
+title: 5 Limit Just Intonation
+date: '2020-05-02'
+tags: ['tuning', 'music theory']
+description: As this is the third post of a series of a series about Just Intonation, let's talk about thirds.
+---
+
+import ConnectedCircle from '../components/common/ConnectedCircle.tsx';
+import TuningCircle from '../components/tuning/TuningCircle.tsx';
+import Monochord from '../components/tuning/Monochord.tsx';
+import { InlineMath, BlockMath } from 'react-katex';
+import { State } from 'react-powerplug';
+import Slider from '@material-ui/core/Slider';
+import Select from '@material-ui/core/Select';
+import Grid from '@material-ui/core/Grid';
+import Button from '@material-ui/core/Button';
+import ButtonGroup from '@material-ui/core/ButtonGroup';
+import Fraction from 'fraction.js';
+import canUseDOM from '../components/canUseDOM.ts';
+import flatten from '../components/common/flatten.ts';
+import { cents, limitN, limit5, generate, frequencyColor, pythagoreanComma } from '../components/tuning/tuning.ts';
+import * as Tone from 'tone';
+import { harp } from '../components/common/harp.ts';
+
+As this is the third post of a series of a series about Just Intonation, let's talk about thirds.
+
+## Stacking Thirds
+
+Let's start by stacking major thirds on top of each other. The most simple ratio that represents a major third is 5/4:
+
+<div className="flex mb-1">
+  <Monochord value={1} invert={true} base={220} />
+  <InlineMath>{`5^{0}*2^{0}`}</InlineMath>
+</div>
+<div className="flex mb-1">
+  <Monochord value={4 / 5} invert={true} base={220} />
+  <InlineMath>{`5^{1}*2^{-2}`}</InlineMath>
+</div>
+<div className="flex mb-1">
+  <Monochord value={16 / 25} invert={true} base={220} />
+  <InlineMath>{`5^{2}*2^{-4}`}</InlineMath>
+</div>
+<div className="flex mb-1">
+  <Monochord value={64 / 125} invert={true} base={220} />
+  <InlineMath>{`5^{3}*2^{-6}`}</InlineMath>
+</div>
+<div className="flex mb-1">
+  <Monochord value={256 / 625} invert={true} base={220} />
+  <InlineMath>{`5^{4}*2^{-8}`}</InlineMath>
+</div>
+<div className="flex mb-1">
+  <Monochord value={1024 / 3125} invert={true} base={220} />
+  <InlineMath>{`5^{5}*2^{-10}`}</InlineMath>
+</div>
+<div className="flex mb-1">
+  <Monochord value={4096 / 15625} invert={true} base={220} />
+  <InlineMath>{`5^{6}*2^{-12}`}</InlineMath>
+</div>
+
+Note that the ratios are frequency ratios instead of length ratios.
+
+Like in the last post, we are multiplying powers of harmonic partials, in this case 5 and 2, which is the same powering thirds:
+
+$$
+5^{n} * 2^{-2n} = (\frac{5}{4})^{n}
+$$
+
+I prefer the combination of powers of natural numbers, as this expresses more clearly what we are doing here: combining harmonic partials.
+
+**Observation**:
+
+We can clearly see and hear a pattern: There are 3 distinct pitches, which repeat in a detuned way.
+On strings 4 and 7, we arrive at a pitches that are really close to octaves of the fundamental frequency.
+
+$$
+\frac{1}{1} \approx \frac{125}{64} * 2^{-1} \approx \frac{15625}{4096} * 2^{-2}
+$$
+
+This makes sense if we compare that to standard western tuning, where 3 major thirds fit inside one octave.
+
+### Diesis
+
+This little "error" between 3 stacked thirds and 1 octave is called [Diesis](https://en.wikipedia.org/wiki/Diesis):
+
+$$
+\frac{125}{64} : 2 = \frac{125}{128}
+$$
+
+This is similar to the pythagorean comma, which is the little "error" between 12 stacked fifths and 7 octaves (see last post).
+
+## 5 Limit Tuning
+
+Now that we have a little knowledge of thirds, we can look at 5 limit tuning, which combines pure fifths and thirds (powers of 3 and powers of 5) to generate ratios.
+This means that for each number of fifths, we can add any number of thirds. As a formula, this means:
+
+$$
+R_{5} = 2^{a} * 3^{b} * 5^{c}
+$$
+
+Like in the last post, we will use octave reduction to automatically set the exponent of 2 to keep the end result between 1 and 2.
+Having that out of the way, we have free control over the two exponents b and c.
+
+So 5 limit tuning brings a whole new dimension to our system: The first dimension is the 3 (fifths) and the second, new dimension is the 5 (thirds).
+
+### Naming collision
+
+It may sound wrong that the 3 stands for a fifth, while the 5 stands for a third, but this just stems from the naming convention of musical intervals,
+based on 7 notes per octave. Funny enough, the next prime numbers are 7, which adds the minor seventh, and 9, which adds the major second (or 9th).
+But let's stay with 3 and 5 for now.
+
+### Tuning Circle
+
+<State
+  initial={{
+    toggle: false,
+    interval: 1,
+    focus: undefined,
+    fifths: 4,
+    thirds: 2,
+    rotateFifths: -2,
+    rotateThirds: -1,
+    preset: 'Chromatic',
+    activeUnit: 'powers',
+    activeView: 'grid',
+    disabled: [
+      [2, -1],
+      [-2, 1],
+      [-2, -1],
+    ],
+  }}
+>
+  {({ state, setState }) => {
+    const units = {
+      powers: 'Powers',
+      ratio: 'Ratio',
+      frequency: 'Frequency',
+      cent: 'Cent',
+    };
+    const views = {
+      grid: 'Grid',
+      list: 'Sorted',
+    };
+    const l5 = limit5([state.fifths, state.rotateFifths], [state.thirds, state.rotateThirds]);
+    const flat = flatten(l5).filter(({ fifth, third }) => !state.disabled.find(([x, y]) => x === fifth && y === third));
+    const maxThirds = 3;
+    const maxFifths = 11;
+    const base = 440;
+    const presets = [
+      {
+        preset: 'Ionian',
+        fifths: 3,
+        rotateFifths: -1,
+        thirds: 1,
+        rotateThirds: 0,
+        disabled: [[2, 1]],
+      },
+      {
+        preset: 'Ionian (3-limit)',
+        fifths: 6,
+        rotateFifths: -1,
+        thirds: 0,
+        rotateThirds: 0,
+        disabled: [],
+      },
+      {
+        preset: 'Aeolian',
+        fifths: 4,
+        rotateFifths: -2,
+        thirds: 1,
+        rotateThirds: -1,
+        disabled: [
+          [-1, -1],
+          [-2, -1],
+          [2, -1],
+        ],
+      },
+      {
+        preset: 'Dorian',
+        fifths: 5,
+        rotateFifths: -2,
+        thirds: 1,
+        rotateThirds: -1,
+        disabled: [
+          [-2, -1],
+          [-1, -1],
+          [0, -1],
+          [2, -1],
+          [3, -1],
+        ],
+      },
+      {
+        preset: 'Mixolydian',
+        fifths: 4,
+        rotateFifths: -2,
+        thirds: 1,
+        rotateThirds: 0,
+        disabled: [
+          [1, 1],
+          [-2, 1],
+          [2, 1],
+        ],
+      },
+      {
+        preset: 'Chromatic',
+        fifths: 5,
+        rotateFifths: -2,
+        thirds: 2,
+        rotateThirds: -1,
+        disabled: [
+          [2, -1],
+          [-2, 1],
+          [-2, -1],
+          [3, -1],
+          [3, 0],
+          [3, 1],
+        ],
+      },
+    ];
+    return (
+      <div>
+        <br />
+        <ConnectedCircle
+          r={100}
+          nodeRadius={20}
+          nodes={flat.map(({ ratio, top, bottom, fifth, third }, id) => {
+            let label = `${top}/${bottom}`;
+            if (state.activeUnit === 'frequency') {
+              label = Math.round(ratio * base);
+            } else if (state.activeUnit === 'cent') {
+              label = Math.round(cents(ratio));
+            }
+            return {
+              id: `${fifth}-${third}`,
+              label,
+              value: cents(ratio) / 1200,
+              ratio,
+              distance: 140,
+              fill: frequencyColor(base * ratio),
+            };
+          })}
+          links={[]}
+          onClick={({ node }) => {
+            if (node) {
+              harp.triggerAttackRelease(node.ratio * base, 1);
+            }
+          }}
+        />
+        <br />
+        <strong>Presets:</strong>
+        <select
+          value={state.preset}
+          onChange={(e) => {
+            const p = presets.find(({ preset }) => preset === e.target.value);
+            p && setState(p);
+          }}
+        >
+          {presets.map(({ preset }, i) => (
+            <option key={i} value={preset}>
+              {preset}
+            </option>
+          ))}
+        </select>
+        <br />
+        <Grid container spacing={2}>
+          <Grid item xs={6}>
+            {state.fifths} fifth{state.fifths !== 1 ? 's' : ''}
+            <br />
+            <Slider
+              marks
+              track={false}
+              min={0}
+              max={maxFifths}
+              value={state.fifths}
+              onChange={(e, v) => v !== state.fifths && setState({ fifths: v })}
+            />
+          </Grid>
+          <Grid item xs={6}>
+            rotate by {state.rotateFifths} fifth
+            {Math.abs(state.rotateFifths) !== 1 ? 's' : ''}
+            <br />
+            <Slider
+              marks
+              track={false}
+              min={-maxFifths}
+              max={maxFifths}
+              value={state.rotateFifths}
+              onChange={(e, v) => v !== state.rotateFifths && setState({ rotateFifths: v })}
+            />
+          </Grid>
+        </Grid>
+        <Grid container spacing={2}>
+          <Grid item xs={6}>
+            {state.thirds} third{state.thirds !== 1 ? 's' : ''}
+            <Slider
+              marks
+              track={false}
+              min={0}
+              max={maxThirds}
+              value={state.thirds}
+              onChange={(e, v) => v !== state.thirds && setState({ thirds: v })}
+            />
+          </Grid>
+          <Grid item xs={6}>
+            rotate by {state.rotateThirds} third
+            {Math.abs(state.rotateThirds) !== 1 ? 's' : ''}
+            <br />
+            <Slider
+              marks
+              track={false}
+              min={-maxThirds}
+              max={maxThirds}
+              value={state.rotateThirds}
+              onChange={(e, v) => v !== state.rotateThirds && setState({ rotateThirds: v })}
+            />
+          </Grid>
+        </Grid>
+        {/*<ButtonGroup color="primary">
+          {Object.keys(views).map((view) => (
+            <Button
+              key={view}
+              variant={state.activeView === view ? "contained" : ""}
+              onClick={() => setState({ activeView: view })}
+            >
+              {views[view]}
+            </Button>
+          ))}
+        </ButtonGroup>*/}
+        <table>
+          <tbody>
+            {Array.from({ length: state.fifths + 1 }, (_, f) => (
+              <tr key={f}>
+                {Array.from({ length: state.thirds + 1 }, (_, t) => {
+                  const fifth = f + state.rotateFifths;
+                  const third = t + state.rotateThirds;
+                  const factor = Math.pow(3, fifth) * Math.pow(5, third);
+                  const exp = Math.ceil(Math.log(1 / factor) / Math.log(2));
+                  const value = Math.pow(2, exp) * factor;
+                  const [top, bottom] = new Fraction(value).toFraction().split('/');
+                  const isDisabled = !!state.disabled.find(([x, y]) => fifth === x && third === y);
+                  const colProps = {
+                    key: `${f}-${t}`,
+                    style: {
+                      color: 'black',
+                      paddingLeft: 10,
+                      border: 0,
+                      backgroundColor: isDisabled ? 'gray' : frequencyColor(value * base),
+                    },
+                    onClick: () => {
+                      {
+                        if (isDisabled) {
+                          setState({
+                            disabled: state.disabled.filter(([x, y]) => !(x === fifth && y === third)),
+                          });
+                        } else {
+                          setState({
+                            disabled: state.disabled.concat([[fifth, third]]),
+                          });
+                        }
+                      }
+                    },
+                  };
+                  if (state.activeUnit === 'powers') {
+                    return (
+                      <td {...colProps}>
+                        <InlineMath>{`3^{${fifth}}*5^{${third}}*2^{${exp}} = \\frac{${top}}{${
+                          bottom || 1
+                        }}`}</InlineMath>
+                      </td>
+                    );
+                  }
+                  if (state.activeUnit === 'ratio') {
+                    return (
+                      <td {...colProps}>
+                        <InlineMath>{`\\frac{${top}}{${bottom || 1}}`}</InlineMath>
+                      </td>
+                    );
+                  }
+                  if (state.activeUnit === 'cent') {
+                    return <td {...colProps}>{Math.round(cents(value) * 10) / 10}</td>;
+                  }
+                  if (state.activeUnit === 'frequency') {
+                    return <td {...colProps}>{Math.round(value * base * 10) / 10}Hz</td>;
+                  }
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <ButtonGroup color="primary">
+          {Object.keys(units).map((unit) => (
+            <Button
+              key={unit}
+              variant={state.activeUnit === unit ? 'contained' : ''}
+              onClick={() => setState({ activeUnit: unit })}
+            >
+              {units[unit]}
+            </Button>
+          ))}
+        </ButtonGroup>
+        <br />
+        <br />
+      </div>
+    );
+  }}
+</State>
+
+In contrast to the Tuning Circle of the last post, where we had a one dimensional table of ratios, here we have a two dimensional grid.
+
+- The fifths stack in vertical while thirds stack in horizontal direction.
+- From each field, the fields below and above are pure fifths apart, while the fields to the left and right are pure major thirds apart.
+- The bounds for both grid dimensions can be adjusted with the sliders on the left
+- The rotation for each dimension can be adjusted with the sliders on the right. It controls the offset of the exponents in that direction.
+- You can switch between different units to change the representation type of each ratio
+- Each ratio can be disabled/enabled by clicking. This will gray it out and also hide it in the circle.
+- You can pick a preset to load different 5 limit scales
+
+### 5 limit vs 3 limit
+
+With 5 limit, we can simplify many of the complex ratios of 3 limit.
+This results in much purer intervals. The downside is, that it adds complexity by introducing another dimension.
+
+Also, some intervals can be reached in multiple ways, and the right choice depends on the use case.
+For example, the the sixth can either be 27/16 or 5/3.
+The first one seems more complex, but if we wanted to build a chord on the second degree of the scale (9/8), we should choose that one.
+But this is a topic for another post!

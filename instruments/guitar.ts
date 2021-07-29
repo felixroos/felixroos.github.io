@@ -1,0 +1,56 @@
+import canUseDOM from '../components/canUseDOM'
+import { sampler } from '../components/rhythmical/instruments/sampler';
+
+export const guitar = {
+  load: async () => {
+    const samples = {
+      E2: "../samples/guitar/1 L5.mp3",
+      F2: "../samples/guitar/2 L5.mp3",
+      Gb2: "../samples/guitar/3 L5.mp3",
+      G2: "../samples/guitar/4 L5.mp3",
+      Ab2: "../samples/guitar/5 L5.mp3",
+      A2: "../samples/guitar/6 L5.mp3",
+      Bb2: "../samples/guitar/7 L5.mp3",
+      B2: "../samples/guitar/8 L5.mp3",
+      C3: "../samples/guitar/9 L5.mp3",
+      Db3: "../samples/guitar/10 L5.mp3",
+      D3: "../samples/guitar/11 L5.mp3",
+      Eb3: "../samples/guitar/12 L5.mp3",
+      E3: "../samples/guitar/13 L5.mp3",
+      F3: "../samples/guitar/14 L5.mp3",
+      Gb3: "../samples/guitar/15 L5.mp3",
+      G3: "../samples/guitar/16 L5.mp3",
+      Ab3: "../samples/guitar/17 L5.mp3",
+      A3: "../samples/guitar/18 L5.mp3",
+      Bb3: "../samples/guitar/19 L5.mp3",
+      B3: "../samples/guitar/20 L5.mp3",
+      C4: "../samples/guitar/21 L5.mp3",
+      Db4: "../samples/guitar/22 L5.mp3",
+      D4: "../samples/guitar/23 L5.mp3",
+      Eb4: "../samples/guitar/24 L5.mp3",
+      E4: "../samples/guitar/25 L5.mp3",
+      F4: "../samples/guitar/26 L5.mp3",
+      Gb4: "../samples/guitar/27 L5.mp3",
+      G4: "../samples/guitar/28 L5.mp3",
+      Ab4: "../samples/guitar/29 L5.mp3",
+      A4: "../samples/guitar/30 L5.mp3",
+      Bb4: "../samples/guitar/31 L5.mp3",
+      B4: "../samples/guitar/32 L5.mp3",
+      C5: "../samples/guitar/33 L5.mp3",
+      Db5: "../samples/guitar/34 L5.mp3",
+      D5: "../samples/guitar/35 L5.mp3",
+      Eb5: "../samples/guitar/36 L5.mp3",
+      E5: "../samples/guitar/37 L5.mp3",
+      F5: "../samples/guitar/38 L5.mp3",
+      Gb5: "../samples/guitar/39 L5.mp3",
+      G5: "../samples/guitar/40 L5.mp3",
+      Ab5: "../samples/guitar/41 L5.mp3",
+      A5: "../samples/guitar/42 L5.mp3",
+      Bb5: "../samples/guitar/43 L5.mp3",
+      B5: "../samples/guitar/44 L5.mp3",
+      C6: "../samples/guitar/45 L5.mp3",
+      Db6: "../samples/guitar/46 L5.mp3",
+    }
+    return canUseDOM() && (await sampler(samples, { volume: -20 })()).toDestination();
+  }
+}

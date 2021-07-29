@@ -1,0 +1,917 @@
+---
+title: Rhythmical Objects
+date: '2020-05-29'
+tags: ['code', 'rhythmical']
+description: Today, I want to write about why and how the powerful rhythmical object format is implemented.
+---
+
+import PianoRoll from '../components/rhythmical/components/PianoRoll.tsx';
+import Player from '../components/rhythmical/components/Player.tsx';
+import PlayButton from '../components/rhythmical/components/PlayButton.tsx';
+import { renderRhythmObject } from '../components/rhythmical/rhythmical.ts';
+import { rhythmicalScore } from '../components/score/score-utils.ts';
+import { Score } from '../components/score/Score.tsx';
+import { InlineMath, BlockMath } from 'react-katex';
+import { interpolateRainbow } from 'd3-scale-chromatic';
+import { Note } from '@tonaljs/tonal';
+import drums from '../instruments/tidal';
+import piano from '../instruments/tinypiano.ts';
+import { sampler } from '../components/rhythmical/instruments/sampler.ts';
+import { inheritProperty } from '../components/rhythmical/features/inherit.ts';
+
+<Player
+  fold={true}
+  hierarchy={false}
+  instruments={{ piano, drums }}
+  events={renderRhythmObject(
+    {
+      duration: 14,
+      instrument: 'piano',
+      parallel: [
+        [
+          ['e5', ['b4', 'c5'], 'd5', ['c5', 'b4']],
+          ['a4', ['a4', 'c5'], 'e5', ['d5', 'c5']],
+          ['b4', ['r', 'c5'], 'd5', 'e5'],
+          ['c5', 'a4', 'a4', 'r'],
+          [['r', 'd5'], ['r', 'f5'], 'a5', ['g5', 'f5']],
+          ['e5', ['r', 'c5'], 'e5', ['d5', 'c5']],
+          ['b4', ['b4', 'c5'], 'd5', 'e5'],
+          ['c5', 'a4', 'a4', 'r'],
+        ],
+        [
+          ['e2', 'e3', 'e2', 'e3', 'e2', 'e3', 'e2', 'e3'],
+          ['a2', 'a3', 'a2', 'a3', 'a2', 'a3', 'a2', 'a3'],
+          ['g#2', 'g#3', 'g#2', 'g#3', 'e2', 'e3', 'e2', 'e3'],
+          ['a2', 'a3', 'a2', 'a3', 'a2', 'a3', 'b1', 'c2'],
+          ['d2', 'd3', 'd2', 'd3', 'd2', 'd3', 'd2', 'd3'],
+          ['c2', 'c3', 'c2', 'c3', 'c2', 'c3', 'c2', 'c3'],
+          ['b1', 'b2', 'b1', 'b2', 'e2', 'e3', 'e2', 'e3'],
+          ['a1', 'a2', 'a1', 'a2', 'a1', 'a2', 'a1', 'a2'],
+        ],
+        {
+          instrument: 'drums',
+          value: [
+            ['bd', 'hh', 'bd', 'hh', 'bd', ['hh', 'hh'], 'bd', 'hh'],
+            ['bd', 'hh', 'bd', 'hh', 'bd', ['hh', 'hh'], 'bd', 'hh'],
+            ['bd', 'hh', 'bd', 'hh', 'bd', ['hh', 'hh'], 'bd', 'hh'],
+            ['bd', 'hh', 'bd', 'hh', 'bd', ['hh', 'hh'], 'bd', 'hh'],
+            ['bd', 'hh', 'bd', 'hh', 'bd', ['hh', 'hh'], 'bd', 'hh'],
+            ['bd', 'hh', 'bd', 'hh', 'bd', ['hh', 'hh'], 'bd', 'hh'],
+            ['bd', 'hh', 'bd', 'hh', 'bd', ['hh', 'hh'], 'bd', 'hh'],
+            ['bd', 'hh', 'bd', 'hh', 'bd', ['hh', 'hh'], 'bd', 'hh'],
+          ],
+        },
+      ],
+    },
+    [inheritProperty('instrument')],
+    { includeNonLeaves: false }
+  )}
+/>
+
+<details>
+  <summary>show source</summary>
+
+```js
+<Player
+  fold={true}
+  events={renderRhythmObject(
+    {
+      duration: 14,
+      parallel: [
+        [
+          ['e5', ['b4', 'c5'], 'd5', ['c5', 'b4']],
+          ['a4', ['a4', 'c5'], 'e5', ['d5', 'c5']],
+          ['b4', ['r', 'c5'], 'd5', 'e5'],
+          ['c5', 'a4', 'a4', 'r'],
+          [['r', 'd5'], ['r', 'f5'], 'a5', ['g5', 'f5']],
+          ['e5', ['r', 'c5'], 'e5', ['d5', 'c5']],
+          ['b4', ['b4', 'c5'], 'd5', 'e5'],
+          ['c5', 'a4', 'a4', 'r'],
+        ],
+        [
+          ['e2', 'e3', 'e2', 'e3', 'e2', 'e3', 'e2', 'e3'],
+          ['a2', 'a3', 'a2', 'a3', 'a2', 'a3', 'a2', 'a3'],
+          ['g#2', 'g#3', 'g#2', 'g#3', 'e2', 'e3', 'e2', 'e3'],
+          ['a2', 'a3', 'a2', 'a3', 'a2', 'a3', 'b1', 'c2'],
+          ['d2', 'd3', 'd2', 'd3', 'd2', 'd3', 'd2', 'd3'],
+          ['c2', 'c3', 'c2', 'c3', 'c2', 'c3', 'c2', 'c3'],
+          ['b1', 'b2', 'b1', 'b2', 'e2', 'e3', 'e2', 'e3'],
+          ['a1', 'a2', 'a1', 'a2', 'a1', 'a2', 'a1', 'a2'],
+        ],
+        {
+          instrument: 'drums',
+          value: [
+            ['bd', 'hh', 'bd', 'hh', 'bd', ['hh', 'hh'], 'bd', 'hh'],
+            ['bd', 'hh', 'bd', 'hh', 'bd', ['hh', 'hh'], 'bd', 'hh'],
+            ['bd', 'hh', 'bd', 'hh', 'bd', ['hh', 'hh'], 'bd', 'hh'],
+            ['bd', 'hh', 'bd', 'hh', 'bd', ['hh', 'hh'], 'bd', 'hh'],
+            ['bd', 'hh', 'bd', 'hh', 'bd', ['hh', 'hh'], 'bd', 'hh'],
+            ['bd', 'hh', 'bd', 'hh', 'bd', ['hh', 'hh'], 'bd', 'hh'],
+            ['bd', 'hh', 'bd', 'hh', 'bd', ['hh', 'hh'], 'bd', 'hh'],
+            ['bd', 'hh', 'bd', 'hh', 'bd', ['hh', 'hh'], 'bd', 'hh'],
+          ],
+        },
+      ],
+    },
+    [inheritProperty('instrument')]
+  )}
+/>
+```
+
+</details>
+<br/>
+
+In the last post, we implemented the [rhythmical array notation](../rhythmical-arrays/).
+Today, I want to write about why and how the more powerful rhythmical object format is implemented.
+
+The array notation can be seen as a feature subset of the object notation.
+The implementation from last post will be obsolete, but the concepts of recursive flattening + paths stays relevant and helps to prevent analysis paralysis.
+
+## Features
+
+In addition to the features of the array notation, here are things we can do with object notation:
+
+### Polyphony
+
+Using the Object syntax, we can express polyphony:
+
+```js
+{
+  parallel: [
+    { sequential: ['E3', 'F3', 'G3'], color: 'orchid' },
+    { sequential: ['C3', 'D3', 'E3'], color: 'palegreen' },
+  ];
+}
+```
+
+<Player
+  center={0}
+  height={100}
+  noteRange={['C3', 'G3']}
+  events={renderRhythmObject({
+    duration: 3,
+    parallel: [
+      { sequential: ['E3', 'F3', 'G3'], color: 'orchid' },
+      { sequential: ['C3', 'D3', 'E3'], color: 'palegreen' },
+    ],
+  })}
+/>
+
+This is impossible to formulate with just arrays.
+As an alternative, the same end result could be achieved with this notation:
+
+```js
+{
+  sequential: [
+    { parallel: ['C3', 'E3'], color: 'aquamarine' },
+    { parallel: ['D3', 'F3'], color: 'skyblue' },
+    { parallel: ['E3', 'G3'], color: 'slateblue' },
+  ];
+}
+```
+
+<Player
+  height={100}
+  noteRange={['C3', 'G3']}
+  center={0}
+  events={renderRhythmObject({
+    duration: 3,
+    sequential: [
+      { parallel: ['C3', 'E3'], color: 'aquamarine' },
+      { parallel: ['D3', 'F3'], color: 'skyblue' },
+      { parallel: ['E3', 'G3'], color: 'slateblue' },
+    ],
+  })}
+/>
+
+Depending on the context, both ways can be useful:
+
+- the first approach can be used for multiple voices in a piece (horizontal approach)
+- the second can be used for chords inside a single voice (vertical approach)
+
+As we can nest arbitrarily deep, we can also combine both approaches:
+
+```js
+{
+    color: 'orchid',
+    duration: 3,
+    parallel: [
+      ['G3', ['A3', 'C4'], 'B3'],
+      [
+        { parallel: ['C3', 'E3'], color: 'aquamarine' },
+        { parallel: ['D3', 'F3'], color: 'skyblue' },
+        { parallel: ['E3', 'G3'], color: 'slateblue' }
+      ]
+    ]
+}
+```
+
+<Player
+  height={200}
+  center={0}
+  noteRange={['C3', 'C4']}
+  events={renderRhythmObject({
+    color: 'orchid',
+    duration: 3,
+    parallel: [
+      ['G3', ['A3', 'C4'], 'B3'],
+      [
+        { parallel: ['C3', 'E3'], color: 'aquamarine' },
+        { parallel: ['D3', 'F3'], color: 'skyblue' },
+        { parallel: ['E3', 'G3'], color: 'slateblue' },
+      ],
+    ],
+  })}
+/>
+
+- This idea of parallel and sequential blocks is similar to [Lisp as a second Language](http://recherche.ircam.fr/equipes/repmus/LispSecondLanguage/functional/functional.html).
+- The combination with nested array notation + durations makes it even more powerful
+
+### Inheritance
+
+In the example above, the colors show how we can use inheritance:
+
+- color _orchid_ is defined the root object
+- all children that do not override the color will have that color
+- if children do set a color, all of their children will keep the new color
+
+This concept is useful for many things, like setting instruments, velocities, styles etc...
+
+### Default values
+
+By utilizing default values, we do not have to use objects for many tasks. If we use arrays or strings, default values will be assumed, like:
+
+- duration = 1
+- type = sequential
+
+So we only need objects if we want to set non-default properties.
+
+### Song Example
+
+Let's combine all features by spelling an example, like [Oye Como Va by Santana](https://www.youtube.com/watch?v=J7ATTjg7tpE).
+The groove goes like this:
+
+<Score
+  width={620}
+  height={100}
+  clef=""
+  timeSignature=""
+  staves={rhythmicalScore([
+    [
+      ['b4', 'r', 'b4', 'r'],
+      ['r', 'b4', 'r', 'b4'],
+    ],
+    [
+      ['r', ['r', 'b4']],
+      [['r', 'b4'], 'r'],
+    ],
+  ])}
+/>
+<Player
+  height={100}
+  center={0}
+  events={renderRhythmObject({
+    duration: 4,
+    sequential: [
+      [
+        ['B4', 'r', 'B4', 'r'],
+        ['r', 'B4', 'r', 'B4'],
+      ],
+      [
+        ['r', ['r', 'B4']],
+        [['r', 'B4'], 'r'],
+      ],
+    ],
+  })}
+/>
+
+The rhythmical notation is:
+
+```js
+[
+  [
+    ['B4', 'r', 'B4', 'r'],
+    ['r', 'B4', 'r', 'B4'],
+  ],
+  [
+    ['r', ['r', 'B4']],
+    [['r', 'B4'], 'r'],
+  ],
+];
+```
+
+If we now wanted to play a chord with that groove, we can just do this:
+
+```js
+const chord = { parallel: ['C3', 'Eb3', 'G3'] };
+const groove = [
+  [
+    [chord, 'r', chord, 'r'],
+    ['r', chord, 'r', chord],
+  ],
+  [
+    ['r', ['r', chord]],
+    [['r', chord], 'r'],
+  ],
+];
+```
+
+import { Synth, PolySynth } from 'tone';
+import canUseDOM from '../components/canUseDOM.ts';
+
+export const synth = canUseDOM() && new Synth({ volume: -12 }).toDestination();
+
+<Player
+  height={100}
+  center={0}
+  instruments={{ synth, drums }}
+  events={(() => {
+    const chord = { parallel: ['C3', 'Eb3', 'G3'] };
+    return renderRhythmObject(
+      {
+        duration: 4,
+        parallel: [
+          {
+            instrument: 'drums',
+            value: ['hh', 'hh', 'hh', 'hh', 'hh', 'hh', 'hh', 'hh'],
+          },
+          [
+            [
+              [chord, 'r', chord, 'r'],
+              ['r', chord, 'r', chord],
+            ],
+            [
+              ['r', ['r', chord]],
+              [['r', chord], 'r'],
+            ],
+          ],
+        ],
+      },
+      [inheritProperty('instrument')]
+    );
+  })()}
+/>
+
+Finally, we can add the melody as a second voice:
+
+```js
+{
+  parallel: [
+    {
+      sequential: [
+        [
+          ['C4', 'F4', 'Eb4', 'F4'],
+          ['C4', { value: 'r', duration: 3 }],
+        ],
+        [
+          [{ value: 'r', duration: 3 }, 'Eb4'],
+          ['G4', 'r', 'F4', 'r'],
+        ],
+      ],
+      color: 'darksalmon',
+    },
+    [
+      [
+        [chord, 'r', chord, 'r'],
+        ['r', chord, 'r', chord],
+      ],
+      [
+        ['r', ['r', chord]],
+        [['r', chord], 'r'],
+      ],
+    ],
+  ];
+}
+```
+
+<Player
+  height={200}
+  events={(() => {
+    const chord = { parallel: ['C3', 'Eb3', 'G3'] };
+    return renderRhythmObject(
+      {
+        duration: 4,
+        parallel: [
+          {
+            sequential: [
+              [
+                ['C4', 'F4', 'Eb4', 'F4'],
+                ['C4', { value: 'r', duration: 3 }],
+              ],
+              [
+                [{ value: 'r', duration: 3 }, 'Eb4'],
+                ['G4', 'r', 'F4', 'r'],
+              ],
+            ],
+            color: 'darksalmon',
+          },
+          [
+            [
+              [chord, 'r', chord, 'r'],
+              ['r', chord, 'r', chord],
+            ],
+            [
+              ['r', ['r', chord]],
+              [['r', chord], 'r'],
+            ],
+          ],
+        ],
+      },
+      [inheritProperty('instrument')]
+    );
+  })()}
+/>
+
+If you still don't like the syntax, you should have a look at string shorthand notations described [here](https://felixroos.github.io/rhythmical/).
+The string notation is a topic for another post.
+
+## Implementation
+
+Now, let's implement all of this..
+
+### Ways of Representation
+
+Let's first go back to the basics. With javascript, we can make use of:
+
+- Strings / Numbers
+- Arrays
+- Objects (new)
+
+For javascript, all of those are treated as Objects internally, but we care about the syntax here.
+We could represent one note in three different ways:
+
+```js
+"C4 D3 E3" // string
+["C4", "D3", "E3"] // array
+{"sequential": ["C4", "D3", "E3"]} // object
+```
+
+We have a hierarchy of semantical limitation vs syntactical simplicity here:
+
+- Strings are the most limited but most simple: No nesting, but the least characters
+- Arrays are less limited but more verbose: With Nesting, but more syntax
+- Objects are limitless but most verbose: Any properties can be added for extra functionality, but even more syntax
+
+### Domain Specific Language
+
+We could even extend the features of the string by writing some regex magic or even a Domain Specific Language. For example, we could allow nesting and durations:
+
+```
+"C4 [D3 E3] F3*2"
+```
+
+As this is a huge topic, it will be a topic for another post. This post will mainly focus on the background concepts of the format.
+Just keep in mind that the format for the end usage will look even better, similar to TidalCycles mini notation.
+The [REPL](https://felixroos.github.io/rhythmical/) already uses an experimental implementation of string shorthand notation.
+
+## Unification
+
+Before we implement the flattening we need some helpers for unification:
+
+```ts
+export function toObject<T>(agnostic: AgnosticChild<T>): ValueChild<T> {
+  if (typeof agnostic !== 'object' || Array.isArray(agnostic)) {
+    return { value: agnostic };
+  }
+  return agnostic;
+}
+export function toArray<T>(array: T | T[]): T[] {
+  if (!Array.isArray(array)) {
+    return [array] as T[];
+  }
+  return array as T[];
+}
+export type ValueChild<T> = { value?: AgnosticChild<T>; [key: string]: any };
+export type AgnosticChild<T> = ValueChild<T> | T[] | T;
+```
+
+- ValueChild is just an arbitrary object with the reserved property "value"
+- AgnosticChild can be either primitive, Array of primitives or ValueChild
+- So AgnosticChild can be any hierarchy of objects via value properties
+- toArray ensures the output to be an Array
+- toObject ensures the output to be a ValueChild
+
+<details>
+<summary>show example tests</summary>
+
+```js
+test('toObject', () => {
+  expect(toObject('')).toEqual({ value: '' });
+  expect(toObject('C')).toEqual({ value: 'C' });
+  expect(toObject({ m: 'C' })).toEqual({ m: 'C' });
+  expect(toObject(['C', 'D'])).toEqual({ value: ['C', 'D'] });
+  expect(toObject('C')).toEqual({ value: 'C' });
+});
+test('toArray', () => {
+  expect(toArray('')).toEqual(['']);
+  expect(toArray([])).toEqual([]);
+  expect(toArray('C')).toEqual(['C']);
+  expect(toArray({ m: 'C' })).toEqual([{ m: 'C' }]);
+});
+```
+
+</details>
+<br/>
+
+## Flattening nested Objects
+
+With the above helper methods, we can implement a basic flattening method:
+
+```ts
+export function flatObject<T>(agnostic: AgnosticChild<T>, props: FlatObjectProps<T> = {}): ValueChild<T>[] {
+  const getChildren: ChildrenResolver<T> = props.getChildren || getChildrenWithPath;
+  let flat: ValueChild<T>[] = [];
+  const children = getChildren(agnostic, props);
+  children.forEach((child) => {
+    if (child.value && typeof child.value === 'object') {
+      flat = flat.concat(flatObject(child, props));
+    } else {
+      flat.push(child);
+    }
+  });
+  return flat;
+}
+export interface FlatObjectProps<T> {
+  getChildren?: ChildrenResolver<T>;
+  [key: string]: any;
+}
+export type ChildrenResolver<T> = (agnostic: AgnosticChild<T>, props?: FlatObjectProps<T>) => ValueChild<T>[];
+```
+
+- getChildren resolves children from the given AgnosticChild (if any)
+  - this is where we can inject functionality without
+- for each resolved child
+  - that has an object as value, we call that value again with flatObject
+  - that has a primitive as value, we just append the child to the flat array
+
+The default children resolver _getChildrenWithPath_ is this:
+
+```ts
+export function getChildrenWithPath<T>(agnostic: AgnosticChild<T>): ValueChild<T>[] {
+  let o = toObject<T>(agnostic);
+  const children = toArray(o.value) || [];
+  return children.map((child, i, children) => ({
+    ...toObject(child),
+    path: (o.path || []).concat([[i, children.length]]),
+  }));
+}
+```
+
+- here we first ensure we have an object
+- then we transform the value to an array
+- then we append the path to the child
+
+<details>
+<summary>show example tests</summary>
+
+```ts
+expect(flatObject(['C', ['D', 'E']])).toEqual([
+  { value: 'C', path: [[0, 2]] },
+  {
+    value: 'D',
+    path: [
+      [1, 2],
+      [0, 2],
+    ],
+  },
+  {
+    value: 'E',
+    path: [
+      [1, 2],
+      [1, 2],
+    ],
+  },
+]);
+
+expect(flatObject({ value: ['C', ['D', 'E']] })).toEqual([
+  { value: 'C', path: [[0, 2]] },
+  {
+    value: 'D',
+    path: [
+      [1, 2],
+      [0, 2],
+    ],
+  },
+  {
+    value: 'E',
+    path: [
+      [1, 2],
+      [1, 2],
+    ],
+  },
+]);
+expect(flatObject(['C', { value: ['D', 'E'] }])).toEqual([
+  { value: 'C', path: [[0, 2]] },
+  {
+    value: 'D',
+    path: [
+      [1, 2],
+      [0, 2],
+    ],
+  },
+  {
+    value: 'E',
+    path: [
+      [1, 2],
+      [1, 2],
+    ],
+  },
+]);
+expect(flatObject([{ value: 'C' }, { value: ['D', 'E'] }])).toEqual([
+  { value: 'C', path: [[0, 2]] },
+  {
+    value: 'D',
+    path: [
+      [1, 2],
+      [0, 2],
+    ],
+  },
+  {
+    value: 'E',
+    path: [
+      [1, 2],
+      [1, 2],
+    ],
+  },
+]);
+```
+
+</details>
+
+Maybe this implementation is hard to grasp, or it may seem overkill to have an extra function to resolve the children, but we will see why this is really helpful when we implement rhythmical features.
+
+## Durations
+
+Like already mentioned in the last post, we need a way to change the duration of events. This can be done with a custom getChildren method:
+
+```ts
+export function getRhythmChildren<T>(agnostic: AgnosticChild<T>): ValueChild<T>[] {
+  let o = toObject<T>(agnostic);
+  const children = toArray(o.value) || [];
+  const duration = sumDurations(children);
+  return children.map((child, i, children) => {
+    const position = sumDurations(children.slice(0, i));
+    child = toObject(child);
+    const path = (o.path || []).concat([[position, child.duration || 1, duration]]);
+    return { ...child, path };
+  });
+}
+// wrap flatObject with custom getChildren method:
+export function flatRhythmObject<T>(agnostic: AgnosticChild<T>): ValueChild<T>[] {
+  return flatObject(agnostic, {
+    getChildren: getRhythmChildren,
+  });
+}
+```
+
+- path format: `[position, childDuration, parentDuration]`
+- the position is the sum of all previous child durations
+- the childDuration defaults to 1 if not set
+- the parent duration is the sum of all child durations
+
+sumDurations:
+
+```ts
+export function sumDurations<T>(children: AgnosticChild<T>[]) {
+  return children.reduce((sum, child) => sum + (toObject(child).duration || 1), 0);
+}
+```
+
+Now we can finally use durations like:
+
+```js
+[{ value: 'C4', duration: 3 }, 'D4'];
+```
+
+<Player center={0} events={renderRhythmObject([{ value: 'C4', duration: 3 }, 'D4'])} />
+
+<details>
+<summary>show example tests</summary>
+
+```ts
+expect(flatRhythmObject(['C', ['D', 'E']])).toEqual([
+  { value: 'C', path: [[0, 1, 2]] },
+  {
+    value: 'D',
+    path: [
+      [1, 1, 2],
+      [0, 1, 2],
+    ],
+  },
+  {
+    value: 'E',
+    path: [
+      [1, 1, 2],
+      [1, 1, 2],
+    ],
+  },
+]);
+expect(flatRhythmObject([{ value: 'C', duration: 2 }, ['D', 'E']])).toEqual([
+  { value: 'C', path: [[0, 2, 3]], duration: 2 },
+  {
+    value: 'D',
+    path: [
+      [2, 1, 3],
+      [0, 1, 2],
+    ],
+  },
+  {
+    value: 'E',
+    path: [
+      [2, 1, 3],
+      [1, 1, 2],
+    ],
+  },
+]);
+expect(
+  flatRhythmObject({
+    duration: 2,
+    value: [{ value: 'C', duration: 2 }, ['D', 'E']],
+  })
+).toEqual([
+  { value: 'C', path: [[0, 2, 3]], duration: 2 },
+  {
+    value: 'D',
+    path: [
+      [2, 1, 3],
+      [0, 1, 2],
+    ],
+  },
+  {
+    value: 'E',
+    path: [
+      [2, 1, 3],
+      [1, 1, 2],
+    ],
+  },
+]);
+expect(flatRhythmObject({ value: ['C', 'E', 'G'], type: 'parallel' })).toEqual([
+  { value: 'C', path: [[0, 1, 1]] },
+  { value: 'E', path: [[0, 1, 1]] },
+  { value: 'G', path: [[0, 1, 1]] },
+]);
+```
+
+</details>
+<br/>
+
+## Polyphony
+
+By adding types, we can change how the path is set:
+
+```ts
+const types = { sequential: 'sequential', parallel: 'parallel' };
+
+// set value + type based on shorthand property
+export function toRhythmObject<T>(agnostic: AgnosticChild<T>) {
+  let o = toObject<T>(agnostic);
+  if (o[types.sequential]) {
+    o.type = types.sequential;
+    o.value = o[types.sequential];
+    delete o[types.sequential];
+  }
+  if (o[types.parallel]) {
+    o.type = types.parallel;
+    o.value = o[types.parallel];
+    delete o[types.parallel];
+  }
+  return o;
+}
+
+// add paths based on duration + type
+export function getRhythmChildren<T>(agnostic: AgnosticChild<T>): ValueChild<T>[] {
+  let o = toRhythmObject<T>(agnostic);
+  let { value: parentValue, type: parentType, path: parentPath, color: parentColor } = o;
+  const children = toArray(parentValue) || [];
+  const duration = sumDurations(children);
+  const maxDuration = max(children.map((c) => toObject(c).duration || 1));
+  return children.map((child, i, children) => {
+    child = toRhythmObject(child);
+    // add paths depending on type
+    let path;
+    if (!parentType || parentType === types.sequential) {
+      const position = sumDurations(children.slice(0, i));
+      path = (parentPath || []).concat([[position, child.duration || 1, duration]]);
+    } else if (parentType === types.parallel) {
+      path = (parentPath || []).concat([[0, o.duration || 1, maxDuration]]);
+    } else {
+      throw new Error(parentType + ': type not supported');
+    }
+    // drill path and color
+    return { ...child, path, color: child.color || parentColor };
+  });
+}
+```
+
+This opens up the world of harmony:
+
+<Player
+  center={0}
+  events={renderRhythmObject([
+    { value: ['C3', 'E3', 'G3'], type: 'parallel' },
+    { value: ['D3', 'F3', 'A3'], type: 'parallel' },
+  ])}
+/>
+
+```js
+[
+  { value: ['C3', 'E3', 'G3'], type: 'parallel' },
+  { value: ['D3', 'F3', 'A3'], type: 'parallel' },
+];
+```
+
+## Feature encapsulation
+
+As I plan to add a lot more features, and the code above already starts to get hard to read, I ended up encapsulating features into seperate methods.
+I am aware that this slightly drains the performance of the rendering but the performance should not be an issue.
+
+```ts
+export function applyFeatures<T>(agnostic: AgnosticChild<T>, features: Feature<T>[]): AgnosticChild<T> {
+  features.forEach((feature) => {
+    agnostic = feature(agnostic);
+  });
+  return agnostic;
+}
+export declare type Feature<T> = (agnostic: AgnosticChild<T>) => AgnosticChild<T>;
+export type ValueChild<T> = { value?: AgnosticChild<T>; [key: string]: any };
+export type AgnosticChild<T> = ValueChild<T> | T[] | T;
+```
+
+<br />
+
+### Inheritance
+
+Here is a simple feature that inherits a property from parent to child. The child has the ability to override the parent property:
+
+```ts
+export function inheritProperty<T>(property) {
+  return (_parent: AgnosticChild<T>): AgnosticChild<T> => {
+    const parent = toObject(_parent);
+    if (!parent[property] || !parent.value) {
+      return parent;
+    }
+    return {
+      ...parent,
+      value: toArray(parent.value).map((child) => {
+        const childObj = toObject(child);
+        return {
+          ...childObj,
+          [property]: childObj[property] || parent[property],
+        };
+      }),
+    };
+  };
+}
+inheritProperty('color'); // => can be applied to parent
+```
+
+<Player
+  center={0}
+  events={renderRhythmObject({
+    duration: 4,
+    value: Array.from({ length: 9 }, (_, i) => ({
+      color: interpolateRainbow(i / 9),
+      value: {
+        parallel: [0, 4, 7]
+          .map((step) => Note.fromMidi(Note.midi('C3') + i + step))
+          .concat([
+            {
+              value: Note.fromMidi(Note.midi('C4') + i),
+              color: interpolateRainbow((9 - i) / 9),
+            },
+          ]),
+      },
+    })),
+  })}
+/>
+
+<details>
+  <summary>show source</summary>
+
+```ts
+Array.from({ length: 9 }, (_, i) => ({
+  color: interpolateRainbow(i / 9),
+  value: {
+    parallel: [1, 3, 5]
+      .map((step) => Note.fromMidi(Note.midi('C3') + i + step - 1))
+      .concat([
+        {
+          value: Note.fromMidi(Note.midi('C4') + i),
+          color: interpolateRainbow((9 - i) / 9),
+        },
+      ]),
+  },
+}));
+```
+
+</details>
+<br/>
+
+## Next Steps
+
+This is the basic implementation of rhythmical object format! Future extensions could be:
+
+- setting instruments
+- using variables
+- assign values from parent to children (like duration for different time signatures)
+- playback component

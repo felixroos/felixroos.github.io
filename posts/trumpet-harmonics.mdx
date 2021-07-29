@@ -1,0 +1,115 @@
+---
+title: Trumpet Harmonics
+date: '2020-05-19'
+# image: ./img/trumpet-harmonics.png
+tags: ['tuning', 'music theory']
+description: The harmonic spiral from last post can also be used to vizualize the harmonics of instruments that work with overblowing, like a trumpet.
+---
+
+import Button from '@material-ui/core/Button';
+import Spiral from '../components/common/Spiral.tsx';
+import { State } from 'react-powerplug';
+import { Note } from '@tonaljs/tonal';
+import { InlineMath } from 'react-katex';
+import { angle, frequencyColor, nearestPitch, edo12 } from '../components/tuning/tuning.ts';
+import * as Tone from 'tone';
+import canUseDOM from '../components/canUseDOM.ts';
+import { TrumpetSpiral } from '../components/tuning/TrumpetSpiral.tsx';
+
+The harmonic spiral from last post can also be used to vizualize the harmonics of instruments that work with overblowing, like a trumpet:
+
+![trumpet](./img/trumpet.svg)
+
+Before I show the spiral, let's look at how a trumpet handles pitch.
+
+### How a trumpet produces different pitches
+
+A trumpet without valves can just play the harmonic series, which has large gaps. To fix that, valves are used to send the air through extra detours:
+
+![valve](./img/valve2d.gif)
+
+_screenshot from [this animation](http://www.dwerden.com/comp/aCompIntro9_FlowFlow_F4.html)_
+
+- the tube length directly affects the pitch of the horn => longer tube = lower note
+- if no valve is pressed, the tube is the shortest
+- if a valve is pressed, the tube is elongated by the length of the slide that comes out of its piston
+- the elongation of the third slide is the same as the elongation of the first and second combined (approximately)
+- the player can play all harmonics of a certain tube length by raising the air pressure
+- with all harmonics of all possible tube lengths, all common equal temperament notes (or at least close ones) can be played (and more)
+
+As there are 3 valves with two states each, we can create 8 different combinations. Each combination can be expressed as a binary number (0 = not pressed, 1 = pressed).
+To read the binary numbers in a useful order, let's flip the trumpet. _If we would read the bits in the other direction, one two and three would not coincide with the valves one two and three_
+
+![trumpet](./img/trumpet-mirrored.svg)
+
+### Valve Combinations
+
+<table>
+  <tbody>
+    <tr>
+      <th>color</th>
+      <th>binary</th>
+      <th>decimal</th>
+      <th>semitones</th>
+      <th>root</th>
+    </tr>
+    {[
+      [0, '000', 'C2'],
+      [-1, '010', 'B1'],
+      [-2, '001', 'Bb1'],
+      [-3, '011', 'A1'],
+      [-3, '100', 'A1'],
+      [-4, '110', 'Ab1'],
+      [-5, '101', 'G1'],
+      [-6, '111', 'Gb1'],
+    ].map(([offset, combination, root], i) => (
+      <tr key={i}>
+        <td>
+          <div
+            style={{
+              width: 20,
+              height: 20,
+              borderRadius: '50%',
+              backgroundColor: frequencyColor(edo12(offset) * Note.freq('Bb1') * 3),
+            }}
+          ></div>
+        </td>
+        <td>{combination}</td>
+        <td>{parseInt(combination, 2)}</td>
+        <td>{offset}</td>
+        <td>{root}</td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+
+Due to the fact that the elongation of the third slide is the same as the elongation of the first and second slides combined, the combination 011 (3) creates the same harmonics as 100 (4). This lucky coincidence maps the decimal number 3 to the 3rd valve!
+
+### Harmonic Spiral
+
+<TrumpetSpiral />
+
+- as the harmonic series gets denser as we go up, more and more combinations will end up on similar notes in higher registers.
+- most of those pitches will by slightly detuned to each other, depending on the tube length and harmonic
+- all the harmonic series start on their second partial (omitting the root partial), as by instrument design, the root partials are not intended to be played and hard to produce, so I omitted them.
+- i have no idea how the exact length ratios of the slides are, I just assumed the roots were tuned to equal temperament. Nevertheless the pattern would look the same, just slightly detuned.
+
+### Default Combinations
+
+In practice, there are certain default combinations, so for simplicity each note is mostly played with the same combination.
+It is desired that
+
+- the pitch is close to equal temperament, relative to the root note of the horn
+- lower harmonics are used in favor of higher harmonics
+
+## Further Ideas
+
+- Measure pitches of actual trumpet to find out where the "anchors" are
+- Measure lengths of tube + slides of actual trumpet
+- Write algorithm that outputs different default combinations for alternative tunings
+
+## Links
+
+- [Valve Systems](http://www.dwerden.com/eu-articles-comp.cfm) + [animated version](http://www.dwerden.com/comp/aCompIntro9_FlowFlow_F4.html)
+- [Trumpet Tuning Tendencies Relating to the Overtone Series with Solutions](https://www.utc.edu/faculty/erika-schafer/musiceducatorresources/tuning.php)
+- [Trumpet on music.stackexchange](https://music.stackexchange.com/questions/84172/trumpet-valves-lengths-and-pitch)

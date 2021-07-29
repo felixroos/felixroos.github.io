@@ -1,0 +1,440 @@
+---
+title: Rhythmical Arrays
+date: '2020-05-27'
+tags: ['code', 'rhythmical']
+description: In this post, I want to describe how and why rhythmical is implemented.
+---
+
+import PianoRoll from '../components/rhythmical/components/PianoRoll.tsx';
+import Player from '../components/rhythmical/components/Player.tsx';
+import RhythmicalTree from '../components/rhythmical/components/RhythmicalTree.tsx';
+import { renderRhythmObject } from '../components/rhythmical/rhythmical.ts';
+import { inheritProperty } from '../components/rhythmical/features/inherit.ts';
+import { Score } from '../components/score/Score.tsx';
+import { rhythmicalScore } from '../components/score/score-utils.ts';
+import { InlineMath, BlockMath } from 'react-katex';
+import PlayButton from '../components/rhythmical/components/PlayButton.tsx';
+
+<Player
+  fold={true}
+  events={renderRhythmObject({
+    duration: 14,
+    value: [
+      ['e5', ['b4', 'c5'], 'd5', ['c5', 'b4']],
+      ['a4', ['a4', 'c5'], 'e5', ['d5', 'c5']],
+      ['b4', ['r', 'c5'], 'd5', 'e5'],
+      ['c5', 'a4', 'a4', 'r'],
+      [['r', 'd5'], ['r', 'f5'], 'a5', ['g5', 'f5']],
+      ['e5', ['r', 'c5'], 'e5', ['d5', 'c5']],
+      ['b4', ['b4', 'c5'], 'd5', 'e5'],
+      ['c5', 'a4', 'a4', 'r'],
+    ],
+  })}
+/>
+
+<details>
+  <summary>show source</summary>
+
+```js
+<Player
+  events={renderRhythmObject({
+    duration: 16,
+    value: [
+      ['e5', ['b4', 'c5'], 'd5', ['c5', 'b4']],
+      ['a4', ['a4', 'c5'], 'e5', ['d5', 'c5']],
+      ['b4', ['r', 'c5'], 'd5', 'e5'],
+      ['c5', 'a4', 'a4', 'r'],
+      [['r', 'd5'], ['r', 'f5'], 'a5', ['g5', 'f5']],
+      ['e5', ['r', 'c5'], 'e5', ['d5', 'c5']],
+      ['b4', ['b4', 'c5'], 'd5', 'e5'],
+      ['c5', 'a4', 'a4', 'r'],
+    ],
+  })}
+/>
+```
+
+</details>
+<br/>
+
+In this post, I want to describe how and why [rhythmical](https://github.com/felixroos/rhythmical) is implemented.
+
+## Nested vs Flat Arrays
+
+The goal of rhythmical is to convert rhythms from nested arrays to a flat arrays.
+
+### Nested Array
+
+A simple nested array looks like this:
+
+```js
+['C4', ['E4', 'G4'], 'B4', 'D5'];
+```
+
+We can visualize it with a tree:
+
+<RhythmicalTree rhythm={['C4', ['E4', 'G4'], 'B4', 'D5']} height={150} />
+
+- **Pro**: Easy to read and write for humans
+- **Pro**: Good for hierarchical visualizations
+- **Contra**: Hard to parse for machines
+
+### Flat Array
+
+A flat representation of the nested array above could look like this:
+
+```js
+[
+  { value: 'C4', time: 0, duration: 1 },
+  { value: 'E4', time: 1, duration: 0.5 },
+  { value: 'G4', time: 1.5, duration: 0.5 },
+  { value: 'B4', time: 2, duration: 1 },
+  { value: 'D5', time: 3, duration: 1 },
+];
+```
+
+- **Pro**: Easy to parse for machines
+- **Pro**: Good for playback / visualization
+- **Contra**: Hard to read and write for humans
+
+We can render this as a piano roll:
+
+<PianoRoll noteRange={['C4', 'D5']} center={0} events={renderRhythmObject(['C4', ['E4', 'G4'], 'B4', 'D5'])} />
+<br />
+
+... or as a score:
+
+<Score width={660} height={100} staves={rhythmicalScore([['C4', ['E4', 'G4'], 'B4', 'D5']])} />
+
+... or play it back
+
+<PlayButton
+  events={renderRhythmObject({
+    duration: 4,
+    value: ['C4', ['E4', 'G4'], 'B4', 'D5'],
+  })}
+/>
+
+Now we want to find out how this transformation can be done.
+
+## Flattening arrays
+
+Of course, we could just use `Array.flat`:
+
+```js
+Array.flat(['C4', ['E4', 'G4'], 'B4', 'D5']);
+// ['C4', 'E4', 'G4', 'B4', 'D5']
+```
+
+But with this, we loose the nesting information.
+
+### Keeping track of indices
+
+To keep the nesting info when flattening, we need some way of representation for the position of elements inside the tree.
+We could use an array of indices:
+
+```js
+[
+  { value: 'C4', path: [0] },
+  { value: 'E4', path: [1, 0] },
+  { value: 'G4', path: [1, 1] },
+  { value: 'B4', path: [2] },
+  { value: 'D5', path: [3] },
+];
+```
+
+So now we keep the nesting information. This is enough information to recreate the original nested tree.
+
+### Keeping track of array lengths
+
+While the above flat array with indices might be lossless, it is really expensive to work with it, as we do not know how many elements are on each level.
+We could iterate over all elements and count them, but this is rather expensive. To avoid this, we can just keep track of the array lengths:
+
+```js
+[
+  { value: 'C4', path: [[0, 4]] },
+  {
+    value: 'E4',
+    path: [
+      [1, 4],
+      [0, 2],
+    ],
+  },
+  {
+    value: 'G4',
+    path: [
+      [1, 4],
+      [1, 2],
+    ],
+  },
+  { value: 'B4', path: [[2, 4]] },
+  { value: 'D5', path: [[3, 4]] },
+];
+```
+
+### Basic Implementation
+
+This is a simple recursive implementation:
+
+```js
+export function flatArray<T>(array: NestedArray<T>, path: Path[] = [], flat: FlatItem<T>[] = []): FlatItem<T>[] {
+  for (let i = 0; i < array.length; i++) {
+    if (typeof array[i] !== 'object') {
+      flat.push({ value: array[i] as T, path: path.concat([[i, array.length]]) })
+    } else if (Array.isArray(array[i])) {
+      flatArray(array[i] as NestedArray<T>, path.concat([[i, array.length]]), flat)
+    } else {
+      throw new Error('Non-Array Objects not supported!')
+    }
+  }
+  return flat;
+}
+export interface NestedArray<T> extends Array<T | NestedArray<T>> { }
+export type Path = [number, number];
+export type FlatItem<T> = { value: T, path: Path[] };
+```
+
+<details>
+<summary>show example tests</summary>
+
+```ts
+test('flatArray', () => {
+  expect(flatArray([])).toEqual([]);
+  expect(flatArray(['C'])).toEqual([{ value: 'C', path: [[0, 1]] }]);
+  expect(flatArray(['C', 'D'])).toEqual([
+    { value: 'C', path: [[0, 2]] },
+    { value: 'D', path: [[1, 2]] },
+  ]);
+  expect(flatArray(['C', 'D', ['E', 'F']])).toEqual([
+    { value: 'C', path: [[0, 3]] },
+    { value: 'D', path: [[1, 3]] },
+    {
+      value: 'E',
+      path: [
+        [2, 3],
+        [0, 2],
+      ],
+    },
+    {
+      value: 'F',
+      path: [
+        [2, 3],
+        [1, 2],
+      ],
+    },
+  ]);
+});
+```
+
+</details>
+<br/>
+
+### Calculating absolute time + duration from paths
+
+We can calculate absolute time and duration of a path array like this:
+
+```ts
+export function getTimeDuration(path: [number, number][], whole = 1) {
+  let time = 0;
+  let subdivision = whole;
+  for (let i = 0; i < path.length; i++) {
+    subdivision *= 1 / path[i][1];
+    time += path[i][0] * subdivision;
+  }
+  return [time, subdivision];
+}
+```
+
+<details>
+<summary>show example tests</summary>
+
+```ts
+test('getTimeDuration', () => {
+  expect(getTimeDuration([[0, 2]])).toEqual([0, 0.5]);
+  expect(getTimeDuration([[1, 2]])).toEqual([0.5, 0.5]);
+  expect(
+    getTimeDuration([
+      [0, 2],
+      [0, 2],
+    ])
+  ).toEqual([0, 0.25]);
+  expect(
+    getTimeDuration([
+      [0, 2],
+      [1, 2],
+    ])
+  ).toEqual([0.25, 0.25]);
+  expect(
+    getTimeDuration([
+      [1, 2],
+      [0, 2],
+    ])
+  ).toEqual([0.5, 0.5]);
+});
+```
+
+</details>
+<br/>
+
+### Why not calculate directly?
+
+Of course we could directly calculate the time and duration in the process of flattening, but the path representation has some advantages:
+
+- no information is lost => we could recreate the nested tree from the flat output
+- we can transform nested trees by treating the paths like fractions
+
+### Throwing it together
+
+We can now combine flatArray with getTimeDuration:
+
+```ts
+export function flatRhythmArray<T>(array: NestedArray<T>, whole = 1) {
+  return flatArray(array).map(({ value, path }) => {
+    let [time, duration] = getTimeDuration(path);
+    return { value, time, duration };
+  });
+}
+```
+
+<details>
+<summary>show example tests</summary>
+
+```ts
+test('flatRhythmArray', () => {
+  expect(flatRhythmArray(['C', 'D'])).toEqual([
+    { value: 'C', time: 0, duration: 0.5 },
+    { value: 'D', time: 0.5, duration: 0.5 },
+  ]);
+  expect(flatRhythmArray(['C', ['D', 'E']])).toEqual([
+    { value: 'C', time: 0, duration: 0.5 },
+    { value: 'D', time: 0.5, duration: 0.25 },
+    { value: 'E', time: 0.75, duration: 0.25 },
+  ]);
+});
+```
+
+</details>
+<br/>
+
+## Array nesting / unflattening
+
+By remembering the tree position with the path array, we can return to the nested state again:
+
+```ts
+export function nestArray<T>(items: FlatItem<T>[]): NestedArray<T> {
+  return items.reduce((nested, item) => {
+    let [index, subdivision] = item.path[0];
+    if (!nested.length && subdivision) {
+      nested = Array(subdivision).fill(0); // populate array
+    }
+    if (item.path.length === 1) {
+      nested[index] = item.value;
+    } else {
+      nested[index] = nestArray(
+        items
+          .filter((i) => i.path.length > 1 && i.path[0][0] === index) // remove siblings
+          .map((i) => ({ ...i, path: i.path.slice(1) })) // remove first path
+      );
+    }
+    return nested;
+  }, []);
+}
+```
+
+<details>
+<summary>show example tests</summary>
+
+```ts
+test('nestArray', () => {
+  expect(nestArray([])).toEqual([]);
+  expect(nestArray([{ value: 'C', path: [[0, 1]] }])).toEqual(['C']);
+  expect(
+    nestArray([
+      { value: 'C', path: [[0, 2]] },
+      { value: 'D', path: [[1, 2]] },
+    ])
+  ).toEqual(['C', 'D']);
+
+  expect(
+    nestArray([
+      { value: 'C', path: [[0, 3]] },
+      { value: 'D', path: [[1, 3]] },
+      {
+        value: 'E',
+        path: [
+          [2, 3],
+          [0, 2],
+        ],
+      },
+      {
+        value: 'F',
+        path: [
+          [2, 3],
+          [1, 2],
+        ],
+      },
+    ])
+  ).toEqual(['C', 'D', ['E', 'F']]);
+});
+```
+
+</details>
+
+<br />
+
+## Durations
+
+There is one thing we missed so far: We need a way to adjust the duration of elements.
+For example, without durations, we cannot represent this:
+
+<Score
+  width={400}
+  height={100}
+  staves={[
+    [
+      ['C4', '2d'],
+      ['D4', 'q'],
+    ],
+  ]}
+/>
+<PlayButton
+  events={renderRhythmObject({
+    duration: 2,
+    value: [{ value: 'C4', duration: 3 }, 'D4'],
+  })}
+/>
+
+So we need some way to specify durations. We could use objects with duration and value:
+
+```js
+[{ value: 'C4', duration: 3 }, 'D4'];
+```
+
+or some form of custom string syntax:
+
+```js
+['C4*3', 'D4'];
+```
+
+If not specified, the default value for duration is 1.
+
+With durations, calculating absolute time gets more complicated, because the time depends on the durations of the preceeding elements.
+The most obvious way to do this is by including the duration with the path, so we have 3 numbers:
+
+```js
+[
+  { value: 'C4', path: [[0, 3, 4]] },
+  { value: 'D4', path: [[3, 1, 4]] },
+];
+```
+
+Now, the format for the paths is `[index, duration, subdivision]`. Note that the index and subdivision are now scaled to the total duration. This representation can be seen as fractions:
+
+<BlockMath>{`time_{c4} = \\frac{0}{4}`}</BlockMath>
+<BlockMath>{`duration_{c4} = \\frac{3}{4}`}</BlockMath>
+<BlockMath>{`time_{d4} = \\frac{3}{4}`}</BlockMath>
+<BlockMath>{`duration_{d4} = \\frac{1}{4}`}</BlockMath>
+<br />
+
+## Next Steps
+
+We will implement durations in another post, as it requires allowing non-Array objects, which i call the extended rhythmical format. It opens up even [more possibilities](https://felixroos.github.io/rhythmical/), like polyphony.
