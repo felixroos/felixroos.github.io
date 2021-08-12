@@ -1,0 +1,397 @@
+---
+title: SVG Piano Roll Component
+date: '2020-06-10'
+tags: ['code', 'web audio']
+description: After playback was implemented in the last post, we can now feed our eyes with some colored bars.
+---
+
+import Player, { playEvents, synth } from '../components/rhythmical/components/Player.tsx';
+import PlayButton from '../components/rhythmical/components/PlayButton.tsx';
+import { renderRhythmObject } from '../components/rhythmical/rhythmical.ts';
+import { stack, equivalence } from '../components/tuning/tuning.ts';
+import PianoRoll from '../components/rhythmical/components/PianoRoll.tsx';
+import { inheritProperty } from '../components/rhythmical/features/inherit.ts';
+import { State } from 'react-powerplug';
+import drums from '../instruments/tidal';
+
+After playback was implemented in the last post, we can now feed our eyes with some colored bars:
+
+<Player
+  fold={true}
+  instruments={{ synth, drums }}
+  rhythmLanes={['sn', 'hh', 'cp', 'bd', 'cm']}
+  events={renderRhythmObject(
+    {
+      color: 'darksalmon',
+      duration: 4,
+      parallel: [
+        [
+          [
+            ['Eb4', 'F4', 'r', 'G3'],
+            ['r', 'r', 'r', 'G3'],
+          ],
+          [['r', 'Bb3'], 'G3', 'r', ['r', 'D4']],
+        ],
+        {
+          color: 'brown',
+          value: [
+            ['C3', 'C3', 'G2', 'r'],
+            ['C3', 'C3', 'G2', 'r'],
+          ],
+        },
+        [
+          {
+            color: 'steelblue',
+            instrument: 'drums',
+            parallel: [
+              [
+                ['hh', 'hh', 'hh', 'hh', 'hh', 'hh', 'hh', 'hh'],
+                ['hh', 'hh', 'hh', 'hh', 'hh', 'hh', 'hh', ['hh', 'hh']],
+              ],
+              [
+                ['bd', ['sn', 'bd'], 'bd', 'sn'],
+                ['bd', ['sn', 'r', 'r', 'bd'], 'bd', 'sn'],
+              ],
+            ],
+          },
+        ],
+      ],
+    },
+    [inheritProperty('instrument')]
+  )}
+/>
+
+<details>
+  <summary>show source</summary>
+
+```ts
+renderRhythmObject(
+  {
+    color: 'darksalmon',
+    duration: 4,
+    parallel: [
+      [
+        [
+          ['Eb4', 'F4', 'r', 'G3'],
+          ['r', 'r', 'r', 'G3'],
+        ],
+        [['r', 'Bb3'], 'G3', 'r', ['r', 'D4']],
+      ],
+      {
+        color: 'brown',
+        value: [
+          ['C3', 'C3', 'G2', 'r'],
+          ['C3', 'C3', 'G2', 'r'],
+        ],
+      },
+      [
+        {
+          color: 'steelblue',
+          instrument: 'drums',
+          parallel: [
+            [
+              ['hh', 'hh', 'hh', 'hh', 'hh', 'hh', 'hh', 'hh'],
+              ['hh', 'hh', 'hh', 'hh', 'hh', 'hh', 'hh', ['hh', 'hh']],
+            ],
+            [
+              ['bd', ['sn', 'bd'], 'bd', 'sn'],
+              ['bd', ['sn', 'r', 'r', 'bd'], 'bd', 'sn'],
+            ],
+          ],
+        },
+      ],
+    ],
+  },
+  [inheritProperty('instrument')]
+);
+```
+
+</details>
+
+## Drawing the SVG
+
+Using a little bit of d3, the basic implementation is pretty compact:
+
+```js
+export default function PianoRoll(props: PianoRollProps) {
+  let {
+    width = 600,
+    height = 200,
+    margin = 1,
+    noteRange = ['C3', 'C4'],
+    timeRange = [0, 1],
+    strokeWidth = 1,
+    hiddenSymbols = ['r'],
+    events,
+  } = props;
+  const deepest = max(events.map((e) => (e.path ? e.path.length : 1)));
+  const midiRange = [Note.midi(noteRange[0]), Note.midi(noteRange[1])];
+  const x = scaleLinear()
+      .domain(timeRange)
+      .range([margin, width - margin]),
+    y = scaleLinear()
+      .domain([midiRange[0] - 1, midiRange[1]])
+      .range([height - margin, margin]);
+  return (
+    <svg {...{ width, height }}>
+      {events
+        .filter(({ value }) => hiddenSymbols.indexOf(value) === -1)
+        .map(({ value, time, duration, path, color }, i) => {
+          return (
+            <rect
+              stroke="black"
+              strokeWidth={strokeWidth}
+              fill={color || interpolateBlues((path ? path.length : 1) / deepest)}
+              key={i}
+              x={x(time)}
+              y={y(Note.midi(value))}
+              width={x(duration) - strokeWidth}
+              height={y(midiRange[1] - 1) - strokeWidth}
+            />
+          );
+        })}
+    </svg>
+  );
+}
+```
+
+Usage:
+
+```ts
+<PianoRoll
+  height={100}
+  noteRange={['C3', 'A3']}
+  events={renderRhythmObject({
+    parallel: [
+      { sequential: ['E3', 'F3', 'G3', 'A3'], color: 'magenta' },
+      { sequential: ['C3', 'D3', 'E3', 'F3'], color: 'cyan' },
+    ],
+  })}
+/>
+```
+
+## Rhythm Lanes
+
+- With the above piano roll implementation, only notes in scientific pitch notation will work.
+- It would be nice if the piano roll recognizes all used values and creates a lane for each
+
+By filtering the events to be unique, we can create a lane for each unique value.
+
+```ts
+const uniqueLanes = events
+  .filter(({ value }) => hiddenSymbols.indexOf(value) === -1)
+  .map((e) => e.value)
+  .filter((v, i, e) => e.indexOf(v) === i)
+  .sort((a, b) => Note.midi(b) - Note.midi(a));
+```
+
+This will create lanes for rhythms too:
+
+<Player
+  fold={true}
+  instruments={{ drums }}
+  events={renderRhythmObject({
+    duration: 2,
+    parallel: [
+      ['hh', 'hh', 'hh', 'hh', 'hh', 'hh', 'hh', 'hh'],
+      ['bd', ['sn', 'bd'], 'bd', 'sn'],
+    ],
+  })}
+/>
+
+## Foldable Lanes
+
+Using only unique events for notes has the effect of folding (similar to fold in ableton midi edit). I implemented this behaviour with the fold flag:
+
+<State initial={{ fold: false }}>
+  {({ state, setState }) => (
+    <>
+      <label>
+        <input type="checkbox" checked={state.fold} onChange={(e) => setState({ fold: e.target.checked })} />
+        Fold
+      </label>
+      <br />
+      <Player
+        fold={state.fold}
+        height={100}
+        noteRange={['C3', 'A3']}
+        events={renderRhythmObject({
+          duration: 2,
+          parallel: [
+            { sequential: ['E3', 'F3', 'G3', 'A3'], color: 'magenta' },
+            { sequential: ['C3', 'D3', 'E3', 'F3'], color: 'cyan' },
+          ],
+        })}
+      />
+    </>
+  )}
+</State>
+<br />
+<br />
+
+### Customize Rhythm Lanes
+
+For consistent visualizations, it would be good to have a setting that controls which rhythm lanes are created.
+By passing an array of strings to rhythmLanes, we can control which lanes are created for non note events.
+The order will remain consistent even if we fold:
+
+<State initial={{ fold: false }}>
+  {({ state, setState }) => (
+    <>
+      <label>
+        <input type="checkbox" checked={state.fold} onChange={(e) => setState({ fold: e.target.checked })} />
+        Fold
+      </label>
+      <br />
+      <Player
+        fold={state.fold}
+        rhythmLanes={['sn', 'hh', 'cp', 'bd', 'cm']}
+        instruments={{ drums }}
+        events={renderRhythmObject({
+          duration: 2,
+          parallel: [
+            ['hh', 'hh', 'hh', 'hh', 'hh', 'hh', 'hh', 'hh'],
+            ['bd', ['sn', 'bd'], 'bd', 'sn'],
+          ],
+        })}
+      />
+    </>
+  )}
+</State>
+
+```ts
+<PianoRoll
+  fold={state.fold}
+  rhythmLanes={['sn', 'hh', 'cp', 'bd', 'cm']}
+  events={renderRhythmObject({
+    duration: 2,
+    parallel: [
+      ['hh', 'hh', 'hh', 'hh', 'hh', 'hh', 'hh', 'hh'],
+      ['bd', ['sn', 'bd'], 'bd', 'sn'],
+    ],
+  })}
+/>
+```
+
+### Mixed Lanes
+
+If we mix rhythm and note events, the piano roll will concat the rhythm lanes below the note lanes:
+
+<State initial={{ fold: false }}>
+  {({ state, setState }) => {
+    const events = renderRhythmObject(
+      {
+        color: 'darksalmon',
+        duration: 4,
+        parallel: [
+          [
+            [
+              ['Eb4', 'F4', 'r', 'G3'],
+              ['r', 'r', 'r', 'G3'],
+            ],
+            [['r', 'Bb3'], 'G3', 'r', ['r', 'D4']],
+          ],
+          {
+            color: 'brown',
+            value: [
+              ['C3', 'C3', 'G2', 'r'],
+              ['C3', 'C3', 'G2', 'r'],
+            ],
+          },
+          [
+            {
+              color: 'steelblue',
+              instrument: 'drums',
+              parallel: [
+                [
+                  ['hh', 'hh', 'hh', 'hh', 'hh', 'hh', 'hh', 'hh'],
+                  ['hh', 'hh', 'hh', 'hh', 'hh', 'hh', 'hh', ['hh', 'hh']],
+                ],
+                [
+                  ['bd', ['sn', 'bd'], 'bd', 'sn'],
+                  ['bd', ['sn', 'r', 'r', 'bd'], 'bd', 'sn'],
+                ],
+              ],
+            },
+          ],
+        ],
+      },
+      [inheritProperty('instrument')]
+    );
+    return (
+      <>
+        <label>
+          <input type="checkbox" checked={state.fold} onChange={(e) => setState({ fold: e.target.checked })} />
+          Fold
+        </label>
+        <br />
+        <Player fold={state.fold} events={events} instruments={{ synth, drums }} />
+      </>
+    );
+  }}
+</State>
+
+### Custom note lanes
+
+Like for custom rhythm lanes, we may also want to show a specific set of notes, like a scale.
+Also, notes that are not in the set will be hidden! This can also be useful if we want to use microtonality.
+
+<PianoRoll
+  height={100}
+  noteLanes={['C3', 'D3', 'E3', 'F3', 'G3', 'A3', 'B3', 'C4']}
+  events={renderRhythmObject({
+    duration: 2,
+    parallel: [
+      { sequential: ['Db3', 'F3', 'Ab3', 'C4'], color: 'magenta' },
+      { sequential: ['C3', 'D3', 'E3', 'F3'], color: 'cyan' },
+    ],
+  })}
+/>
+
+```ts
+<PianoRoll
+  height={100}
+  noteLanes={['C3', 'D3', 'E3', 'F3', 'G3', 'A3', 'B3', 'C4']}
+  events={renderRhythmObject({
+    parallel: [
+      { sequential: ['Db3', 'F3', 'Ab3', 'C4'], color: 'magenta' },
+      { sequential: ['C3', 'D3', 'E3', 'F3'], color: 'cyan' },
+    ],
+  })}
+/>
+```
+
+## Sync with Playback
+
+To synchronize the drawing with Tone.js, it is recommended to use [Tone.Draw](https://tonejs.github.io/docs/r13/Draw):
+
+```ts
+export function drawCallback(callback, grain = 1 / 30) {
+  if (callback) {
+    return new Tone.Loop((time) => {
+      Tone.Draw.schedule(() => callback(Tone.Transport.seconds), time);
+    }, grain).start(0);
+  }
+}
+```
+
+## Working with frequencies
+
+For experimentation with microtonality, we can also just use numbers to play frequencies:
+
+<Player
+  height={100}
+  events={renderRhythmObject({
+    duration: 4,
+    value: stack(12, 4 / 3, 1).map((r) => equivalence(r) * 220),
+    color: 'cyan',
+  }).map((e) => ({ ...e, value: e.value / 2 }))}
+/>
+
+## Next Steps
+
+- numbers should be sorted vertically
+- change zoom
+- add block wrap feature (like implemented in REPL)
+- lane background colors
+- labels

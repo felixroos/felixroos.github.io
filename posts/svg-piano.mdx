@@ -83,8 +83,6 @@ import Keyboard from '../components/music/Keyboard.tsx';
   }}
 />
 
----
-
 ## Adding Mouse Events
 
 Let's add some mouse events to trigger attack / release. We can use 'react-use-gesture' to handle the mouse events:
@@ -174,8 +172,6 @@ const synth = new Synth({ volume: -6 }).toDestination()
   onAttack={(key) => synth && synth.triggerAttack(key.notes[0])}
   onRelease={(key) => synth && synth.triggerRelease()}
 />
-
----
 
 ## Adding keyboard support
 

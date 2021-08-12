@@ -16,12 +16,12 @@ export default function PlayButton({ events, instruments, draw, loop }) {
     if (!part) {
       return;
     }
-    part.removeAll();
+    part?.removeAll?.();
     events.forEach((e) => part.add(e.time, e));
   }, [events]);
   function stop() {
     drawLoop.current && drawLoop.current.stop();
-    part && part.stop();
+    part?.stop?.();
     Tone.Transport.stop();
     setPart(false);
   }

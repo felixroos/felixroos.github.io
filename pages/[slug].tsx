@@ -7,14 +7,23 @@ import Layout from '../components/Layout';
 import { format, parseISO } from 'date-fns';
 import Link from 'next/link';
 import Tag from '../components/Tag';
-/* import Head from 'next/head';
-import Image from 'next/image';
-import Link from 'next/link'; */
+import { Box, Heading, Paragraph, Themed } from 'theme-ui';
+// import 'prismjs/themes/prism-coy.css';
+// import 'prismjs/themes/prism-dark.css';
+// import 'prismjs/themes/prism-funky.css';
+import 'prismjs/themes/prism-okaidia.css';
+// import 'prismjs/themes/prism-solarizedlight.css';
+// import 'prismjs/themes/prism-tomorrow.css';
+// import 'prismjs/themes/prism-twilight.css';
+// import 'prismjs/themes/prism.css';
 
 const CustomLink = ({ as, href, ...otherProps }) => {
+  if (href.startsWith('http')) {
+    return <Themed.a target="_blank" {...{ as, href, ...otherProps }} />;
+  }
   return (
     <Link as={as} href={href}>
-      <a {...otherProps} className="custom-link" />
+      <Themed.a {...otherProps} />
     </Link>
   );
 };
@@ -27,28 +36,37 @@ const Post = ({ code, frontmatter }) => {
     date: frontmatter.date,
     type: 'article',
   };
+  // https://github.com/kentcdodds/mdx-bundler#globals
   const Component = React.useMemo(() => getMDXComponent(code) as any, [code]);
+  const H = (size) => (props) => <Heading {...props} as={`h${size}`} sx={{ mb: 2, mt: 4 }} />;
   return (
-    <Layout customMeta={customMeta}>
-      <article>
-        <div className="float-right">
+    <Layout>
+      <Box as="article">
+        <Box sx={{ float: 'right' }}>
           {frontmatter.tags?.map((tag, i) => (
             <Tag key={i}>{tag}</Tag>
           ))}
-        </div>
-        <h1 className="mb-0 text-gray-900 dark:text-white">{frontmatter.title}</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        </Box>
+        <Heading sx={{ fontSize: 6 }}>{frontmatter.title}</Heading>
+        <Paragraph mb={4} color="gray" sx={{ fontStyle: 'italic' }}>
           {format(parseISO(frontmatter.date), 'MMMM dd, yyyy')}
-        </p>
-        <div className="prose dark:prose-dark">
+        </Paragraph>
+        <Box>
           <Component
             components={{
               a: CustomLink,
-              // pre: CustomCode,
+              h1: H(1),
+              h2: H(2),
+              h3: H(3),
+              h4: H(4),
+              p: Themed.p,
+              ul: Themed.ul,
+              li: Themed.li,
+              img: Themed.img,
             }}
           />
-        </div>
-      </article>
+        </Box>
+      </Box>
     </Layout>
   );
 };

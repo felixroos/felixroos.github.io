@@ -2,6 +2,7 @@ import { format, parseISO } from 'date-fns';
 import { GetStaticProps } from 'next';
 import Link from 'next/link';
 import React from 'react';
+import { Box, Heading, Paragraph, Themed } from 'theme-ui';
 import Layout from '../components/Layout';
 import Tag from '../components/Tag';
 // import { getAllPosts } from '../lib/api';
@@ -16,24 +17,26 @@ type IndexProps = {
 export const Index = ({ posts }: IndexProps): JSX.Element => {
   return (
     <Layout>
-      <p>Welcome to my blog! This is where I write about music and coding stuff that I find interesting.</p>
+      <Paragraph sx={{ pb: 4, pt: 2 }}>
+        Welcome to my blog! This is where I write about music and coding stuff that I find interesting.
+      </Paragraph>
       {posts.map((post) => (
-        <article key={post.slug} className="mt-12">
-          <div className="float-right">
+        <Box as="article" sx={{ mb: 4 }} key={post.slug}>
+          <Box sx={{ float: 'right' }}>
             {post.frontmatter.tags?.map((tag, i) => (
               <Tag key={i}>{tag}</Tag>
             ))}
-          </div>
-          <h1 className="mb-2 text-xxl">
+          </Box>
+          <Heading>
             <Link as={`/${post.slug}`} href={`/[slug]`}>
-              <a className="text-gray-900 dark:text-white dark:hover:text-blue-400">{post.frontmatter.title}</a>
+              <Themed.a>{post.frontmatter.title}</Themed.a>
             </Link>
-          </h1>
-          <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
+          </Heading>
+          <Paragraph color="gray" sx={{ fontStyle: 'italic' }}>
             {format(parseISO(post.frontmatter.date), 'MMMM dd, yyyy')}
-          </p>
-          <p className="mb-3">{post.frontmatter.description}</p>
-        </article>
+          </Paragraph>
+          <Paragraph className="mb-3">{post.frontmatter.description}</Paragraph>
+        </Box>
       ))}
     </Layout>
   );

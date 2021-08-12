@@ -1,13 +1,15 @@
-import { ThemeProvider } from 'next-themes';
+import { ThemeProvider } from 'theme-ui';
 import type { AppProps } from 'next/app';
 import React from 'react';
-import '../styles/globals.css';
+import theme from '../components/theme';
 
 const MyApp = ({ Component, pageProps }: AppProps): JSX.Element => {
   return (
-    <ThemeProvider attribute="class" enableSystem={false} defaultTheme="dark">
-      <Component {...pageProps} />
-    </ThemeProvider>
+    <>
+      <ThemeProvider theme={theme}>
+        <Component {...pageProps} />
+      </ThemeProvider>
+    </>
   );
 };
 

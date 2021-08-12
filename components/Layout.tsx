@@ -1,39 +1,37 @@
-import React from 'react';
-import { MetaProps } from '../types/layout';
+import theme from './theme';
+import { Box } from 'theme-ui';
 import Head from './Head';
-import Navigation from './Navigation';
-import ThemeSwitch from './ThemeSwitch';
+import ThemeToggle from './ui/ThemeToggle';
+import Header from './ui/Header';
+import Footer from './ui/Footer';
 
-type LayoutProps = {
-  children: React.ReactNode;
-  customMeta?: MetaProps;
-};
-
-export const WEBSITE_HOST_URL = 'https://nextjs-typescript-mdx-blog.vercel.app';
-
-const Layout = ({ children, customMeta }: LayoutProps): JSX.Element => {
+const Layout = (props) => {
   return (
     <>
-      <Head customMeta={customMeta} />
-      <header>
-        <div className="max-w-3xl px-8 mx-auto">
-          <div className="flex items-center justify-between py-6">
-            <Navigation />
-            <ThemeSwitch />
-          </div>
-        </div>
-      </header>
-      <main>
-        <div className="max-w-3xl px-8 py-4 mx-auto">{children}</div>
-      </main>
-      <footer className="py-8">
-        <div className="max-w-3xl px-8 mx-auto">
-          &copy;{` ${new Date().getFullYear()} - `}
-          <a className="text-gray-900 dark:text-white" href="https://github.com/felixroos">
-            Felix Roos
-          </a>
-        </div>
-      </footer>
+      <Head {...props} />
+      <Box
+        sx={{
+          display: 'flex',
+          minHeight: '100vh',
+          flexDirection: 'column',
+          margin: 'auto',
+          position: 'relative',
+          maxWidth: 800,
+        }}
+      >
+        {typeof theme.colors.modes === 'object' && <ThemeToggle />}
+        <Header />
+        <Box
+          as="main"
+          sx={{
+            px: [3, 4],
+            pb: 0,
+          }}
+        >
+          {props.children}
+        </Box>
+        <Footer />
+      </Box>
     </>
   );
 };

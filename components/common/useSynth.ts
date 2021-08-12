@@ -75,7 +75,10 @@ export default function useSynth(props: { synth?: any, options?: any, voices?: n
     { notes: [] },
   )
   return {
-    triggerAttackRelease: (notes, duration, time = "+0.01", velocity = 0.8) => synth.triggerAttackRelease(notes, duration, time, velocity),
+    triggerAttackRelease: (notes, duration, time = "+0.01", velocity = 0.8) => {
+      Tone.start();
+      synth.triggerAttackRelease(notes, duration, time, velocity)
+    },
     attack: (action: SynthAction) => dispatch({ type: "ATTACK", ...action }),
     release: (action: SynthAction) => dispatch({ type: "RELEASE", ...action }),
     releaseAll: () => dispatch({ type: "RELEASE_ALL" }),

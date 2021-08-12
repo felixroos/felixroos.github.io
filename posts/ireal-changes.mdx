@@ -1,0 +1,379 @@
+---
+title: Parsing iReal Chord Changes
+date: '2020-06-13'
+tags: ['code', 'ireal']
+description: Let's get access to a huge collection of chord changes.
+---
+
+In the previous posts, my focus was the implementation of rhythmical, which is basically a programmable sequencer.
+If we had some chord changes, we could turn it into a basic backing track player.
+
+One of the biggest collections of chord changes for many genres is the [ireal forum](https://irealb.com/forums/), which can be used with [ireal pro](https://irealpro.com/) to generate backing tracks. They did this seperation after having some copyright issues.
+This is good for us, as all the data is there for us, waiting to be decrypted...
+
+## ireal format
+
+Importing changes to ireal pro works by clicking a link in the forum. Lucky for us, all the data is contained in the URL, for example, this link contains the chord changes of the Beatles Song "Eleanor Rigby":
+
+```md
+irealb://Eleanor%20Rigby%3DThe%20Beatles%20%28Lennon%2C%20McCartney%29%3D%3DRock%20Pop%3DE-%3D%3D1r34LbKcu7XC%7CQy4CXyQ%20lcKQyX-ESA*%7B%7D%20%20lcKQyX-EZL%20lcKLZE-X4Ti*%7B%20%20QyXE-LZE-E%20C%7CQyXCZL%29D/%28W%20%20-EZL%20lcKQyX-%20%5DXyQ%20C%7CQyQyXE/7XyQ%7C6-E%7CQyX7-E%7CQyXE-%7CQyXE/C%7CQyX6-EXyQ%7CC-EB*%5B-EQ%5B%7DyQ%7D%7B*adoC%20la%20.S.D%3C%7CyQX-EZL%20lcKQyXCC%3E%20x%20%20X-EQ%7CXyQZ%20%3DPop-Rock%3D130%3D1%3D%3D%3D
+```
+
+If we decode the special chars and add some formatting, it looks like this:
+
+```md
+irealb://
+Eleanor Rigby=The Beatles (Lennon, McCartney)==Rock Pop=E-==
+1r34LbKcu7XC|Qy4CXyQ lcKQyX-ESA*{}  lcKQyX-EZL lcKLZE-X4Ti*{  QyXE-LZE-E C|QyXCZL)D/(W  -EZL lcKQyX- ]XyQ C|QyQyXE/7XyQ|6-E|QyX7-E|QyXE-|QyXE/C|QyX6-EXyQ|C-EB*[-EQ[}yQ}{*adoC la .S.D<|yQX-EZL lcKQyXCC> x  X-EQ|XyQZ
+=Pop-Rock=130=1===
+```
+
+The structure is:
+
+```md
+irealb://
+{title}={composer}=={style}={key}==
+{scrambled chord changes}
+={compStyle}={bpm}={repeats}===
+```
+
+This is what ireal pro makes of the link:
+
+<img alt="eleanor rigby" src="./img/eleanorrigbychords.png" />
+
+<br />
+
+## ireal-reader
+
+Luckily, there is already a lib that parses the link format, called [ireal-reader](https://github.com/pianosnake/ireal-reader). We can get a JSON like this:
+
+```ts
+import iRealReader from 'ireal-reader';
+
+const playlist = new iRealReader(decodeURI(link));
+```
+
+import { RealReader, RealRenderer, SheetSnippet, RealPlaylist } from '../components/ireal/RealParser.tsx';
+
+This is how the returned object looks:
+
+<RealReader url="irealb://Eleanor%20Rigby%3DThe%20Beatles%20%28Lennon%2C%20McCartney%29%3D%3DRock%20Pop%3DE-%3D%3D1r34LbKcu7XC%7CQy4CXyQ%20lcKQyX-ESA*%7B%7D%20%20lcKQyX-EZL%20lcKLZE-X4Ti*%7B%20%20QyXE-LZE-E%20C%7CQyXCZL%29D/%28W%20%20-EZL%20lcKQyX-%20%5DXyQ%20C%7CQyQyXE/7XyQ%7C6-E%7CQyX7-E%7CQyXE-%7CQyXE/C%7CQyX6-EXyQ%7CC-EB*%5B-EQ%5B%7DyQ%7D%7B*adoC%20la%20.S.D%3C%7CyQX-EZL%20lcKQyXCC%3E%20x%20%20X-EQ%7CXyQZ%20%3DPop-Rock%3D130%3D1%3D%3D%3D" />
+<br />
+
+- everything is a playlist
+- each song has some metadata
+- the property music contains the actual changes
+
+### Measures
+
+Unfortunately, the chords in music.measures are not rendered correctly.
+Let's format the JSON to a readable text version (left) and compare it to how ireal plays it (right):
+
+import ReactDiffViewer from 'react-diff-viewer';
+
+import root from 'react-shadow';
+
+<ReactDiffViewer
+  oldValue={`
+// intro
+C | C | E- | E-
+C | C | E- | E-
+// A
+E- | E- | E- | C
+C E- | E- | E- | E- E-/D
+C | C E-
+// B
+E-7 | E-6 | C/E | E-
+E-7 | E-6 | C/E | E-
+// repeat A
+E- | E- | E- | C
+C E- | E- | E- | E- E-/D
+C | C E-
+// repeat B
+E-7 | E-6 | C/E | E-
+E-7 | E-6 | C/E | E-
+// C
+C | C | E- | E-
+C | C | E- | E-
+// Coda
+E-
+// A
+E- | E- | E- | C
+C E- | E- | E- | E- E-/D
+C | C E-
+// B
+E-7 | E-6 | C/E | E-
+E-7 | E-6 | C/E | E-
+// A repeat
+E- | E- | E- | C
+C E- | E- | E- | E- E-/D
+C | C E-
+// B repeat
+E-7 | E-6 | C/E | E-
+E-7 | E-6 | C/E | E-
+// C
+C | C | E- | E-
+C | C | E- | E-
+// Coda
+E-
+`}
+  newValue={`
+// intro
+C | C | E- | E-
+C | C | E- | E-
+// A
+E- | E- | E- | C
+C E- | E- | E- | E- E-/D
+C | C E-
+// B
+E-7 | E-6 | C/E | E-
+E-7 | E-6 | C/E | E-
+// repeat A
+E- | E- | E- | C
+C E- | E- | E- | E- E-/D
+C | C E-
+// repeat B
+E-7 | E-6 | C/E | E-
+E-7 | E-6 | C/E | E-
+// C
+C | C | E- | E-
+C | C | E- | E-
+// A
+E- | E- | E- | C
+C E- | E- | E- | E- E-/D
+C | C E-
+// B
+E-7 | E-6 | C/E | E-
+E-7 | E-6 | C/E | E-
+// Coda
+E-
+`}
+  splitView={true}
+  extraLinesSurroundingDiff={100}
+  useDarkTheme={true}
+/>
+<br />
+
+Problems:
+
+- The Coda is mistakenly played after the first C part
+- A B are repeated again + C is played twice => coda sign seems to be ignored
+- It seems the coda and dal segnio is just ignored and everything (except the intro) is repeated
+- Even if everything was correct, we still won't know any info on the structure of the sheet, which we need, at least for meaningful visual rendering
+
+### raw output
+
+As the measures are not really usable for playback, and also visual rendering is not possible without some structural info, we need another strategy to get the data.
+
+The good news is that the lib turns the scrambled chord changes (left) into a parseable string (right):
+
+<ReactDiffViewer
+  oldValue={`1r34LbKcu7XC|Qy4CXyQ lcKQyX-ESA*{}  lcKQyX-EZL lcKLZE-X4Ti*{  QyXE-LZE-E C|QyXCZL)D/(W  -EZL lcKQyX- ]XyQ C|QyQyXE/7XyQ|6-E|QyX7-E|QyXE-|QyXE/C|QyX6-EXyQ|C-EB*[-EQ[}yQ}{*adoC la .S.D<|yQX-EZL lcKQyXCC> x  X-EQ|XyQZ `}
+  newValue={`{*iT44CXyQKcl LZE-XyQKcl }{*ASE-XyQKcl LZE-XyQ|CXyQ|C E-LZE-XyQKcl LZE- (W/D)LZCXyQ|C E- ]XyQXyQ [*BE-7XyQ|E-6XyQ|C/EXyQ|E-XyQ|E-7XyQ|E-6XyQ|C/EXyQ|QE-XyQ}{*CCXyQKcl LZE-XyQ|<D.S. al Coda> x }[QE-XyQZ `}
+  splitView={true}
+  extraLinesSurroundingDiff={100}
+  useDarkTheme={true}
+/>
+<br />
+
+In the comments of [the unscramble script](https://github.com/pianosnake/ireal-reader/blob/master/unscramble.js), it states, that "strings are broken up in 50 character segments. each segment undergoes character substitution addressed by obfusc50()".
+
+So instead of relying on the measures output, we can just use the raw string to generate our own measures. This is where ireal-renderer comes in.
+
+## ireal-renderer
+
+The lib [ireal-renderer](https://github.com/daumling/ireal-renderer) renders ireal sheets as html. Internally, it uses ireal-reader to get the unscrambled raw string and then uses custom regex to parse it.
+
+### String Decryption
+
+In the [comments](https://github.com/daumling/ireal-renderer/blob/master/src/ireal-renderer.js#L24), the different parts of the string are described:
+
+```js
+/*
+ * The parser cracks up the music string at song.music into several objects,
+ * one for each cell. iReal Pro works with rows of 16 cell each. The result
+ * is stored at song.cells.
+ *
+ * Each object has the following properties:
+ *
+ * chord: if non-null, a chord object with these properties:
+ *   note      - the base note (also blank, W = invisible root, p/x/r - pause/bar repeat/double-bar repeat, n - no chord)
+ *   modifiers - the modifiers, like 7, + o etc (string)
+ *   over      - if non-null, another chord object for the under-note
+ *   alternate - if non-null another chord object for the alternate chord
+ * annots: annotations, a string of:
+ *  *x  - section, like *v, *I, *A, *B etc
+ *  Nx  - repeat bots (N1, N2 etc)
+ *  Q   - coda
+ *  S   - segno
+ *  Txx - measure (T44 = 4/4 etc, but T12 = 12/8)
+ *  U   - END
+ *  f   - fermata
+ *  l   - (letter l) normal notes
+ *  s   - small notes
+ * comments: an array of comment strings
+ * bars: bar specifiers, a string of:
+ *  | - single vertical bar, left
+ *  [ - double bar, left
+ *  ] - double bar, right
+ *  { - repeat bar, left
+ *  } - repeat bar, right
+ *  Z - end bar, right
+ * spacer - a number indicating the number of vertical spacers above this cell
+ *
+ * XyQ - 3 empty cells
+ * Kcl - repeat last bar
+ * LZ - bar line
+ * */
+```
+
+If we decipher our unscrambled beatles string with these tokens, we get this:
+
+```md
+{ // repeat start
+*i // intro section
+T44 // 44 time
+C // chord
+XyQ // 3 empty cells
+Kcl // repeat last bar
+LZ // bar line
+E- // chord
+XyQ // 3 empty cells
+Kcl // repeat last bar
+} // repeat end
+{ // repeat start
+*A // A section
+S // Dal Segnio
+E- // chord
+XyQ // 3 empty cells
+Kcl // repeat last bar
+LZ // bar line
+E- // chord
+XyQ // 3 empty cells
+| // barline
+C // chord
+XyQ // 3 empty cells
+| // barline
+C // chord
+  // empty cell
+E- // chord
+LZ // barline
+E- // chord
+XyQ // 3 empty cells
+Kcl // repeat last bar
+LZ // barline
+E- // chord
+(W/D) // comment
+LZ // barline
+C // chord
+XyQ // 3 empty cells
+| // barline
+C // chord
+  // empty cell
+E- // chord
+] // double bar right
+XyQXyQ // 7 empty cells
+[ // double bar left
+*B // section B
+E-7 // chord
+XyQ| // 3 empty cells + barline
+E-6 // chord
+XyQ| // 3 empty cells + barline
+C/E // chord
+XyQ| // 3 empty cells + barline
+E- // chord
+XyQ| // 3 empty cells + barline
+E-7 // chord
+XyQ| // 3 empty cells + barline
+E-6 // chord
+XyQ| // 3 empty cells + barline
+C/E // chord
+XyQ| // 3 empty cells + barline
+Q // coda sign
+E- // chord
+XyQ // 3 empty cells
+} // repeat end
+{ // repeat start
+*C // section C
+C // chord
+XyQ // 3 empty cells
+Kcl LZ // repeat last bar + space + barline
+E- // chord
+XyQ| // 3 empty cells + barline
+<D.S. al Coda> x
+} // repeat end
+[ // double barline left
+Q // Coda sign
+E- // chord
+XyQ // 3 empty cells
+Z // end of song
+```
+
+ireal-renderer essentially does this with regex magic, turning each cell into an object for rendering.
+
+As the ireal-renderer package does not expose a method that returns the parsed objects, I took the code and modified it for a more general purpose, as part of my [leetsheet package](https://github.com/felixroos/leetsheet):
+
+## leetsheet
+
+With leetsheet, the raw unscrambled string can be parsed with RealParser.parseSheet:
+
+```ts
+import { RealParser } from 'leetsheet/lib/RealParser';
+import iRealReader from 'ireal-reader';
+const playlist = iRealReader(decodeURI(url));
+const song = playlist.songs[0];
+const sheet = RealParser.parseSheet(song.music.raw);
+```
+
+<RealRenderer url="irealb://Eleanor%20Rigby%3DThe%20Beatles%20%28Lennon%2C%20McCartney%29%3D%3DRock%20Pop%3DE-%3D%3D1r34LbKcu7XC%7CQy4CXyQ%20lcKQyX-ESA*%7B%7D%20%20lcKQyX-EZL%20lcKLZE-X4Ti*%7B%20%20QyXE-LZE-E%20C%7CQyXCZL%29D/%28W%20%20-EZL%20lcKQyX-%20%5DXyQ%20C%7CQyQyXE/7XyQ%7C6-E%7CQyX7-E%7CQyXE-%7CQyXE/C%7CQyX6-EXyQ%7CC-EB*%5B-EQ%5B%7DyQ%7D%7B*adoC%20la%20.S.D%3C%7CyQX-EZL%20lcKQyXCC%3E%20x%20%20X-EQ%7CXyQZ%20%3DPop-Rock%3D130%3D1%3D%3D%3D" />
+
+<br />
+
+- This array of Measure objects can be used for further processing, as it still contains all repeat signs / codas, sections etc..
+- You can find more info on [the Measure object in the leetsheet readme](https://github.com/felixroos/leetsheet#measures).
+
+### Snippets
+
+With Snippets, we can format the array of Measure objects to a compact human readable string:
+
+```ts
+import { Snippet } from 'leetsheet/lib/Snippet';
+let snippet = Snippet.from(sheet);
+```
+
+<SheetSnippet url="irealb://Eleanor%20Rigby%3DThe%20Beatles%20%28Lennon%2C%20McCartney%29%3D%3DRock%20Pop%3DE-%3D%3D1r34LbKcu7XC%7CQy4CXyQ%20lcKQyX-ESA*%7B%7D%20%20lcKQyX-EZL%20lcKLZE-X4Ti*%7B%20%20QyXE-LZE-E%20C%7CQyXCZL%29D/%28W%20%20-EZL%20lcKQyX-%20%5DXyQ%20C%7CQyQyXE/7XyQ%7C6-E%7CQyX7-E%7CQyXE-%7CQyXE/C%7CQyX6-EXyQ%7CC-EB*%5B-EQ%5B%7DyQ%7D%7B*adoC%20la%20.S.D%3C%7CyQX-EZL%20lcKQyXCC%3E%20x%20%20X-EQ%7CXyQZ%20%3DPop-Rock%3D130%3D1%3D%3D%3D" />
+
+compared to the ireal rendering:
+
+<img alt="eleanor rigby" src="./img/eleanorrigbychords.png" />
+
+- Currently, the snippet does not support section headings, resulting in wrong line breaks.
+- Also, bass notes that are annotated with comments are not recognized (bar 12)
+- The good thing about the Snippet format is that is can be used as an editor, like I already implemented with [the jazzband demo](https://felixroos.github.io/jazzband/).
+- leetsheet can also render a sheet for playback (resolve all jump signs), see [Sheet.render](https://github.com/felixroos/leetsheet#sheetrender). We will also look at this in a future post
+
+## Simple Viewer
+
+Here you can paste any ireal link and view the songs as text snippets:
+
+import playlist from '../public/ireal/stevie.json';
+
+<RealPlaylist url={playlist} />
+
+## Conclusion
+
+With this post we have unlocked the huge dataset of ireal changes to hack with! Here are some things we can do in future posts:
+
+- generate backing tracks like ireal itself, using rhythmical
+- generate ear training exercises based on real world changes
+- analyze common chord changes to find out what to practise as an improviser
+- feed sets into a hidden markov model to generate changes in a specific style
+- write a backing track player/editor that runs inside a shell
+
+TBD:
+
+- fork ireal-reader to just generate metadata with unscrambled strings without measures array => faster
+- fix leetsheet expand bugs
+- add parser flag to keep empty cells (meaningful for visual rendering)
+- write leetsheet feature for rhythmical
+- improve leetsheet docs e.g. Sheet.from, Snippet.from, Sheet.
