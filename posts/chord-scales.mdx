@@ -1,0 +1,1198 @@
+---
+title: Chord Scales
+date: '2021-04-11'
+image: ./img/251graph.png
+tags: ['music theory', 'algorithms']
+description: Let's find the best chord scales with a common path finding algorithm.
+---
+
+import { BlockMath, InlineMath } from 'react-katex';
+import { Chord } from '@tonaljs/tonal';
+import { Graph } from '../components/graphs/Graphviz.tsx';
+import AstarChordScaleFinder from '../components/graphs/AstarChordScaleFinder.tsx';
+import scaleModes from '../components/sets/scaleModes';
+import chordScaleGraph from '../components/graphs/chordScaleGraph';
+import scaleColor from '../components/sets/scaleColor';
+import { Scale, Note } from '@tonaljs/tonal';
+import HarmonicCircle from '../components/sets/HarmonicCircle.tsx';
+import ChromaticCircle from '../components/sets/ChromaticCircle.tsx';
+import Card from '@material-ui/core/Card';
+import CardContent from '@material-ui/core/CardContent';
+import { State } from 'react-powerplug';
+import Switch from '@material-ui/core/Switch';
+
+To build a hackable backing track player, we already laid the foundation of [rhythm](../rhythmical-objects/) and [harmony](../rhythmical-chords/).
+What's missing: Melodies.
+Even if we just want a backing track player, playing melodies is required for basslines, or any kind of melodic fill in.
+
+So far, we were generating voicings from chord symbols. The problem: melodies will eventually use notes that are not a chord note.
+Therefore, we need a way to find scales that fit to chord changes.
+
+## Problem: Chord Scale Ambiguity
+
+The main problem when searching for chord scales: most of the time, there are serveral scales that could be played over a single chord.
+And it depends on the surrounding chords which scale choices are better than others.
+Here is a video where Barry Harris talks about chords vs keys:
+
+<iframe
+  width="560"
+  height="315"
+  src="https://www.youtube.com/embed/3V2eNh8qWVo"
+  title="YouTube video player"
+  frameborder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+  allowfullscreen
+></iframe>
+
+import NestedGrid from '../components/graphs/NestedGrid';
+import { renderChordSymbols } from '../components/score/ChordSymbol';
+import { mapNestedArray } from '../components/rhythmical/tree/mapNestedArray';
+
+This is the chord they are talking about:
+
+<NestedGrid
+  rows={[1]}
+  innerBorders={true}
+  outerBorders={false}
+  cells={mapNestedArray(
+    [
+      ['Fm7', 'Bbm7', 'Eb7', 'Ab^7'],
+      ['Db^7', ['Dm7', 'G7'], 'C^7', '%'],
+      ['Cm7', 'Fm7', 'Bb7', 'Eb^7'],
+      ['Ab^7', ['Am7', 'D7'], 'G^7', '%'],
+      ['Am7', 'D7', 'G^7', '%'],
+      ['F#m7b5', 'B7b9', 'E^7', 'C7b13'],
+      ['Fm7', 'Bbm7', 'Eb7', 'Ab^7'],
+      ['Db^7', 'DbmM7', 'Cm7', 'Bo7'],
+      ['Bbm7', 'Eb7', 'Ab^7', ['Gm7b5', 'C7b9']],
+    ],
+    (e, i, a) => {
+      if (e === 'Cm7' && i === 2) {
+        return <div style={{ backgroundColor: 'steelblue', color: 'white' }}>{e}</div>;
+      }
+      return e;
+    }
+  )}
+/>
+<br />
+
+He says: "When you see a C minor in the key of Ab, it's not necessarily the C minor 7 that's in the key of Bb,
+so I cannot put a D natural in it. It's the Ab major scale."
+
+In other words: As the Cm7 appears as in the context of Ab major, it can be seen as the 3rd step chord,
+which is based on the phrygian mode, which has a b9.
+So you would prefer phrygian over aeolian or dorian if you want to stay in Ab major.
+
+### A Little Sidenote
+
+There are some people (including Barry Harris), that do not like the chord / scale approach.
+One reason is that the original jazz artists most certainly did not think that way.
+I still like having scale names as a means to express note material that exceeds 4 notes.
+If you would want to express more than 4 notes as chord symbols, it gets ugly.
+
+Don't take the sentence "scale X can be played over chord Y" too seriously.. It does not mean
+you should be playing the scale up and down, it just means those 7 notes fit over the chord.
+
+### Hello 251
+
+Let's dial back a little bit, and start with the "Hello World" of jazz chord progressions, the 251 in C major: `Dm7 G7 C^7`.
+
+When only using the 7 modes of the major scale (diatonic scales), there are 3 scales that could be played over the D minor 7 chord:
+
+export const chordScale = (chord, scale, harmonic) => {
+  const smallCircle = { r: 90, nodeRadius: 16 };
+  const { notes: scaleNotes, tonic: scaleTonic } = Scale.get(scale);
+  const { notes: chordNotes, tonic: chordTonic } = Chord.get(chord);
+  const pcChromas = (notes) => notes.map((pc) => Note.get(pc).chroma);
+  const scaleSet = pcChromas(scaleNotes.concat([scaleTonic]));
+  const chordSet = pcChromas(chordNotes.concat([chordTonic]));
+  const circle = {
+    label: `${chord} ${scale}`,
+    sets: [
+      { stroke: scaleColor(scale), set: scaleSet },
+      { stroke: 'steelblue', set: chordSet },
+    ],
+    pitches: scaleNotes,
+    tonic: scaleTonic,
+    ...smallCircle,
+  };
+  return <div>{harmonic ? <HarmonicCircle {...circle} /> : <ChromaticCircle {...circle} />}</div>;
+};
+
+<State initial={{ harmonic: true }}>
+  {({ state, setState }) => (
+    <>
+      <label>
+        chromatic
+        <Switch checked={state.harmonic} color="default" onChange={(e) => setState({ harmonic: e.target.checked })} />
+        harmonic
+      </label>
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        {chordScale('Dm7', 'D dorian', state.harmonic)}
+        {chordScale('Dm7', 'D aeolian', state.harmonic)}
+        {chordScale('Dm7', 'D phrygian', state.harmonic)}
+      </div>
+      <p>There is only one (diatonic) scale that can be played over a the G7 chord:</p>
+      <center>
+        <div>{chordScale('G7', 'G mixolydian', state.harmonic)}</div>
+      </center>
+      <p>There are 2 scales that could be played over a the C major 7 chord:</p>
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
+        {chordScale('C^7', 'C lydian', state.harmonic)}
+        {chordScale('C^7', 'C major', state.harmonic)}
+      </div>
+    </>
+  )}
+</State>
+<br />
+
+### Scale Graph
+
+We can visualize the transitions between the possible scales in a graph like this:
+
+<Graph
+  json={{
+    graph: {
+      directed: true,
+      ...chordScaleGraph(['Dm7', 'G7', 'C^7'], scaleModes('major'), true),
+    },
+  }}
+/>
+<br />
+
+- Each column shows the possible scales for one chord, with the arrows representing transitions between scales.
+- The numbers indicate the number of accidentals that change between scales. We can use them to evaluate how smooth the scale transition will be.
+- The colorization is used like described in [this post](coloring-scales/).
+
+Using this representation, we can turn it into a path finding problem.
+
+### Choice Tree
+
+Navigating the graph above, we can follow one of 6 possible paths:
+
+<Graph
+  json={{
+    graph: {
+      directed: true,
+      nodes: [
+        {
+          label: 'start',
+          id: '0',
+        },
+        {
+          label: 'D dorian',
+          id: '0.0:D dorian',
+          fillcolor: '#e9e93c',
+          style: 'filled',
+        },
+        {
+          label: 'G mixolydian',
+          id: '0.1:G mixolydian',
+          fillcolor: '#e9e93c',
+          style: 'filled',
+        },
+        {
+          label: 'C major',
+          id: '0.2:C major',
+          fillcolor: '#e9e93c',
+          style: 'filled',
+        },
+        {
+          label: 'C lydian',
+          id: '1.2:C lydian',
+          fillcolor: '#b2e580',
+          style: 'filled',
+        },
+        {
+          label: 'D aeolian',
+          id: '2.0:D aeolian',
+          fillcolor: '#e5b380',
+          style: 'filled',
+        },
+        {
+          label: 'G mixolydian',
+          id: '2.1:G mixolydian',
+          fillcolor: '#e9e93c',
+          style: 'filled',
+        },
+        {
+          label: 'C major',
+          id: '2.2:C major',
+          fillcolor: '#e9e93c',
+          style: 'filled',
+        },
+        {
+          label: 'C lydian',
+          id: '3.2:C lydian',
+          fillcolor: '#b2e580',
+          style: 'filled',
+        },
+        {
+          label: 'D phrygian',
+          id: '4.0:D phrygian',
+          fillcolor: '#f6afaf',
+          style: 'filled',
+        },
+        {
+          label: 'G mixolydian',
+          id: '4.1:G mixolydian',
+          fillcolor: '#e9e93c',
+          style: 'filled',
+        },
+        {
+          label: 'C major',
+          id: '4.2:C major',
+          fillcolor: '#e9e93c',
+          style: 'filled',
+        },
+        {
+          label: 'C lydian',
+          id: '5.2:C lydian',
+          fillcolor: '#b2e580',
+          style: 'filled',
+        },
+      ],
+      edges: [
+        {
+          source: '0',
+          target: '0.0:D dorian',
+          label: '0',
+        },
+        {
+          source: '0.0:D dorian',
+          target: '0.1:G mixolydian',
+          label: '+0',
+        },
+        {
+          source: '0.1:G mixolydian',
+          target: '0.2:C major',
+          label: '+0=0',
+        },
+        {
+          source: '0',
+          target: '0.0:D dorian',
+          label: '0',
+        },
+        {
+          source: '0.0:D dorian',
+          target: '0.1:G mixolydian',
+          label: '+0',
+        },
+        {
+          source: '0.1:G mixolydian',
+          target: '1.2:C lydian',
+          label: '+1=1',
+        },
+        {
+          source: '0',
+          target: '2.0:D aeolian',
+          label: '0',
+        },
+        {
+          source: '2.0:D aeolian',
+          target: '2.1:G mixolydian',
+          label: '+1',
+        },
+        {
+          source: '2.1:G mixolydian',
+          target: '2.2:C major',
+          label: '+0=1',
+        },
+        {
+          source: '0',
+          target: '2.0:D aeolian',
+          label: '0',
+        },
+        {
+          source: '2.0:D aeolian',
+          target: '2.1:G mixolydian',
+          label: '+1',
+        },
+        {
+          source: '2.1:G mixolydian',
+          target: '3.2:C lydian',
+          label: '+1=2',
+        },
+        {
+          source: '0',
+          target: '4.0:D phrygian',
+          label: '0',
+        },
+        {
+          source: '4.0:D phrygian',
+          target: '4.1:G mixolydian',
+          label: '+2',
+        },
+        {
+          source: '4.1:G mixolydian',
+          target: '4.2:C major',
+          label: '+0=2',
+        },
+        {
+          source: '0',
+          target: '4.0:D phrygian',
+          label: '0',
+        },
+        {
+          source: '4.0:D phrygian',
+          target: '4.1:G mixolydian',
+          label: '+2',
+        },
+        {
+          source: '4.1:G mixolydian',
+          target: '5.2:C lydian',
+          label: '+1=3',
+        },
+      ],
+    },
+  }}
+/>
+<br />
+
+Here, the leftmost path is the optimal one, as its sum of values is 0. The worst path has a value of 3.
+
+Now we arrived at the problem for this post: How do we find the optimal path through a graph of chord scales?
+
+## Implementing Chord Scale Graphs
+
+As we have a general idea of the problem, let's implement this!
+Before we can do any path finding, we need to generate a scale graph from our chord changes.
+
+Generally, a graph consists of nodes and edges, in our domain, those are:
+
+- nodes: chord scales
+- edges: scale transitions
+
+### Finding chord scales
+
+To get our graph's nodes, we need to find all possible scales for a chord progression. What we want is something like this:
+
+```js
+const chords = ['Dm7', 'G7', 'C^7'];
+chords.map((chord) => chordScales(chord, scaleModes('major')));
+/*
+[
+  [ 'phrygian', 'aeolian', 'dorian' ],
+  [ 'mixolydian' ],
+  [ 'lydian', 'major' ]
+]
+*/
+```
+
+Instead of just using [Chord.chordScales](https://github.com/tonaljs/tonal/tree/master/packages/chord#chordchordscaleschordname-string--string), I am using a custom implementation that allows to filter the scales.
+As the core topic of this post should be the actual path finding, I put the details in a yellow box:
+
+<Card elevation={3} >
+<CardContent style={{backgroundColor:'#E9E850'}}>
+
+<details>
+  <summary>Show Implementation Details</summary>
+
+### Subsets and Supersets
+
+To be able to find out which scales contain a chord, we need to understand the concept of subsets and supersets.
+To fully understand this, I recommend you to read my [pitch class sets post](../pitch-class-sets/) first.
+
+Sets can be related by being sub or supersets. For example, a C major chord is a subset of the C major scale. Also, the C major scale is a superset of a C major chord.
+So, a superset contains all notes of its subset + some more, while a subset contains some of its superset (and no others!).
+
+In tonal, we can check if chromas are subsets or supersets:
+
+```js
+const isSupersetOfChord = (chord) => PcSet.isSupersetOf(Chord.get(chord).chroma);
+isSupersetOfChord('M')(Scale.get('major').chroma); // true
+isSupersetOfChord('M')(Scale.get('minor').chroma); // false
+
+const isSubsetOfScale = (chord) => PcSet.isSubsetOf(Scale.get(chord).chroma);
+isSubsetOfScale('major')(Chord.get('M').chroma); // true
+isSubsetOfScale('major')(Chord.get('m').chroma); // false
+
+const isChordScale = (scale, chord) => isSupersetOfChord(chord)(Scale.get(scale).chroma);
+isChordScale('major', 'M'); // true
+isChordScale('major', 'm'); // false
+
+const isScaleChord = (chord, scale) => isSubsetOfScale(scale)(Chord.get(chord).chroma);
+isScaleChord('M', 'major'); // true
+isScaleChord('m', 'major'); // false
+```
+
+For a better understanding, let's implement our own isSuperset function:
+
+```js
+function isSuperset(superset, subset) {
+  const superDec = parseInt(superset, 2);
+  const subDec = parseInt(subset, 2);
+  return (superDec | subDec) === superDec;
+}
+isSuperset(Scale.get('major').chroma, Chord.get('M').chroma); // true
+isSuperset(Scale.get('major').chroma, Chord.get('m').chroma); // false
+```
+
+Here we are using a [bitwise OR operator](<https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Bitwise_OR#:~:text=The%20bitwise%20OR%20operator%20(%20%7C%20),both%20operands%20are%201%20s.>).
+As bitwise OR expects a decimal input, we have to convert our chromas to decimal beforehand.
+Now, if we apply the or between superset and subset, the superset will be the result if the subset has no additional ones!
+
+For completeness, we can now implement isSubset, using isSuperset:
+
+```js
+function isSubset(subset, superset) {
+  return isSuperset(superset, subset);
+}
+isSubset(Chord.get('M').chroma, Scale.get('major').chroma); // true
+isSubset(Chord.get('m').chroma, Scale.get('major').chroma); // false
+```
+
+### Chord Scales
+
+Now, if we want to know which scales we can play over a certain chord, we just have to look for supersets of the chords chroma. Luckily, there is already a method in tonal:
+
+```js
+Chord.chordScales('^7');
+/*
+[
+  'ionian pentatonic',
+  'lydian pentatonic',
+  'augmented',
+  'double harmonic lydian',
+  'lydian',
+  'augmented heptatonic',
+  'harmonic major',
+  'double harmonic major',
+  'major',
+  'lydian #9',
+  'purvi raga',
+  'bebop',
+  'bebop major',
+  'ichikosucho',
+  'kafi raga',
+  "messiaen's mode #3",
+  'chromatic'
+]
+*/
+```
+
+To understand how it works + to have more control over the output, let's reimplent it:
+
+```js
+function chordScales(chord) {
+  const isSuperSet = PcSet.isSupersetOf(Chord.get(chord).chroma);
+  return Scale.names().filter((scale) => isSuperSet(Scale.get(scale).chroma));
+}
+chordScales('^7');
+```
+
+### Filtering Choices
+
+The scale above choices are pretty overwhelming. We could limit the checked scales like that:
+
+```js
+function chordScales(chord, scales = Scale.names()) {
+  const isSuperSet = PcSet.isSupersetOf(Chord.get(chord).chroma);
+  return scales.filter((scale) => isSuperSet(Scale.get(scale).chroma));
+}
+chordScales('^7', ['major', 'minor', 'lydian']);
+// ['lydian', 'major']
+```
+
+As we may want all modes of a certain scale family, we can spare us some typing with this:
+
+```js
+const oneOfModes = (families) => (scale) =>
+  families.map((f) => Scale.get(f).normalized).includes(Scale.get(scale).normalized);
+const scaleModes = (...families) => Scale.names().filter(oneOfModes(families));
+scaleModes('major');
+/*
+[
+  'lydian',
+  'locrian',
+  'phrygian',
+  'aeolian',
+  'dorian',
+  'mixolydian',
+  'major'
+]
+*/
+chordScales('^7', scaleModes('major', 'harmonic minor', 'melodic minor'));
+// [ 'lydian', 'major', 'lydian #9' ]
+```
+
+</details>
+
+</CardContent>
+</Card>
+<br/>
+
+### Scale Transitions
+
+For our graph's edges, we need to find a way to evaluate scale transitions.
+
+To tell how much change is happening in a scale transition, we can use the chroma difference:
+
+```js
+export const chromaDifference(a, b) => {
+  let diff = 0;
+  for (let i = 0; i < 12; ++i) {
+    diff += a[i] === b[i] ? 0 : 1
+  }
+  return diff;
+}
+```
+
+This function will count how much characters of two chromas are different. Example:
+
+```
+
+101011010101 = C major
+101011010110 = F major
+__________^^ = 2 different bits
+
+```
+
+If we divide the different bits by 2, we get the difference in accidentals:
+
+```js
+const fromCtoG = chromaDifference(scaleChroma('C major'), scaleChroma('F major')); // 2
+const diff = fromCtoG / 2; // 1
+```
+
+In the final algorithm, we won't divide by 2, as it does not bring anything new to the table.
+
+### Rendering Scale Graphs
+
+Now that we have our nodes (scales) and edges (scale transitions), we can generate a graph from a set of chord changes.
+To visualize the algorithm for development, we will use [graphviz](https://graphviz.org/).
+
+As this is also just an extra implementation, I'll put the details in a green box.
+
+<Card elevation={3} >
+<CardContent style={{backgroundColor:'#C1E585'}}>
+
+<details>
+  <summary>Show Implementation Details</summary>
+
+To be able to use JSON instead of DOT, we will use [jgf-dot](https://github.com/jsongraph/jgf-dot):
+
+```js
+import { Graphviz } from 'graphviz-react';
+import toDot from 'jgf-dot';
+
+export default function GraphvizJSON({ json, options }) {
+  if (!json) {
+    return;
+  }
+  const dot = toDot(json);
+  // console.log('dot',dot);
+  return <Graphviz dot={dot} options={options} />;
+}
+```
+
+We can use it like that:
+
+```js
+<GraphvizJSON
+  options={{ height: 300 }}
+  json={{
+    graph: {
+      directed: true,
+      ...chordScaleGraph(['Dm7', 'G7', 'C^7'], scaleModes('major')),
+    },
+  }}
+/>
+```
+
+Finally, the chordScaleGraph function will output a json-graph that represents the scales of the given chords:
+
+```js
+export default function chordScaleGraph(chords, allowedScales = scaleModes('major'), halfDifference = false) {
+  const scales = chords
+    .map((chord) => chordScales(chord, allowedScales))
+    .map((choices) => (choices.length > 0 ? choices : ['chromatic']));
+  let nodes = [];
+  let links = [];
+  scales.forEach((choices, i) => {
+    choices
+      .map((choice) => `${Chord.tokenize(chords[i])[0]} ${choice}`)
+      .sort(bySetNum)
+      .forEach((choice, j) => {
+        if (i > 0) {
+          const prev = scales[i - 1];
+          prev.forEach((sourceScale, k) => {
+            const source = nodes.length - j - prev.length + k;
+            const target = nodes.length;
+            let label = chromaDifference(scaleChroma(nodes[source].label), scaleChroma(choice));
+            if (halfDifference) {
+              label /= 2;
+            }
+            links.push({ source, target, label });
+          });
+        }
+        nodes.push({ label: choice, fillcolor: scaleColor(choice), style: 'filled' });
+      });
+  });
+  nodes = nodes.map((node, id) => ({ ...node, id }));
+  return { nodes, edges: links };
+}
+```
+
+UPDATE: replaced graphviz-react by [@hpcc-js/wasm](https://github.com/hpcc-systems/hpcc-js-wasm),
+which is internatlly used by d3-graphviz, which is a dependency of graphviz-react.
+
+</details>
+
+</CardContent>
+</Card>
+<br/>
+
+Finally, this is what we get:
+
+<Graph
+  json={{
+    graph: {
+      directed: true,
+      ...chordScaleGraph(['Dm7', 'G7', 'C^7'], scaleModes('major'), true),
+    },
+  }}
+/>
+<br />
+
+## Path Finding
+
+As we now have all the tools we need, let's talk about how path finding works.
+
+### Naive Approach
+
+A naive approach for a the algorithm would be to
+
+1. find all possible chord scales for the given progression
+2. calculate all possible transition values (accidental changes)
+3. walk all possible paths and sum transition values
+4. the path with the lowest transition value sum is the smoothest
+
+### Complexity
+
+Before implementing the algorithm above, let's think about its complexity.
+To find out the total number of paths, we can multiply the number of scale choices for each chord. In the 251 example, this is:
+
+<BlockMath>{`3 * 1 * 2 = 6`}</BlockMath>
+
+In a common tune, there might be 32 bars of chords (and more). Even if each bar only has one chord with only 2 possible scales, we get:
+
+<BlockMath>{`2^{32} = 4294967296`}</BlockMath>
+
+paths, which is quite a lot.
+
+### Smart Approach
+
+A much more clever approach for path finding is something like [Dijkstra's algorithm](https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm) or the [A\* algorithm](https://en.wikipedia.org/wiki/A*_search_algorithm).
+The general trick is to only calculate the transitions needed, by always following the most promising path first.
+We will find out what that means below..
+
+### Step by Step Path Exploration
+
+Before talking code, let's look at how the algorithm should behave, step by step.
+To be able to see some interesting results, we will use the progression `Dm7 G7 C^7 Cm7 F7 Bb^7`:
+
+<AstarChordScaleFinder
+  chords={['Dm7', 'G7', 'C^7', 'Cm7', 'F7', 'Bb^7']}
+  scales={scaleModes('major')}
+  showJson={false}
+/>
+
+<br />
+
+After pressing "Step" 9 times, it turns into "Done", and the algorithm has found the optimal path.
+In this case, we have a match before we even had to check all transitions. This works because:
+
+- At each step, the path with the lowest value is extended
+- when a path is extended, all other paths leading to its source will be ignored (as they are longer)
+- The algorithm finishes if the path with the lowest value reaches the end.
+
+This saves calculation time, which might seem marginal in this instance, but it will be a life saver for bigger graphs.
+
+## General Algorithm
+
+Let's try to formulate the basic algorithm.
+
+### Connections
+
+To think about links between nodes, let's use this type:
+
+```ts
+declare type Connection = [source: string | null, target: string, value: number];
+```
+
+- source: the node we come from, null if it's a start connection
+- target: the node we are going to
+- value: the total value to get there
+
+Inside our algorithm, we will collect the following data:
+
+- open: connections that we can follow next
+- closed: connections that we already followed
+- winner: contains the winning path when the algorithm is done
+
+Let's again step through our example with the actual data:
+
+<AstarChordScaleFinder
+  chords={['Dm7', 'G7', 'C^7', 'Cm7', 'F7', 'Bb^7']}
+  scales={scaleModes('major')}
+  showJson={true}
+/>
+<br />
+
+### Algorithm Loop
+
+Now, the basic algorithm loop works like this:
+
+<Graph
+  json={{
+    graph: {
+      directed: true,
+      nodes: [
+        { label: 'start', id: '-1' },
+        {
+          label: '1. find connection with minimum value',
+          fillcolor: 'steelblue',
+          style: 'filled',
+          id: 0,
+        },
+        {
+          label: '2. leads to goal?',
+          fillcolor: 'salmon',
+          style: 'filled',
+          id: 1,
+        },
+        {
+          label: 'stop',
+          fillcolor: 'red',
+          style: 'filled',
+          id: 2,
+        },
+        {
+          label: '3. close that connection',
+          fillcolor: 'steelblue',
+          style: 'filled',
+          id: 3,
+        },
+        { label: '4. open all connections it leads to', fillcolor: 'steelblue', style: 'filled', id: 4 },
+      ],
+      edges: [
+        {
+          source: -1,
+          target: 0,
+        },
+        {
+          source: 0,
+          target: 1,
+        },
+        {
+          source: 1,
+          target: 2,
+          label: 'yes',
+        },
+        {
+          source: 1,
+          target: 3,
+          label: 'no',
+        },
+        { source: 3, target: 4 },
+        { source: 4, target: 0 },
+      ],
+    },
+  }}
+/>
+<br />
+
+or as text:
+
+1. find connection with minimum value
+2. stop if minimum connection leads to goal
+3. close that connection and all connections with the same target
+4. open all connections it leads to
+5. jump to 1
+
+### Implementation
+
+After all the talking, here is the code I came up with:
+
+```ts
+import { minIndex } from 'd3-array';
+
+export declare type NodeID = string;
+export declare type Target = [target: NodeID, value: number];
+
+export function openNext(
+  startNodes: NodeID[],
+  endNodes: NodeID[],
+  getTargets: (source: NodeID) => Target[],
+  state: ConnectionState = {
+    open: startNodes.map((node) => [null, node, 0]),
+    closed: [],
+    winner: false,
+  }
+): ConnectionState {
+  let { open, closed } = state;
+  const getValue = (o) => o[2];
+  // 1. find connection with minimum value
+  const bestIndex = minIndex(open, getValue);
+  const best = open[bestIndex];
+  // 2. stop if minimum connection leads to goal
+  if (endNodes.includes(best[1])) {
+    return { open, closed, winner: traceWinner(best) };
+  }
+  // 3a. close that connection
+  closed = closed.concat([best]);
+  const [_, newSource, distance] = best;
+
+  // 4. open all connections it leads to
+  const connections: Connection[] = getTargets(newSource).map(
+    ([target, value]): Connection => [newSource, target, distance + value]
+  );
+
+  open = [...open.slice(0, bestIndex), ...connections, ...open.slice(bestIndex + 1)];
+
+  // 3b. close all connections that lead to already closed targets
+  open = open.filter((c) => !closed.find(([_, target, v]) => target === c[1] && v <= getValue(c)));
+
+  return { open, closed, winner: false };
+
+  // trace back winner from closed paths
+  function traceWinner(winner) {
+    const path = [winner[0], winner[1]];
+    if (!path[0]) {
+      return [path[1]];
+    }
+    while (!startNodes.includes(path[0])) {
+      const prev = closed.find((c) => c[1] === path[0]);
+      path.unshift(prev[0]);
+    }
+    return path;
+  }
+}
+```
+
+We can run it like this:
+
+```js
+export default function bestPath(
+  startNodes: NodeID[],
+  endNodes: NodeID[],
+  getTargets: (source: NodeID) => Target[]
+): any[] {
+  let state: ConnectionState;
+  while (true) {
+    state = openNext(startNodes, endNodes, getTargets, state);
+    if (state.winner) {
+      return state.winner;
+    }
+  }
+}
+```
+
+I did this seperation to be able to run openNext as a generator function for the step by step explorations.
+
+### Running the algorithm on chord scales
+
+The implementation above is a general purpose path finding algorithm.
+We can use it for the chord scale problem like this:
+
+```js
+const getNodeID = (level, scale) => `${level}.${scale}`;
+const colorDiff = (source, target) => {
+  return source && scaleChroma(source) !== scaleChroma(target) ? 1 : 0;
+};
+const scaleTargets = (graph) => (nodeID) => {
+  const [lvl, source] = nodeID.split('.');
+  const level = parseInt(lvl);
+  if (level >= graph.length - 1) {
+    return [];
+  }
+  return graph[level + 1].map((target): Target => [
+    getNodeID(level + 1, target),
+    scaleDifference(source, target) + colorDiff(source, target),
+  ]);
+};
+
+export default function bestChordScales(chords, scales = scaleModes('major', 'harmonic minor', 'melodic minor')) {
+  const choices = chords.map((chord) => chordScales(chord, scales, true));
+  return bestPath(
+    choices[0].map((scale) => getNodeID(0, scale)),
+    choices[choices.length - 1].map((scale) => getNodeID(choices.length - 1, scale)),
+    scaleTargets(choices)
+  ).map((node) => node.split('.')[1]);
+}
+```
+
+## Running On Real Tunes
+
+Now comes the fun part: let's look if this actually works on real tunes:
+
+### Solar
+
+This Tune is not that long, but it has a few modulations:
+
+import SheetGrid from '../components/score/SheetGrid';
+
+<SheetGrid
+  rows={[1]}
+  measures={[
+    ['CmM7', 'CmM7', 'Gm7', 'C7'],
+    ['F^7', 'F^7', 'Fm7', 'Bb7'],
+    ['Eb^7', ['Ebm7', 'Ab7'], 'Db^7', ['Dm7b5', 'G7b9']],
+  ]}
+  rawText={true}
+  noColors={true}
+/>
+<br />
+
+export const solarChords = [
+  'CmM7',
+  'Gm7',
+  'C7',
+  'F^7',
+  'Fm7',
+  'Bb7',
+  'Eb^7',
+  'Ebm7',
+  'Ab7',
+  'Db^7',
+  'Dm7b5',
+  'G7b9',
+  'CmM7',
+];
+export const solarScales = scaleModes('major', 'melodic minor', 'harmonic minor');
+//export const solarScales = pentatonicScales;
+//export const solarScales = ['major', 'dorian', 'lydian', 'mixolydian', 'aeolian', 'phrygian dominant', 'locrian 6', 'harmonic minor'];
+
+<AstarChordScaleFinder chords={solarChords} scales={solarScales} />
+<br />
+
+If we compare the finished graph above with a graph that includes every possible connection, we see how much work we could save:
+
+<Card elevation={3}>
+  <CardContent style={{ maxHeight: 500, overflow: 'auto' }}>
+    <Graph
+      options={{ fit: true, height: 700, width: 600 }}
+      json={{
+        graph: {
+          directed: true,
+          ...chordScaleGraph(solarChords, solarScales),
+        },
+      }}
+    />
+  </CardContent>
+</Card>
+<br />
+
+Using the result of the algorithm, here is a colored version of the sheet:
+
+<State initial={{ showScales: false }}>
+  {({ state, setState }) => (
+    <>
+      <label>
+        chords
+        <Switch
+          checked={state.showScales}
+          color="default"
+          onChange={(e) => setState({ showScales: e.target.checked })}
+        />
+        scales
+      </label>
+      <SheetGrid
+        rows={[1]}
+        showScales={state.showScales}
+        measures={[
+          ['CmM7', 'CmM7', 'Gm7', 'C7'],
+          ['F^7', 'F^7', 'Fm7', 'Bb7'],
+          ['Eb^7', ['Ebm7', 'Ab7'], 'Db^7', ['Dm7b5', 'G7b9']],
+        ]}
+        rawText={true}
+        noColors={false}
+        innerBorders={false}
+      />
+    </>
+  )}
+</State>
+<br />
+
+Problem: A set of changes is mostly played in a loop, but the result has a break between the end and the beginning.
+Instead of C melodic minor, we could play harmonic minor at the beginning to better fit the ending.
+
+Possible Solution: We could put the sheet 3 times in sequence:
+
+<SheetGrid
+  rows={[1]}
+  measures={[
+    ['CmM7', 'CmM7', 'Gm7', 'C7'],
+    ['F^7', 'F^7', 'Fm7', 'Bb7'],
+    ['Eb^7', ['Ebm7', 'Ab7'], 'Db^7', ['Dm7b5', 'G7b9']],
+    ['CmM7', 'CmM7', 'Gm7', 'C7'],
+    ['F^7', 'F^7', 'Fm7', 'Bb7'],
+    ['Eb^7', ['Ebm7', 'Ab7'], 'Db^7', ['Dm7b5', 'G7b9']],
+    ['CmM7', 'CmM7', 'Gm7', 'C7'],
+    ['F^7', 'F^7', 'Fm7', 'Bb7'],
+    ['Eb^7', ['Ebm7', 'Ab7'], 'Db^7', ['Dm7b5', 'G7b9']],
+  ]}
+  rawText={true}
+  noColors={false}
+  innerBorders={false}
+/>
+<br />
+
+... and cut out the middle:
+
+<State initial={{ showScales: false }}>
+  {({ state, setState }) => (
+    <>
+      <label>
+        chords
+        <Switch
+          checked={state.showScales}
+          color="default"
+          onChange={(e) => setState({ showScales: e.target.checked })}
+        />
+        scales
+      </label>
+      <SheetGrid
+        rows={[1]}
+        showScales={state.showScales}
+        measures={[
+          ['CmM7', 'CmM7', 'Gm7', 'C7'],
+          ['F^7', 'F^7', 'Fm7', 'Bb7'],
+          ['Eb^7', ['Ebm7', 'Ab7'], 'Db^7', ['Dm7b5', 'G7b9']],
+        ]}
+        rawText={true}
+        noColors={false}
+        innerBorders={false}
+        loop={true}
+      />
+    </>
+  )}
+</State>
+<br />
+
+With this, we have a loopable version of the chord scales.. Of course, in practice, we can decide when to switch colors.
+
+Note: The ends of some scales might not fit in the cells. You can hover over a cell to see the full name.
+
+### All The Things You Are
+
+As a last example, we can go full circle and run this on All The Things You Are
+
+export const attyaScales = scaleModes('major', 'melodic minor', 'harmonic minor');
+
+export const attyaChords = [
+  'Fm7',
+  'Bbm7',
+  'Eb7',
+  'Ab^7',
+  'Db^7',
+  'Dm7',
+  'G7',
+  'C^7',
+  'C^7',
+  'Cm7',
+  'Fm7',
+  'Bb7',
+  'Eb^7',
+  'Ab^7',
+  'Am7',
+  'D7',
+  'G^7',
+  'G^7',
+  'Am7',
+  'D7',
+  'G^7',
+  'G^7',
+  'F#h7',
+  'B7b9',
+  'E^7',
+  'C7b13',
+  'Fm7',
+  'Bbm7',
+  'Eb7',
+  'Ab^7',
+  'Db^7',
+  'DbmM7',
+  'Cm7',
+  'Bo7',
+  'Bbm7',
+  'Eb7',
+  'Ab^7',
+  'Gh7',
+  'C7b9',
+];
+
+<AstarChordScaleFinder chords={attyaChords} scales={attyaScales} />
+<br />
+
+full graph:
+
+<Card elevation={3}>
+  <CardContent style={{ maxHeight: 500, overflow: 'auto' }}>
+    <Graph
+      options={{ fit: true, height: 1200, width: 600 }}
+      json={{
+        graph: {
+          directed: true,
+          ...chordScaleGraph(attyaChords, attyaScales),
+        },
+      }}
+    />
+  </CardContent>
+</Card>
+<br />
+
+And finally, this is how the colored version of this sheet looks like:
+
+<State initial={{ showScales: false }}>
+  {({ state, setState }) => (
+    <>
+      <label>
+        chords
+        <Switch
+          checked={state.showScales}
+          color="default"
+          onChange={(e) => setState({ showScales: e.target.checked })}
+        />
+        scales
+      </label>
+      <SheetGrid
+        rows={[1]}
+        showScales={state.showScales}
+        measures={[
+          ['Fm7', 'Bbm7', 'Eb7', 'Ab^7'],
+          ['Db^7', ['Dm7', 'G7'], 'C^7', 'C^7'],
+          ['Cm7', 'Fm7', 'Bb7', 'Eb^7'],
+          ['Ab^7', ['Am7', 'D7'], 'G^7', 'G^7'],
+          ['Am7', 'D7', 'G^7', 'G^7'],
+          ['F#m7b5', 'B7b9', 'E^7', 'C7b13'],
+          ['Fm7', 'Bbm7', 'Eb7', 'Ab^7'],
+          ['Db^7', 'DbmM7', 'Cm7', 'Bo7'],
+          ['Bbm7', 'Eb7', 'Ab^7', ['Gm7b5', 'C7b9']],
+        ]}
+        rawText={true}
+        noColors={false}
+        innerBorders={false}
+      />
+    </>
+  )}
+</State>
+<br />
+
+Looking at the Cm7 chord we talked about at the beginning of this post, we see that it is correctly
+recognized as part of Ab major! So Barry Harris would be proud... [Maybe not](https://www.youtube.com/watch?v=iDozKWsGTSM).
+
+## Conclusion
+
+Now we can automatically detect how chords go together in a tune. This opens a wide field of possibilities, for example:
+
+- Generating chord substitutions from scales, using 9ths 11ths and 13ths
+- "You should know the rules to know how to break them": The scales we get can be seen as a zero point of tension. We can gradually add tension by altering the scales.
+- Generating Melodies / Basslines
+- Roman Numeral Analysis
+
+## Links
+
+- [Search: Optimal, Branch and Bound, Astar @MIT](https://www.youtube.com/watch?v=gGQ-vAmdAOI)
+- [Computerphile: Dijkstra's Algorithm](https://www.youtube.com/watch?v=GazC3A4OQTE)

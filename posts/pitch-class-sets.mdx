@@ -1,0 +1,392 @@
+---
+title: Pitch Class Sets
+date: '2021-01-03'
+tags: ['tuning', 'music theory']
+description: Let's explore the world of pitch class sets.
+image: ./img/cof.png
+---
+
+import Button from '@material-ui/core/Button';
+import ChromaticCircle from '../components/sets/ChromaticCircle.tsx';
+import HarmonicCircle from '../components/sets/HarmonicCircle.tsx';
+import ScalePicker from '../components/sets/ScalePicker.tsx';
+import Grid from '@material-ui/core/Grid';
+import Switch from '@material-ui/core/Switch';
+import { Scale, Note, Range, PcSet, Chord } from '@tonaljs/tonal';
+import { State } from 'react-powerplug';
+import rotateMode from '../components/sets/rotateMode';
+import rotateScale from '../components/sets/rotateScale';
+import scaleReflection from '../components/sets/scaleReflection';
+import transposeScale from '../components/sets/transposeScale.ts';
+import simplifyScale from '../components/sets/simplifyScale.ts';
+
+export const oneOfModes = (families) => (scale) =>
+  families.map((f) => Scale.get(f).normalized).includes(Scale.get(scale).normalized);
+export const scaleModes = (...families) => Scale.names().filter(oneOfModes(families));
+export const byCenter = (a, b) => Scale.get(a).setNum - Scale.get(b).setNum;
+export const roots = ['C', 'C#', 'Db', 'D', 'D#', 'Eb', 'E', 'F', 'F#', 'Gb', 'G', 'G#', 'Ab', 'A', 'A#', 'Bb', 'B'];
+
+export const intervalCircle = (tonicAndinterval) => {
+  const [tonic, interval] = tonicAndinterval.split(' ');
+  const pitches = [tonic, Note.transpose(tonic, interval)];
+  const set = pitches.map((pc) => Note.get(pc).chroma);
+  return { tonic, pitches, sets: [{ stroke: 'steelblue', set }], label: tonicAndinterval, ...smallCircle };
+};
+
+Let's explore the world of pitch class sets.
+
+## Harmonic & Chromatic Circles
+
+There are (at least) two ways we can represent 12 notes in a circle:
+
+<State initial={{ scale: 'C major', relative: false }}>
+  {({ state, setState }) => {
+    const tonic = state.scale.split(' ')[0];
+    const scale = Scale.get(state.scale);
+    const set = scale.notes.concat([tonic]).map((pc) => Note.get(pc).chroma);
+    const pcset = PcSet.get(scale.notes);
+    const scales = scaleModes('major', 'melodic minor').sort(byCenter);
+    const setScale = (scale) => setState({ scale: simplifyScale(scale || state.scale) });
+    return (
+      <>
+        <center>
+          <Grid spacing={0} container style={{ width: '100%' }} alignItems="center">
+            <Grid item xs={6}>
+              <h3>Circle of Fifths</h3>
+              <HarmonicCircle
+                sets={[{ stroke: 'steelblue', set }]}
+                pitches={scale.notes}
+                tonic={scale.tonic}
+                relative={state.relative}
+              />
+              <Button color="primary" onClick={() => setScale(rotateScale(state.scale, 5, scales))}>
+                rotate scale
+              </Button>
+              <Button color="primary" onClick={() => setScale(rotateMode(state.scale, 5, scales))}>
+                rotate mode
+              </Button>
+              <Button color="primary" onClick={() => setScale(transposeScale(5, state.scale))}>
+                transpose
+              </Button>
+            </Grid>
+            <Grid item xs={6}>
+              <h3>Chromatic Circle</h3>
+              <ChromaticCircle
+                sets={[{ stroke: 'steelblue', set }]}
+                pitches={scale.notes}
+                tonic={scale.tonic}
+                relative={state.relative}
+              />
+              <Button color="primary" onClick={() => setScale(rotateScale(state.scale, 1, scales))}>
+                rotate scale
+              </Button>
+              <Button color="primary" onClick={() => setScale(rotateMode(state.scale, 1, scales))}>
+                rotate mode
+              </Button>
+              <Button color="primary" onClick={() => setScale(transposeScale(-1, state.scale))}>
+                transpose
+              </Button>
+            </Grid>
+          </Grid>
+          <ScalePicker scale={state.scale} onChange={(scale) => setState({ scale })} scales={scales} />
+          <br />
+          <label>
+            absolute
+            <Switch
+              checked={state.relative}
+              color="primary"
+              onChange={(e) => setState({ relative: e.target.checked })}
+            />
+            relative
+          </label>
+          <br /> Chroma: {pcset.chroma} = {pcset.setNum} {/*pcset.normalized*/}
+        </center>
+      </>
+    );
+  }}
+</State>
+
+The blue line connects all pitches that are part of the selected scale. Using those representations, we can build a geometric intuition for musical phenomena.
+In a nutshell, the circle of fifth helps to understand harmonic relationships, while the chromatic circle works better for melodic content.
+
+## Chromas & Set Numbers
+
+In the circles above, a so called chroma is displayed for each scale. A chroma is a format to represent a set of notes.
+For example, the chroma of a C major scale is `101011010101`.
+
+The idea: each digit stands for 1 of 12 possible pitches, where the first digit is C, then going chromatically up.
+A 1 means that the pitch that is represented by the digit is in the set, a 0 means it is not.
+
+A set number is just the decimal representation of a chroma:
+
+<State initial={{ scale: 'major', root: 'C' }}>
+  {({ state, setState }) => (
+    <>
+      <select value={state.root} onChange={(e) => setState({ root: e.target.value })}>
+        {Note.names().map((note, index) => (
+          <option key={index}>{note}</option>
+        ))}
+      </select>
+      <select value={state.scale} onChange={(e) => setState({ scale: e.target.value })}>
+        {['major', 'minor', 'dorian', 'mixolydian', 'harmonic minor', 'melodic minor'].map((scale, index) => (
+          <option key={index}>{scale}</option>
+        ))}
+      </select> <pre>
+        {Range.chromatic(['C3', 'B3'])
+          .map((n) => Note.get(n))
+          .map(({ pc, alt }) => (alt ? ' ' : pc))
+          .join('')}{' '}
+        = setNum
+        <br />
+        {PcSet.get(Scale.get(state.root + ' ' + state.scale).notes).chroma} ={' '}
+        {PcSet.get(Scale.get(state.root + ' ' + state.scale).notes).setNum}
+        <br />
+        {Array.from({ length: Note.chroma(state.root) + 1 }).join(' ')}^
+      </pre>
+    </>
+  )}
+</State>
+
+To find more about scale representations, be sure to check out [The Exciting Universe of Music Theory](https://ianring.com/musictheory/scales/#representing).
+Unfortunately, the chromas and set numbers are reversed, which does not seem right to me. Read [these comments](https://www.youtube.com/watch?v=4MIVQqSOJU4&lc=Ugzl97yE7jsVWS9JLmd4AaABAg) to find out more.
+
+### Chroma from Scale
+
+To get the chroma for a given scale, we can do this:
+
+```js
+PcSet.get(Scale.get('D dorian')).chroma; // 101011010101
+```
+
+<div style={{display:'none'}}>
+
+You might wonder why we do not use this:
+
+```js
+Scale.get('D dorian').chroma; // 101101010110
+```
+
+If you take a closer look at the chroma, you will notice that it represents C dorian, practially ignoring the "D", which is impractical for our purpose.
+
+</div>
+
+<details>
+  <summary>Why not Scale.get().chroma ?</summary>
+
+Because it is always relative to C, ignoring the root of the scale:
+
+```js
+const scaleProps = Scale.get('G major');
+
+scaleProps.chroma;
+// '101011010101' => ingores G
+
+PcSet.get(scaleProps.notes).chroma;
+// '101011010101' => relative to G => correct
+```
+
+</details>
+<br/>
+
+### Scale from Chroma
+
+As the opposite of the above, we might also want the scale for a given chroma:
+
+```js
+const chromaScale = (chroma, tonic, scaleTypes = Scale.names()) => {
+  const type = scaleTypes.find((type) => scaleChroma(`${tonic} ${type}`) === chroma);
+  if (type) {
+    return `${tonic} ${type}`;
+  }
+  return '';
+};
+expect(chromaScale('101011010101', 'C')).toBe('C major');
+expect(chromaScale('101011010101', 'D')).toBe('D dorian');
+expect(chromaScale('101011010101', 'E')).toBe('E phrygian');
+expect(chromaScale('101011010101', 'Eb')).toBe('');
+```
+
+### Chroma from Chord
+
+Of course, we can also represent a chord as a chroma:
+
+<State initial={{ chord: 'M', root: 'C' }}>
+  {({ state, setState }) => (
+    <>
+      <select value={state.root} onChange={(e) => setState({ root: e.target.value })}>
+        {Note.names().map((note, index) => (
+          <option key={index}>{note}</option>
+        ))}
+      </select>
+      <select value={state.chord} onChange={(e) => setState({ chord: e.target.value })}>
+        {['M', 'm', '7', '^7', 'm7'].map((chord, index) => (
+          <option key={index}>{chord}</option>
+        ))}
+      </select> <pre>
+        {Range.chromatic(['C3', 'B3'])
+          .map((n) => Note.get(n))
+          .map(({ pc, alt }) => (alt ? ' ' : pc))
+          .join('')}{' '}
+        = setNum
+        <br />
+        {PcSet.get(Chord.get(state.root + ' ' + state.chord).notes).chroma} ={' '}
+        {PcSet.get(Chord.get(state.root + ' ' + state.chord).notes).setNum}
+        <br />
+        {Array.from({ length: Note.chroma(state.root) + 1 }).join(' ')}^
+      </pre>
+    </>
+  )}
+</State>
+
+## Set Concepts
+
+Let's look at different concepts around pitch class sets.
+
+export const smallCircle = { r: 80, nodeRadius: 16 };
+
+### Modes
+
+These are the 7 modes of C major:
+
+export const scaleCircle = (scaleName) => {
+  const scale = Scale.get(scaleName);
+  const tonic = scaleName.split(' ')[0];
+  const set = scale.notes.concat([tonic]).map((pc) => Note.get(pc).chroma);
+  return { tonic, pitches: scale.notes, sets: [{ stroke: 'steelblue', set }], label: scaleName, ...smallCircle };
+};
+
+<ChromaticCircle {...scaleCircle('C major')} />
+<ChromaticCircle {...scaleCircle('D dorian')} />
+<ChromaticCircle {...scaleCircle('E phrygian')} />
+<ChromaticCircle {...scaleCircle('F lydian')} />
+<ChromaticCircle {...scaleCircle('G mixolydian')} />
+<ChromaticCircle {...scaleCircle('A aeolian')} />
+<ChromaticCircle {...scaleCircle('B locrian')} />
+
+- All of the above resemble the same set (same pitches)
+- Each set can be started at any contained pitch, which gives n modes for n pitch sets.
+
+### Transpositions / Rotations
+
+Transposing a set leads to rotation. These are the 12 major scales:
+
+<ChromaticCircle {...scaleCircle('C major')} />
+<ChromaticCircle {...scaleCircle('Db major')} />
+<ChromaticCircle {...scaleCircle('D major')} />
+<ChromaticCircle {...scaleCircle('Eb major')} />
+<ChromaticCircle {...scaleCircle('E major')} />
+<ChromaticCircle {...scaleCircle('F major')} />
+<ChromaticCircle {...scaleCircle('F# major')} />
+<ChromaticCircle {...scaleCircle('G major')} />
+<ChromaticCircle {...scaleCircle('Ab major')} />
+<ChromaticCircle {...scaleCircle('A major')} />
+<ChromaticCircle {...scaleCircle('Bb major')} />
+<ChromaticCircle {...scaleCircle('B major')} />
+
+For some scales, there are less than 12 unique rotations, for example:
+
+<ChromaticCircle {...scaleCircle('C whole tone')} />
+<ChromaticCircle {...scaleCircle('Db whole tone')} />
+<ChromaticCircle {...scaleCircle('D whole tone')} />
+
+- The above example shows that there are just 2 whole tone scales
+- After 2 rotations, we end up with D whole tone, which is a mode of C whole tone => same notes
+- All symmetric scales will have less than 12 unique rotations
+
+### Complements
+
+A complement can be obtained by using the gaps of another set:
+
+<ChromaticCircle {...scaleCircle('D major')} />
+<ChromaticCircle {...scaleCircle('Ab pentatonic')} />
+
+- Each set has exactly one complement
+
+### Reflections
+
+The reflection of a set can be generated by flipping it around:
+
+export const relectedCircle = (scale, interval, middleAxis) => {
+  const { sets, ...props } = scaleCircle(scale);
+  const {
+    sets: [{ set: intervalSet }],
+  } = intervalCircle(interval);
+  return {
+    sets: sets.concat([{ set: intervalSet, stroke: 'black', offset: middleAxis ? 1 / 24 : 0 }]),
+    ...props,
+  };
+};
+
+Flipping around the 1 / b5 will drop a major third down:
+
+<ChromaticCircle {...relectedCircle('C major', 'C 4A')} />
+<ChromaticCircle {...relectedCircle(scaleReflection('C major', 0, false, 'Ab'), 'C 4A')} />
+
+Flipping around the 5th / b2 gives us whole tone steps down:
+
+<ChromaticCircle {...relectedCircle('C major', 'G 4A')} />
+<ChromaticCircle {...relectedCircle(scaleReflection('C major', 1, false, 'Bb'), 'G 4A')} />
+
+Flipping around at the 2nd / b13 degree returns the same set:
+
+<ChromaticCircle {...relectedCircle('C major', 'D 4A')} />
+<ChromaticCircle {...relectedCircle(scaleReflection('C major', 2, false, 'C'), 'D 4A')} />
+
+Flipping around at the 6th / b3:
+
+<ChromaticCircle {...relectedCircle('C major', 'Eb 4A')} />
+<ChromaticCircle {...relectedCircle(scaleReflection('C major', 3, false, 'D'), 'Eb 4A')} />
+
+Flipping around at the 3rd / b7:
+
+<ChromaticCircle {...relectedCircle('C major', 'E 4A')} />
+<ChromaticCircle {...relectedCircle(scaleReflection('C major', 4, false, 'E'), 'E 4A')} />
+
+Flipping around at 4th / 7:
+
+<ChromaticCircle {...relectedCircle('C major', 'F 4A')} />
+<ChromaticCircle {...relectedCircle(scaleReflection('C major', 5, false, 'Gb'), 'F 4A')} />
+
+### Negative Harmony Reflections
+
+If we move the axis between the notes, we can get the "negative harmony":
+
+<ChromaticCircle {...relectedCircle('C major', 'A 4A', true)} />
+<ChromaticCircle {...relectedCircle(scaleReflection('C major', 4, true, 'C'), 'A 4A', true)} />
+
+Here, the C major scale is flipped around the axis between Eb/E and A/Bb.
+
+## Conclusion
+
+This was just a broad overview of some things that can be done with pitch class sets.
+I will write about more concepts and some of the above in greater detail in future posts.
+Be sure to check out the links below:
+
+## Links
+
+- [The Exciting Universe Of Music Theory](https://ianring.com/musictheory/)
+- [Visual Reference for Musicians](http://www.milesokazaki.com/wp-content/uploads/2016/02/visual-reference-smaller.pdf)
+- [Combinatorial Music Theory](https://www.youtube.com/watch?v=OMDtp89Xqlw)
+- [Basics of Set Theory](https://www.youtube.com/watch?v=GAWcpmLGJoA)
+
+<div style={{display:'none'}}>
+
+- [ ] clickable nodes to listen to scale, or hotkeys 1-9, or play button
+- [x] be able to draw lines between nodes in connected circle (for negative harmony axis)
+- [x] get reflection programmatically
+- [ ] chromaSymbols(chroma) to scales, chords, intervals
+- [ ] show some chord reflections
+- [x] fix order of rotation (wrong for non diatonic scales)
+- [x] add relative switch => show intervals instead of pitch class names
+- [x] coherent coloring: pitch classes should always have the same color (across both circles)
+- [x] two level scale sorting: sort first after number of notes, only if same number after the above
+- [ ] different scale sortings: byScaleNum, byCenter, alphatbetically.
+
+- show scale properties: chroma, scaleNum, accidentals, related scales, supersets, subsets
+- show nearby scales: 1 altered note (1 added note, 1 removed note => already shown sub/supersets)
+- handle unnamed scales: allow rotation into scales that do not have a name
+- also allow chords + maybe intervals
+- curved lines
+- animation??
+
+</div>

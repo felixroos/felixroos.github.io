@@ -1,0 +1,311 @@
+---
+title: Using MIDI with JavaScript
+date: '2020-12-30'
+image: ./img/MIDI_LOGO.jpg
+tags: ['web audio', 'code']
+description: With the Web MIDI API, we can send and receive MIDI events from javascript
+---
+
+With the Web MIDI API, we can send and receive MIDI events from javascript.
+This allows us to trigger notes on any instrument!
+
+## Turning MIDI into sound
+
+Before we get started, we need to make sure we can actually hear something:
+
+### External Instrument
+
+One way to turn MIDI into sound is to trigger an external hardware instrument.
+For example, we could send the MIDI from the browser though an audio interface MIDI output to the MIDI input of a synth.
+
+### Internal MIDI
+
+As described [here](https://stackoverflow.com/questions/43544357/how-to-connect-web-midi-api-to-native-application-like-ableton-live), MIDI can be received from the browser via IAC (at least on macOS).
+With it, we can control any software instrument / daw on the same computer. I am using Ableton, setting up a MIDI instrument track.
+
+## Live Coding with RunJS
+
+A quick and simple solution to trigger midi from javascript is using [RunJS](https://runjs.dev/) and [webmidi](https://github.com/djipco/webmidi).
+After installation, we can use the following function to run any midi logic:
+
+```js
+import WebMidi from 'webmidi';
+
+function run(fn, clear = true) {
+  WebMidi.enable((err) => {
+    if (err) {
+      throw new Error('Web Midi could not be enabled...');
+    }
+    if (WebMidi.outputs.length === 0) {
+      throw new Error('No output found...');
+    }
+    // console.log('outputs', WebMidi.outputs)
+    const output = WebMidi.outputs[0]; // use the input you like
+    console.log(`using output "${output.name}"`);
+    if (clear) {
+      output.sendChannelMode('allnotesoff');
+    }
+    setTimeout(() => fn(output), 5);
+  });
+}
+const stopAll = () => run(() => output.sendChannelMode('allnotesoff'));
+// test chord:
+run((output) => output.playNote(['C3', 'E3', 'G3', 'B3'], 1));
+stopAll(); // stops all notes if no run call is active
+```
+
+I found it best to disable "auto-run code on change" to trigger the code only when wanted with CMD+R.
+If you have an instrument connected that listens for channel 1, the above code should produce a beatiful C major 7 chord.
+
+### Scale Trainer
+
+Another way to use this is ear training. We can trigger random notes out of a given scale like this:
+
+```js
+import { Interval, Note, Scale } from '@tonaljs/tonal';
+
+const random = (a) => a[Math.floor(a.length * Math.random())];
+
+const scaleTrainer = (root, scale, clear) =>
+  run((output) => {
+    const notes = [root, random(Scale.get(`${root} ${scale}`).notes)];
+    console.log('play notes', notes);
+    output.playNote(notes, 2);
+  }, clear);
+
+scaleTrainer('C4', 'dorian', false);
+```
+
+This is just an example how we can get creative with this tool.
+
+## Running from a Web Browser
+
+Currently, the Web MIDI API only has [limited browser support](https://github.com/djipco/webmidi#browser-support).
+
+### useWebMidi
+
+The following hook can be used to interface with WebMidi:
+
+```js
+import { useEffect, useState } from 'react';
+import WebMidi from 'webmidi';
+
+export default function useWebMidi({ ready, connected, disconnected }: any) {
+  const [loading, setLoading] = useState(true);
+  const [outputs, setOutputs] = useState<any[]>(WebMidi?.outputs || []);
+  useEffect(() => {
+    WebMidi.enable((err) => {
+      if (err) {
+        //throw new Error("Web Midi could not be enabled...");
+        console.warn('Web Midi could not be enabled..');
+        return;
+      }
+      // Reacting when a new device becomes available
+      WebMidi.addListener('connected', (e) => {
+        setOutputs([...WebMidi.outputs]);
+        connected?.(WebMidi, e);
+      });
+
+      // Reacting when a device becomes unavailable
+      WebMidi.addListener('disconnected', (e) => {
+        setOutputs([...WebMidi.outputs]);
+        disconnected?.(WebMidi, e);
+      });
+      ready?.(WebMidi);
+      setLoading(false);
+    });
+  }, [ready, connected, disconnected, outputs]);
+  const outputByName = (name) => WebMidi.getOutputByName(name);
+  return { loading, outputs, outputByName };
+}
+```
+
+### MidiSelect
+
+Let's use the hook to show a midi output selector:
+
+import MidiSelect from '../components/midi/MidiSelect.tsx';
+import { State } from 'react-powerplug';
+
+<State initial={{}}>
+  {({ setState, state }) => (
+    <>
+      <MidiSelect onChange={(output) => setState({ output })} />
+      {state.output && (
+        <p>
+          {state.output?.name} selected
+          <br />
+          <button onClick={() => state.output?.playNote('A4')}>play A4</button>
+          <button onClick={() => state.output?.sendChannelMode('allnotesoff')}>stop</button>
+        </p>
+      )}
+    </>
+  )}
+</State>
+
+```js
+import MidiSelect from '../components/midi/MidiSelect.tsx';
+import { State } from 'react-powerplug';
+
+<State initial={{}}>
+  {({ setState, state }) => (
+    <>
+      <MidiSelect onChange={(output) => setState({ output })} />
+      {state.output && (
+        <p>
+          {state.output?.name} selected
+          <br />
+          <button onClick={() => state.output?.playNote('A4')}>play A4</button>
+          <button onClick={() => state.output?.sendChannelMode('allnotesoff')}>stop</button>
+        </p>
+      )}
+    </>
+  )}
+</State>;
+```
+
+## Midi Instrument
+
+We can now use the above knowledge to create a special midi instrument for the rhythmical player.
+
+import Player from '../components/rhythmical/components/Player.tsx';
+import { midi } from '../components/rhythmical/instruments/midi.ts';
+import drums from '../instruments/tidal';
+import { renderRhythm } from '../components/rhythmical/rhythmical.ts';
+import { inherit } from '../components/rhythmical/features/inherit.ts';
+
+<Player
+  fold={true}
+  hierarchy={false}
+  instruments={{ piano: midi('IAC-Treiber Bus 1', 1) }}
+  events={renderRhythm(
+    {
+      duration: 14,
+      instrument: 'piano',
+      parallel: [
+        [
+          ['e5', ['b4', 'c5'], 'd5', ['c5', 'b4']],
+          ['a4', ['a4', 'c5'], 'e5', ['d5', 'c5']],
+          ['b4', ['r', 'c5'], 'd5', 'e5'],
+          ['c5', 'a4', 'a4', 'r'],
+          [['r', 'd5'], ['r', 'f5'], 'a5', ['g5', 'f5']],
+          ['e5', ['r', 'c5'], 'e5', ['d5', 'c5']],
+          ['b4', ['b4', 'c5'], 'd5', 'e5'],
+          ['c5', 'a4', 'a4', 'r'],
+        ],
+        [
+          ['e2', 'e3', 'e2', 'e3', 'e2', 'e3', 'e2', 'e3'],
+          ['a2', 'a3', 'a2', 'a3', 'a2', 'a3', 'a2', 'a3'],
+          ['g#2', 'g#3', 'g#2', 'g#3', 'e2', 'e3', 'e2', 'e3'],
+          ['a2', 'a3', 'a2', 'a3', 'a2', 'a3', 'b1', 'c2'],
+          ['d2', 'd3', 'd2', 'd3', 'd2', 'd3', 'd2', 'd3'],
+          ['c2', 'c3', 'c2', 'c3', 'c2', 'c3', 'c2', 'c3'],
+          ['b1', 'b2', 'b1', 'b2', 'e2', 'e3', 'e2', 'e3'],
+          ['a1', 'a2', 'a1', 'a2', 'a1', 'a2', 'a1', 'a2'],
+        ],
+      ],
+    },
+    [inherit('instrument')]
+  )}
+/>
+
+The instrument can be used like any other [instrument](https://felixroos.github.io/blog/rhythmical-playback/#using-multiple-instruments):
+
+```js
+<Player
+  fold={true}
+  hierarchy={false}
+  instruments={{ piano: midi('IAC-Treiber Bus 1', 1) }}
+  events={renderRhythm(
+    {
+      duration: 14,
+      instrument: 'piano',
+      parallel: [
+        [
+          ['e5', ['b4', 'c5'], 'd5', ['c5', 'b4']],
+          ['a4', ['a4', 'c5'], 'e5', ['d5', 'c5']],
+          ['b4', ['r', 'c5'], 'd5', 'e5'],
+          ['c5', 'a4', 'a4', 'r'],
+          [['r', 'd5'], ['r', 'f5'], 'a5', ['g5', 'f5']],
+          ['e5', ['r', 'c5'], 'e5', ['d5', 'c5']],
+          ['b4', ['b4', 'c5'], 'd5', 'e5'],
+          ['c5', 'a4', 'a4', 'r'],
+        ],
+        [
+          ['e2', 'e3', 'e2', 'e3', 'e2', 'e3', 'e2', 'e3'],
+          ['a2', 'a3', 'a2', 'a3', 'a2', 'a3', 'a2', 'a3'],
+          ['g#2', 'g#3', 'g#2', 'g#3', 'e2', 'e3', 'e2', 'e3'],
+          ['a2', 'a3', 'a2', 'a3', 'a2', 'a3', 'b1', 'c2'],
+          ['d2', 'd3', 'd2', 'd3', 'd2', 'd3', 'd2', 'd3'],
+          ['c2', 'c3', 'c2', 'c3', 'c2', 'c3', 'c2', 'c3'],
+          ['b1', 'b2', 'b1', 'b2', 'e2', 'e3', 'e2', 'e3'],
+          ['a1', 'a2', 'a1', 'a2', 'a1', 'a2', 'a1', 'a2'],
+        ],
+      ],
+    },
+    [inherit('instrument')]
+  )}
+/>
+```
+
+This is the source code for the instrument:
+
+```js
+import WebMidi, { Output } from 'webmidi';
+import * as Tone from 'tone';
+import enableWebMidi from '../../midi/enableWebMidi';
+
+export function midi(outputName, channel) {
+  return () => new Promise((resolve, reject) => {
+    enableWebMidi().then(() => {
+      if (WebMidi.outputs.length === 0) {
+        throw new Error('No output found...');
+      }
+      const output = WebMidi.getOutputByName(outputName) as Output;
+      const s = {
+        triggerAttackRelease: (note, duration, time?, velocity?) => {
+          // https://github.com/Tonejs/Tone.js/issues/805#issuecomment-748172477
+          const timingOffset = WebMidi.time - Tone.context.currentTime * 1000
+          time = time * 1000 + timingOffset;
+          output?.playNote(note, channel, { time, duration: duration * 1000 - 5, velocity: 0.5 });
+        },
+        connect: (dest) => { return s },
+        toMaster: () => { return s },
+      }
+      // onload(instrument)
+      resolve(s);
+    }).catch(() => {
+      throw new Error('Web Midi could not be enabled...');
+    });
+  })
+}
+```
+
+You might wonder what enableWebMidi is doing there, and why not use WebMidi.enable?
+This is a workaround to be able to use WebMidi multiple times on one page. It seems that WebMidi.enable will only work once.. The enableWebMidi function looks like that:
+
+```js
+import WebMidi from 'webmidi';
+
+export default function enableWebMidi() {
+  return new Promise((resolve, reject) => {
+    if (WebMidi.enabled) {
+      // if already enabled, just resolve WebMidi
+      resolve(WebMidi);
+      return;
+    }
+    WebMidi.enable((err) => {
+      if (err) {
+        reject(err);
+      }
+      resolve(WebMidi);
+    });
+  });
+}
+```
+
+## More
+
+- https://github.com/Tonejs/Midi
+- https://github.com/djipco/webmidi#nodejs-support
+- [accurate midi scheduling with tone.js](https://github.com/Tonejs/Tone.js/issues/805#issuecomment-748172477)

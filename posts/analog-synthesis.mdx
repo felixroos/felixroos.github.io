@@ -1,0 +1,338 @@
+---
+title: A Macro View on Analog Synthesis
+date: '2021-05-14'
+tags: ['diy', 'electronics', 'synthesis']
+description: Lately, I've been learning about analog synthesis
+image: ./img/vco.png
+---
+
+import { Color } from '../components/common/Color.tsx';
+import { Plot } from '../components/common/Plot.tsx';
+import AnimationFrame from '../components/common/AnimationFrame.tsx';
+import { State } from 'react-powerplug';
+import ReactAudioPlayer from 'react-audio-player';
+
+Lately, I've been learning about analog synthesis.
+In this post, I want to document what I've learned so far and how I approached the topic.
+Disclaimer: I am not an expert.
+
+## Analog & Digital Synthesis
+
+![analog circuit](./img/analog-synthesis/analogcircuit.gif)
+
+In a nutshell, analog synthesis produces sound by directly manipulating voltages in electrical circuits.
+In digital synthesis, buffered sound data is calculated from code and then passed to an audio interface that transforms it into voltage.
+
+Generally, analog synthesis is much simpler in its infrastructure.
+The higher complexity of digital synthesis allows much more fine grained control,
+whereas analog synthesis can sometimes behave in unexpected ways.
+
+I am not going into the debate of which is "better" here, as both ways have their right to exist.
+
+## From Voltage to Sound 🔌 🔊
+
+In both analog and digital synthesis, we have a voltage at the end, which is fed to the sound system (amplifier + speaker).
+
+<AnimationFrame autostart={true}>
+  {({ toggle, time, isRunning, start }) => {
+    return (
+      <>
+        {time && (
+          <div style={{ display: 'flex' }}>
+            <div style={{ width: 300 }}>
+              <p>When the voltage does a sine wave,</p>
+              <Plot
+                range={{ x: [0, 10 * Math.PI], y: [-1, 1] }}
+                height={100}
+                width={300}
+                hideAxes={true}
+                functions={[(x) => Math.sin(x + time.fromStart / 100)]}
+                colors={['green', 'yellow']}
+              />
+            </div>
+            <div style={{ width: 300 }}>
+              <p> the membrane will move like this:</p>
+              <Plot
+                range={{ x: [0, Math.PI], y: [-1, 1] }}
+                height={100}
+                width={300}
+                hideAxes={true}
+                functions={[(x) => Math.sin(time.fromStart / 100) * Math.sin(x)]}
+                colors={['green', 'yellow']}
+              />
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }}
+</AnimationFrame>
+
+<p>... which will push and pull the air molecules around (now from left to right..):</p>
+<img src="https://mk0waitbutwhy9c3hjku.kinstacdn.com/wp-content/uploads/2016/03/red-dot.gif" />
+
+So, the displacement of the membrane in the speaker is directly affected by that incoming voltage level.
+When the membrane moves, it pushes the air molecules back and forth, creating a sound wave that the human ear can detect.
+
+If you want to read more on the basics of sound, I recommend [this post by waitbutwhy](https://waitbutwhy.com/2016/03/sound.html).
+
+## Building Blocks of Analog Synthesis
+
+Now that we have the basic theory out of the way, let's look at the most important building blocks of an analog synth.
+
+### Micromodules
+
+As this post is a macro view on analog synthesis, I will not talk about how the electric circuits work in detail.
+To start playing around with analog synthesis, I found the [micromodules from Syntaxis](http://micromodular.pl/) (not sponsored 🙂).
+They provide breadboard friendly components that can be linked together in multiple ways. With them, I could start to explore
+how analog modules interact without needing to know the details about how to build the circuits.
+
+### The Oscillator
+
+As a sound source, we need at least one oscillator. At the heart of an analog oscillator, an electric circuit is creating some kind of
+periodic voltage wave. Commonly, the frequency of that wave can be controlled with voltage (CV = Control Voltage).
+An oscillator that can be controlled with voltage is called a VCO (= Voltage Controlled Oscillator).
+
+Let's start with a simple circuit:
+
+![vco-simple](./img/analog-synthesis/vco-simple.png)
+
+| color                     | meaning              |
+| ------------------------- | -------------------- |
+| <Color color="#CB2A1D"/>  | +12V                 |
+| <Color color="#3E89D5"/>  | -12V                 |
+| <Color color="#3C3C3C" /> | Ground (0V)          |
+| <Color color="#EC612A" /> | 5V                   |
+| <Color color="#FFF853" /> | Control Voltage (CV) |
+| <Color color="#5CC63D" /> | Analog Audio Voltage |
+
+We will use this color coding throughout the post. This is the (much more messy) circuit in real life:
+
+![vco-simple-real](./img/analog-synthesis/vco-simple-real.png)
+
+#### Parts
+
+- [uVCO-3340-A](https://syntaxis.com.pl/en/micromodules/77-uvco-3340-a.html)
+- [uPSU-112-A](https://syntaxis.com.pl/en/micromodules/82-upsu-112-a.html) with laptop charger
+- 8ohm speaker
+- 3 potentiometers to provide CV
+- breadboard + cables
+
+#### Power Connections
+
+- The PSU (power suplly unit) provides -12V, GND (0V), +12 and 5V.
+- The VCO is connected to -12V, GND and 12V
+- The potentiometers are connected to GND and 5V, outputting a voltage between 0 and 5V.
+
+Similar power connections will be used throughout the post.
+
+#### Control Voltage
+
+The output of the pots is used as CV to change certain parameters of the VCO:
+
+- The coarse pot is connected to the 1/2 V/Oct input, which means it can add 5V/0.5V = 10 octaves
+- The fine pot is connected to the 24V/Oct input, which means it can add 5V/24V = 0.2 octaves = 2.5 semitones
+- Let's ignore the pulse width pot for now
+
+#### Adding a Keyboard
+
+The circuit above is slightly boring, as controlling pitch with a potentiometer is not very useful when we want to play melodies.
+To fix that, let's remove all pots and add a keyboard that supports CV, like the Arturia Keystep:
+
+![vco-keystep real](./img/analog-synthesis/vco-keystep-sketch.png)
+
+In reality:
+
+![vco-keystep real](./img/analog-synthesis/vco-keystep-real.png)
+
+- The keystep has a pitch cv output, that I connected to the 1V/Oct input of the VCO, using a 3,5mm jack (which is also grounded)
+- I also replaced the cheap 8ohm speaker with a Bluetooth Speaker that has an AUX input.
+
+#### Ready to Rave?
+
+Now we are finally ready to rave (loud):
+
+<ReactAudioPlayer type="audio/x-m4a" src="./audio/vco-rave.mp3" controls />
+
+If we look at the waveform, we can see the crisp sawwave:
+
+![sawrave](./img/analog-synthesis/sawrave.png)
+
+Here, we can clearly see the sawwave changing frequencies.
+Also, we can make out slight wobbles in the amplitude, which is that dirty analog imperfection we want.
+
+### The Filter
+
+If you listen to the sound above, the sawwave is really harsh, which might be tamed with a [filter](https://syntaxis.com.pl/en/micromodules/109-uvcf-2044-lp4-a.html):
+
+![vco-filtered](./img/analog-synthesis/vco-filtered-sketch.png)
+
+In reality (with slightly exaggerated cutoff pot):
+
+![vco-filtered real](./img/analog-synthesis/vco-filtered-real.png)
+
+#### Explanation
+
+- Instead of going from the VCO saw output directly to the speaker, we route it into the filter input
+- The filter output is then plugged to the speaker
+- The potentiometer controls the cutoff frequency of the filter
+- A filter that can be controlled with voltage is called VCF (Voltage Controlled Filter)
+
+#### Now the rave gets better
+
+<ReactAudioPlayer type="audio/x-m4a" src="./audio/vco-rave-filter.mp3" controls />
+
+In the beginning of the waveform, we can see the sawwave emerging from a more sinelike shape as the filter opens:
+
+![vco-sawrave filtered](./img/analog-synthesis/sawrave-filtered.png)
+
+### The LFO
+
+So far, I had to use my hand to manually turn the cutoff knob.
+Using an LFO (= Low Frequency Oscillator), we can automate periodic CV changes:
+
+![vco filter + lfo sketch](./img/analog-synthesis/vco-filter-lfo-sketch.png)
+
+In the messy real life:
+
+![vco filter + lfo](./img/analog-synthesis/vco-filter-lfo.png)
+
+#### Explanation
+
+- The LFOs triangle output is connected with the filter frequency input
+- The right pot is connected to another filter frequency input
+  - Both frequency inputs will be summed by the filter
+- A left pot controls the speed of the lfo
+
+#### Hands free raving
+
+<ReactAudioPlayer type="audio/x-m4a" src="./audio/vco-rave-filter-lfo.mp3" controls />
+
+In the waveform, the periodic cutoff changes look like this:
+
+![vco-sawrave filter + lfo](./img/analog-synthesis/sawrave-filter-lfo.png)
+
+### The Attenuator
+
+So far, the LFO has a pretty big impact on our filter.
+It would be nice if we could somehow control the amount of impact.. This is where the attenuator comes in.
+Unlike the other modules, an attenuator is just a potentiometer with special wiring:
+
+![attenuator sketch](./img/analog-synthesis/attenuator.png)
+
+Instead of wiring 5V to the right pin, we use any signal that should be attenuated.
+In our case, we can use the LFO triangle output.
+Using the pot, we can then scale it down to minimize its impact:
+
+![vco-sawrave filter + lfo + attenuator sketch](./img/analog-synthesis/vco-filter-lfo-attenuator-sketch.png)
+
+The rats nest in real life:
+
+![vco-sawrave filter + lfo + attenuator real](./img/analog-synthesis/vco-filter-lfo-attenuator-real.png)
+
+Note that I also added an attenuator for pitch. You can view the attenuator like a modulation depth control for any parameter.
+
+#### Let's rave again
+
+<ReactAudioPlayer type="audio/x-m4a" src="./audio/vco-rave-filter-lfo-attenuator.mp3" controls />
+
+In the waveform, we can see the wobbles getting slightly more intense to the right:
+
+![vco-sawrave filter + lfo + attenuator](./img/analog-synthesis/sawrave-filter-lfo-attenuator.png)
+
+#### Time for a Melody
+
+Using the pitch modulation attenuator, we can create a spacey melody ontop (layered with a DAW):
+
+<ReactAudioPlayer type="audio/x-m4a" src="./audio/vco-rave-filter-lfo-attenuator-melody.mp3" controls />
+
+(The steady beeping came from my potentiometer bouncing out of the breadboard...)
+
+### Gate Signals and the Amplifier
+
+In our little synth, the tone keeps going on and on and on, even if we release the key on the keyboard.
+This is not really practical to make music with.. To control the volume / amplitude of a signal, we can use a VCA (= Voltage Controlled Amplifier).
+
+When using a keyboard, we want the sound to start when the key is pressed and stop when it is released.
+Therefore, a keyboard that includes CV will commonly also have a Gate output.
+By convention, the gate signal will be low (0V) when no key is pressed and high (5V) when a key is pressed.
+
+Back to the circuit: To keep it simple, let's remove the lfo and the attenuators, and add the VCA + Gate:
+
+![vco, filter + vca sketch](./img/analog-synthesis/vco-filter-vca.png)
+
+![vco, filter + vca real](./img/analog-synthesis/vco-filter-vca-real.png)
+
+Now we can release the key and the sound will stop.
+
+<ReactAudioPlayer type="audio/x-m4a" src="./audio/vco-rave-filter-vca-melody.mp3" controls />
+
+### The ADSR Envelope
+
+Using the gate to control our amplifier sounds really hard and sometimes clicky.
+For softer sounds, we might want to fade the in when the key is pressed and out when it is released.
+This is where the ADSR envelope comes in. ADSR stands for:
+
+- Attack: Time till the note reaches the max volume
+- Decay: Time till the note reaches the sustain level
+- Sustain: Final level for the sustained note
+- Release: Time till the note is silent after the key is released
+
+![ADSR](https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/ADSR_parameter.svg/2880px-ADSR_parameter.svg.png)
+
+![ADSR sketch](./img/analog-synthesis/vco-filter-vca-envelope.png)
+
+![ADSR real](./img/analog-synthesis/vco-filter-vca-adsr-real.png)
+
+Now we can control the ADSR curve with the 4 pots on the bottom!
+As we will see soon, we can also use attenuators to modulate parameters with an envelope.
+
+<ReactAudioPlayer type="audio/x-m4a" src="./audio/vco-rave-filter-vca-adsr-melody.mp3" controls />
+
+In the waveform, we can see the slow decay:
+
+![ADSR real](./img/analog-synthesis/sawrave-vco-filter-vca-adsr.png)
+
+### Putting it all together
+
+After we examined the most important building blocks of a classic analog synthesizer, let's combine all of them!
+
+This sketch from the [micromodular how to site](http://micromodular.pl/howto) shows how we can arrange all the parts to a fully functional monosynth:
+
+![full synth](./img/analog-synthesis/bb_simplest_synthesizer.png)
+
+Of course, I also built this thing:
+
+![full synth real](./img/analog-synthesis/whole-synth.png)
+
+#### Controls
+
+- VCO
+  - pitch coarse
+  - pitch fine
+  - pulse width (for square wave)
+  - pitch mod ADSR attenuator
+  - pitch mod LFO attenuator
+- VCF
+  - cutoff
+  - resonance
+  - cutoff mod ADSR attenuator
+  - res mod LFO attenuator
+- VCA
+  - manual gain
+  - volume attenuator
+  - gain mod ADSR attenuator
+  - gain mod LFO attenuator
+- LFO
+  - rate coarse
+  - rate fine
+  - pulse width
+
+### Final Thoughts
+
+Those were the most essential building blocks of an analog synthesizer.
+In a future posts, I might
+
+- combine the synth with my DIY Keyboard Scanner
+- use a multi channel DAC to output polyphonic CV
+- build modules from scratch

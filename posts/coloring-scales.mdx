@@ -1,0 +1,194 @@
+---
+title: Coloring Musical Scales
+date: '2021-01-02'
+tags: ['code', 'd3']
+description: After we found a basic way of coloring pitches, let's now look at a way to color scales.
+image: ./img/coloring-scales.png
+---
+
+import { Scale, Chord, ChordType, Note, PcSet, Collection } from '@tonaljs/tonal';
+import { interpolateSinebow } from 'd3-scale-chromatic';
+import ConnectedCircle from '../components/common/ConnectedCircle';
+import chromaColor from '../components/sets/chromaColor.ts';
+import scaleChroma from '../components/sets/scaleChroma.ts';
+import chromaCenter from '../components/sets/chromaCenter.ts';
+
+After we found a basic way of [coloring pitches](../coloring-pitches), let's now look at a way to color scales.
+
+## Chroma Center
+
+export const chromaticCircle = Array.from({ length: 12 }, (_, i) => Note.get(Note.fromMidi(i)).pc);
+
+This is the C major scale in a chromatic circle, indexed from 0 to 11:
+
+export const mirrorAxis = (scale) => {
+  const center = chromaCenter(scaleChroma(scale));
+  return {
+    source: center * 2,
+    target: (center + 6) * 2,
+  };
+};
+
+export const numberedCircle = (scale) => (
+  <ConnectedCircle
+    margin={3}
+    nodes={Array.from({ length: 24 }, (_, id) => ({
+      id,
+      value: Math.floor(id / 2) / 12,
+      ...(id % 2 === 0
+        ? {
+            stroke: 'black',
+            fill: 'white',
+            color: 'black',
+            label: id / 2,
+            distance: 120,
+          }
+        : {
+            fill: Scale.get(scale).notes.includes(chromaticCircle[(id - 1) / 2]) ? 'steelblue' : 'gray',
+            color: 'white',
+            label: chromaticCircle[(id - 1) / 2],
+            distance: 80,
+          }),
+    }))}
+    links={[mirrorAxis(scale)]}
+    r={80}
+    nodeRadius={16}
+  />
+);
+
+<div>{numberedCircle('C major')}</div>
+
+If we now add all indices of active notes inside modulo 12, we get:
+
+```
+(0 + 2 + 4 + 5 + 7 + 9 + 11) % 12 = 2
+```
+
+... which is the index of D. Interestingly, D is the only place we can put a mirroring axis that won't change the notes after reflection.
+Let's call this the chroma center. We can calculate it for any chroma like this:
+
+```js
+export default function chromaCenter(chroma: string) {
+  const digits = chroma.split('');
+  const ones = digits.map((d, i) => (d === '1' ? i : -1)).filter((i) => i !== -1);
+  return ones.reduce((sum, i) => i + sum, 0) % 12;
+}
+```
+
+Here, we are summing all indices that contain "1" inside mod 12.
+
+<details>
+  <summary>What is a chroma?</summary>
+
+A chroma is a string with 12 characters that represent a set of pitches with a combination of 1s and 0s.
+A 1 means that the note is in the set, a zero means not.
+The 12 characters represent all chromatic notes going from C to B.
+For example, the chroma of C major is 101011010101:
+
+<pre>
+  {`101011010101 
+C D EF G A B`}
+</pre>
+
+</details>
+<br/>
+
+## Scale Colors
+
+Now, we can use the chroma center for [cyclical color interpolation](https://github.com/d3/d3-scale-chromatic#cyclical):
+
+```js
+import { interpolateSinebow } from 'd3-scale-chromatic';
+import chromaCenter from './chromaCenter';
+
+export default function chromaColor(chroma) {
+  return interpolateSinebow(chromaCenter(chroma) / 12);
+}
+```
+
+... and run it on all diatonic scales:
+
+export const circleOfFifths = Array.from({ length: 12 }, (_, i) => Note.get(Note.fromMidi(60 + ((i * 7) % 12))).pc);
+export const scaleColor = (scale) => chromaColor(scaleChroma(scale));
+export const familyScales = (family) => (
+  <ul style={{ margin: 0 }}>
+    {circleOfFifths.map((tonic) => (
+      <li style={{ marginBottom: 2, listStyle: 'none', display: 'flex' }} key={tonic}>
+        {Scale.modeNames(`${tonic} ${family}`).map(([root, scale], i) => (
+          <span style={{ backgroundColor: scaleColor(`${root} ${scale}`), marginRight: 2, padding: 2 }} key={i}>
+            {root} {scale}
+          </span>
+        ))}
+      </li>
+    ))}
+  </ul>
+);
+
+<div>{familyScales('major')}</div>
+<br />
+Here, we can see that scales that contain the same notes have the same color.
+
+<details>
+  <summary>Show Source</summary>
+
+```js
+export const circleOfFifths = Array.from({ length: 12 }, (_, i) => Note.get(Note.fromMidi(60 + ((i * 7) % 12))).pc);
+export const scaleColor = (scale) => chromaColor(scaleChroma(scale));
+export const familyScales = (family) => (
+  <ul style={{ margin: 0 }}>
+    {circleOfFifths.map((tonic) => (
+      <li style={{ marginBottom: 2, listStyle: 'none', display: 'flex' }} key={tonic}>
+        {Scale.modeNames(`${tonic} ${family}`).map(([root, scale], i) => (
+          <span style={{ backgroundColor: scaleColor(`${root} ${scale}`), marginRight: 2, padding: 2 }} key={i}>
+            {root} {scale}
+          </span>
+        ))}
+      </li>
+    ))}
+  </ul>
+);
+
+<div>{familyScales('major')}</div>;
+```
+
+</details>
+<br/>
+
+### More Scales
+
+Modes of Harmonic Minor:
+
+<div>{familyScales('harmonic minor')}</div>
+
+Modes of Melodic Minor:
+
+<div>{familyScales('melodic minor')}</div>
+<br />
+
+### Issue: Same Color for Different Scales
+
+While the coloring inside one scale family works, we can see that some scales across families have the same color, for example C melodic minor and C mixoldian.
+
+This is because the center is the same for both:
+
+<div style={{ display: 'flex' }}>
+  <div>
+    <center>C melodic minor</center>
+    {numberedCircle('C melodic minor')}
+  </div>
+  <div>
+    <center>C mixolydian</center>
+    {numberedCircle('C mixolydian')}
+  </div>
+</div>
+
+We can also double check this by calculating the chroma center:
+
+```
+(0 + 2 + 3 + 5 + 7 + 9 + 11) % 12 = 1 // C melodic minor
+(0 + 2 + 4 + 5 + 7 + 9 + 10) % 12 = 1 // C mixolydian
+```
+
+Still, this way of coloring chromas is very helpful to differentiate different tonal centers inside the same scale family.
+
+That's it for today, the next color post will be about scale light and darkness to diversify the colors.

@@ -21,10 +21,12 @@
   },
   "dependencies": {
     "@ctrl/tinycolor": "^3.4.0",
+    "@hpcc-js/wasm": "^1.4.1",
     "@material-ui/core": "^4.12.2",
     "@material-ui/icons": "^4.11.2",
     "@rebass/preset": "^4.0.5",
     "@tonaljs/tonal": "^4.6.2",
+    "bb-chord-symbol": "^1.0.10",
     "d3": "^7.0.0",
     "d3-axis": "^3.0.0",
     "d3-scale": "^4.0.0",
@@ -35,6 +37,7 @@
     "gray-matter": "^4.0.3",
     "install": "^0.13.0",
     "ireal-reader": "^1.3.0",
+    "jgf-dot": "^1.1.1",
     "js-combinatorics": "^1.5.3",
     "leetsheet": "^0.2.0",
     "mdx-bundler": "^5.2.0",
@@ -69,6 +72,7 @@
     "theme-ui": "^0.10.0",
     "tone": "^14.7.77",
     "vexflow": "^3.0.9",
+    "webmidi": "^2.5.2",
     "zippa": "^0.3.1"
   },
   "devDependencies": {

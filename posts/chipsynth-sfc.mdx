@@ -1,0 +1,135 @@
+---
+title: Recreating SNES Music with Chipsynth SFC
+date: '2020-10-20'
+image: ./img/ocarina.png
+tags: ['synthesis']
+description: Recently, Chipsynth SFC was released, which brings a really accurate emulation of the SNES soundchip to VST or standalone format. Let's play around with it.
+---
+
+I always get nostalgia when listening to the soundtracks of the [SNES](https://en.wikipedia.org/wiki/Super_Nintendo_Entertainment_System), for example:
+
+<audio preload="" id="audio1" controls="controls" src="https://fi.zophar.net/soundfiles/nintendo-snes-spc/legend-of-zelda-the-a-link-to-the-past/02%20Beginning%20of%20the%20Journey.mp3">Your browser does not support HTML5 Audio!</audio>
+
+I transcribed many of those [here](https://musescore.com/user/27655463/sheetmusic)
+
+## Chipsynth SFC
+
+Recently, [Chipsynth SFC](https://www.plogue.com/products/chipsynth-sfc.html) was released, which brings a really accurate emulation of the SNES soundchip to VST or standalone format.
+It reminds me of [C700 VST](http://picopicose.com/software.html), but it seems much more stable and thought out.
+To see the hard work that went into it, check out [this video](https://www.youtube.com/watch?v=V3yWXVAZgO0).
+
+## SPC files
+
+Music on the SNES is packaged to SPC files, which can either be [ripped using an emulator](https://www.smwcentral.net/?p=viewthread&t=86807) or, more much easier, downloaded from [Zophars Music Domain](https://www.zophar.net/music/nintendo-snes-spc).
+They can directly be played with Chipsynth SFC, or with external software like [Audio Overload](https://www.bannister.org/software/ao.htm) and [SPC700 Player](https://www.smwcentral.net/?p=section&a=details&id=15205).
+While Audio Overload is easier to use, SPC700 Player displays more in depth information, but more on that later..
+
+### Tracks & Samples
+
+An SPC file contains up to 8 tracks where each can play 1 of 16 samples at a time.
+It is quite common for tracks to switch samples wihle playing to achieve more versatile output.
+Using a player, you can listen to individual tracks, which is good to analyze or transcribe a tune:
+
+![chipsynth player](./img/spc/chipsynth_player.png)
+chipsynth player
+
+<div style={{display:'none'}}>
+  
+![audiooverload player](./img/spc/audiooverload_player.png)
+audiooverload spc channels
+
+![spc700 player](./img/spc/spc700_player.png)
+spc700 player. tracks are toggled with bottom left buttons. "Src" displays current instrument. You have to press left/right to navigate to that view.
+
+</div>
+
+### Generating MIDI from an SPC file
+
+For some SPC files, it is possible to generate midi! Checkout [these](https://github.com/loveemu/spc_converters_legacy) [links](https://code.google.com/archive/p/loveemu/downloads?page=3) to download converters for many SPC flavours.
+For example to convert a nintendo flavoured SPC, you can use nintspc:
+
+```bash
+for f in *.spc; do "path/to/nintspc" "$f" "$f.mid" --loop 1;done
+```
+
+The generated midi files will contain up to 8 tracks that represent the notes SPC tracks.
+The selection of the correct samples & effects has to be done by hand.
+
+## Recreating a soundtrack with a DAW + chipsynth SFC
+
+The generated (or self transcribed / composed) MIDI can now be used inside a DAW for playback with chipsynth sfc.
+I am using Ableton, but any DAW that allows routing MIDI messages should work.
+
+For the start, I recommend using a more simple tune without instrument switches or fancy effects.
+In this example, I am using "04 Wandering the Plains" from [Super Mario World](https://www.zophar.net/music/nintendo-snes-spc/super-mario-world).
+
+<audio
+  preload=""
+  controls="controls"
+  src="https://fi.zophar.net/soundfiles/nintendo-snes-spc/super-mario-world/04%20Wandering%20the%20Plains.mp3"
+>
+  Your browser does not support HTML5 Audio!
+</audio>
+
+### Track Setup
+
+First, we need to prepare the DAW to be able to send multiple MIDI tracks to the chipsynth.
+We will use PolyTimbral mode which means we have only a single instance of chipsynth SFC.
+This is similar to how the real nintendo soundtracks were made.
+
+1. create 2 MIDI tracks, and add chipsynth SFC (use VST3 version!) to the second track.
+2. Set "Midi To" of the first track to "chipsynth SFC".
+3. Duplicate the first track until you have 8 MIDI tracks + the one with the chipsynth
+4. Now for each of the first 8 tracks' "MIDI To", change "Track In" to "N-chipsynth SFC", where N is the MIDI tracks number
+5. Open chipsynth SFC and select preset "Poly-Timbral > Init".
+
+![ableton tracks](./img/spc/abletontracks.png)
+This is how it should look like
+
+That's it! You can now save this project as a template so you don't have to set this up again.
+
+### Import MIDI
+
+To import a MIDI file to the tracks, drag and drop the file to the first MIDI track.
+If there are less than 8 clips, move each clip to its correct track:
+
+![ableton tracks with midi](./img/spc/abletontrackswithmidi.png)
+
+### Import Samples
+
+1. open chipsynth SFC on the last track and select the Player Tab
+2. select the folder with your SPCs
+3. open the SPC file that was used to generate your MIDI
+
+![spc player](./img/spc/spcplayer.png)
+
+4. Before you continue, make sure you have no samples (press clear in the first tab).
+5. Now, press play and then "Grab all unique" + "Grab echo". This should populate up to 8 samples. 
+6. Now you need to select the correct sample for each channel. To find out which is where, you can simply solo a track and then find the sound in the sample tab (press keyboard key to hear the selected sample).
+7. Press play to hear the magic:
+
+![chipsynth channels](./img/spc/chipsynth_channels.png)
+
+### Fine Tuning
+
+Hopefully, the import went right and you are now hearing a more or less accurate soundtrack.
+To really push the envelope (sry), we now need to find out the correct ADSR / volume / pitch for each channel.
+This can be figured out by listening closely to the spc tracks, trying to match up each channel.
+If you've started with a simple file (like me), this process should be a matter of 1-2 minutes.
+
+## So what?
+
+Now you know how to take apart an original SNES composition and put it back together in a modern environment.
+Of course this is just the starting point, from here you can learn from existing tracks, alter them or create brand new ones..
+For me, this is mostly a combination of nostalgia and the urge to learn about music composition + arrangement.
+
+I'll close this one with an "slightly" altered version of the Donut Plains:
+
+
+<audio
+  preload=""
+  controls="controls"
+  src="./audio/DonutPlainsMinor.mp3"
+>
+  Your browser does not support HTML5 Audio!
+</audio>

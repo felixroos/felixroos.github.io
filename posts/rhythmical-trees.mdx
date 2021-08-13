@@ -1,0 +1,1256 @@
+---
+title: Rhythmical Trees
+date: '2021-04-30'
+tags: ['rhythmical', 'algorithms']
+description: 'After the posts about Rhythmical Arrays and Rhythmical Objects, I want to investigate the actual data structure that is at play: trees.'
+image: ./img/rhythmical-tree.png
+---
+
+import { Chord } from '@tonaljs/tonal';
+import { piano } from '../instruments/piano.ts';
+import { MK2md2 } from '../instruments/rhodes.ts';
+import tetris from '../components/rhythmical/tunes/tetris.ts';
+import tetrisQuiet from '../components/rhythmical/tunes/tetrisQuiet.ts';
+import { marblemachine } from '../components/rhythmical/tunes/marblemachine.ts';
+import { rhythmEvents } from '../components/rhythmical/tree/hierarchy.ts';
+import { renderRhythm } from '../components/rhythmical/rhythmical.ts';
+import renderRhythmTree from '../components/rhythmical/tree/renderRhythmTree';
+import { generateVoicings, voicingFactory } from '../components/rhythmical/voicings/generateVoicings.ts';
+import { lefthand } from '../components/rhythmical/voicings/dictionary.ts';
+import Player from '../components/rhythmical/components/Player.tsx';
+import Tree from '../components/rhythmical/components/Tree.tsx';
+import { TreeAnalyzer } from '../components/rhythmical/components/TreeAnalyzer.tsx';
+import { Color } from '../components/common/Color.tsx';
+import TreeVisitor from '../components/common/TreeVisitor.tsx';
+import { schemeTableau10 } from 'd3-scale-chromatic';
+import { BlockMath } from 'react-katex';
+import { toRhythmObject, haveSameIndices } from '../components/rhythmical/util';
+import { r2d3, ro2d3 } from '../components/rhythmical/tree/r2d3';
+import { colorize } from '../components/rhythmical/tree/colorize';
+import { State } from 'react-powerplug';
+import Fraction from 'fraction.js';
+import { bolero, conventionalLabels } from '../components/rhythmical/tunes/bolero';
+import R from 'ramda';
+import NestedGrid from '../components/graphs/NestedGrid';
+import drums from '../instruments/tidal';
+import swimming from '../components/rhythmical/tunes/swimming.ts';
+
+After the posts about [Rhythmical Arrays](../rhythmical-arrays/) and [Rhythmical Objects](../rhythmical-objects),
+I want to investigate the actual data structure that is at play: trees.
+This is an attempt to explain why trees are a really elegant way to represent rhythm and music.
+
+## Tree Basics
+
+This is a tree:
+
+![tree](./img/tree.png)
+
+Now if we turn this upside down, cut of the stem and draw it like a 3 year old, we get what computer scientists call a tree:
+
+<TreeAnalyzer
+  data={{
+    name: '1',
+    children: [
+      { name: '2', children: [{ name: '5' }, { name: '6' }] },
+      { name: '3', children: [{ name: '7' }, { name: '8' }] },
+      { name: '4', children: [{ name: '9' }, { name: '10' }] },
+    ],
+  }}
+  hideJson={true}
+/>
+
+You can learn the basic terminology by exploration. Just click on different nodes and watch what happens. The color coding should explain itself. If not...
+
+<details>
+<summary>show explanation</summary>
+
+<h3>Terminology</h3>
+
+Trees are commonly explained using the following terminology:
+
+- nodes: points of data that are hierarchically linked (circles)
+- links: connections between nodes (lines)
+- parents: nodes that contain children
+- children: nodes that have a parent
+- root: the uppermost node (1 per tree), it is the only node without a parent
+- leaves: nodes without children
+
+It is common to draw the tree upside down, with the root at the top and the leaves at the bottom.
+
+I implemented the above tree using a [d3 cluster](https://github.com/d3/d3-hierarchy#cluster)
+
+We can represent the above tree with the following object
+
+```js
+{
+    name: '1',
+    children: [
+      { name: '2', children: [{ name: '5' }, { name: '6' }] },
+      { name: '3', children: [{ name: '7' }, { name: '8' }] },
+      { name: '4', children: [{ name: '9' }, { name: '10' }] },
+    ],
+  }
+```
+
+</details>
+<br/>
+
+## Visual: Tree vs Score
+
+Let's ignite a visual explosion of a score notation, using the common Bolero rhythm as an example:
+
+export const colors = schemeTableau10;
+
+<Tree
+  width={620}
+  nodeRadius={10}
+  dx={20}
+  columns={[12, 12]}
+  data={r2d3(bolero, (rhythm, path) => ({
+    ...toRhythmObject(rhythm),
+    color: path.length ? colors[path.length - 1] : 'black',
+    name: conventionalLabels[path.length],
+  }))}
+  hideJson={true}
+/>
+
+![bolero](./img/bolero34.png)
+
+| color                      | value | type          | amount    | visual cue                  |
+| -------------------------- | ----- | ------------- | --------- | --------------------------- |
+| <Color color={colors[0]}/> | 3/4   | bar           | 2 total   | seperated by vertical lines |
+| <Color color={colors[1]}/> | 1/4   | 4ths          | 3 per bar | separated by space          |
+| <Color color={colors[2]}/> | 1/8   | 8ths          | 2 per 4th | connected by first beam     |
+| <Color color={colors[3]}/> | 1/24  | 16th triplets | 3 per 8th | connected by second beam    |
+
+<div style={{ display: 'none' }}>
+  <NestedGrid
+    rows={[1]}
+    innerBorders={true}
+    outerBorders={false}
+    cells={[
+      [
+        ['sn', ['sn', 'sn', 'sn']],
+        ['sn', ['sn', 'sn', 'sn']],
+        ['sn', 'sn'],
+      ],
+      [
+        ['sn', ['sn', 'sn', 'sn']],
+        ['sn', ['sn', 'sn', 'sn']],
+        [
+          ['sn', 'sn', 'sn'],
+          ['sn', 'sn', 'sn'],
+        ],
+      ],
+    ]}
+  />
+</div>
+
+- The tree essentially contains the same information as the score, though using less visual encoding (taking more space).
+- Each group represents different subdivisions of time
+- Each member of a group (color) takes the same amount of time!
+- Each fraction is the duration of the member, relative to the length of 4/4
+
+## Aural: Hearing the Layers of Rhythm
+
+As we are talking about music, let's make the tree layers audible:
+
+export const _8 = ['hh', 'hh', 'hh'];
+export const _4 = [_8, _8];
+export const _1 = [_4, _4, _4];
+export const _b = [_1, _1];
+
+<Player
+  instruments={{ drums }}
+  hierarchy={true}
+  height={25}
+  fold={false}
+  center={0}
+  events={renderRhythm(
+    colorize(
+      {
+        duration: 6,
+        parallel: [
+          _b,
+          [
+            [
+              ['ht', 'ht'],
+              ['ht', 'ht'],
+              ['ht', 'ht'],
+            ],
+            [
+              ['ht', 'ht'],
+              ['ht', 'ht'],
+              ['ht', 'ht'],
+            ],
+          ],
+          [
+            ['mt', 'mt', 'mt'],
+            ['mt', 'mt', 'mt'],
+          ],
+          ['lt', 'lt'],
+        ],
+      },
+      ['black', ...colors]
+    )
+  )}
+/>
+
+Using the same color coding as above, we now use a different sound for each layer of the tree:
+
+| color                      | value | sound      |
+| -------------------------- | ----- | ---------- |
+| <Color color={colors[0]}/> | 3/4   | low tom    |
+| <Color color={colors[1]}/> | 1/4   | middle tom |
+| <Color color={colors[2]}/> | 1/8   | high tom   |
+| <Color color={colors[3]}/> | 1/24  | hi hat     |
+
+The actual bolero rhythm just switches between different layers:
+
+<Player
+  instruments={{ drums }}
+  hierarchy={true}
+  height={25}
+  fold={true}
+  center={0}
+  events={renderRhythm(colorize({ duration: 6, sequential: bolero }, colors))}
+/>
+
+## Textual: Nested vs Flat
+
+Let's oppose two possible textual representations of the bolero:
+
+### Nested
+
+As JSON, this is the most compact and readable version I can think of:
+
+```json
+[
+  [
+    ["sn", ["sn", "sn", "sn"]],
+    ["sn", ["sn", "sn", "sn"]],
+    ["sn", "sn"],
+  ],
+  [
+    ["sn", ["sn", "sn", "sn"]],
+    ["sn", ["sn", "sn", "sn"]],
+    [["sn", "sn", "sn"], ["sn", "sn", "sn"]],
+  ],
+];
+```
+
+![bolero](./img/bolero.png)
+
+The nesting of the braces directly resembles the structure of the notes.
+To understand more about this syntax, check out my post about [Rhythmical Arrays](../rhythmical-arrays).
+
+We could also just ignore the outer two levels:
+
+```json
+[
+  "sn",
+  ["sn", "sn", "sn"],
+  "sn",
+  ["sn", "sn", "sn"],
+  "sn",
+  "sn",
+  "sn",
+  ["sn", "sn", "sn"],
+  "sn",
+  ["sn", "sn", "sn"],
+  ["sn", "sn", "sn"],
+  ["sn", "sn", "sn"]
+]
+```
+
+This piece of text also represents the bolero rhyhtm. It might not be as readable, but it still works..
+It depends on the use case, which representation should be chosen.
+
+<div style={{ display: 'none' }}>
+  <Player
+    instruments={{ drums }}
+    hierarchy={true}
+    height={25}
+    fold={true}
+    center={0}
+    events={renderRhythm(
+      colorize(
+        {
+          duration: 6,
+          sequential: [
+            'sn',
+            ['sn', 'sn', 'sn'],
+            'sn',
+            ['sn', 'sn', 'sn'],
+            'sn',
+            'sn',
+            'sn',
+            ['sn', 'sn', 'sn'],
+            'sn',
+            ['sn', 'sn', 'sn'],
+            ['sn', 'sn', 'sn'],
+            ['sn', 'sn', 'sn'],
+          ],
+        },
+        colors
+      )
+    )}
+  />
+</div>
+
+### Flat
+
+A more machine readable version looks like this:
+
+```json
+[
+  ["sn", 0, 0.75],
+  ["sn", 0.75, 0.25],
+  ["sn", 1, 0.25],
+  ["sn", 1.25, 0.25],
+  ["sn", 1.5, 0.75],
+  ["sn", 2.25, 0.25],
+  ["sn", 2.5, 0.25],
+  ["sn", 2.75, 0.25],
+  ["sn", 3, 0.75],
+  ["sn", 3.75, 0.75],
+  ["sn", 4.5, 0.75],
+  ["sn", 5.25, 0.25],
+  ["sn", 5.5, 0.25],
+  ["sn", 5.75, 0.25],
+  ["sn", 6, 0.75],
+  ["sn", 6.75, 0.25],
+  ["sn", 7, 0.25],
+  ["sn", 7.25, 0.25],
+  ["sn", 7.5, 0.25],
+  ["sn", 7.75, 0.25],
+  ["sn", 8, 0.25],
+  ["sn", 8.25, 0.25],
+  ["sn", 8.5, 0.25],
+  ["sn", 8.75, 0.25]
+]
+```
+
+This is an absolute representation of the bolero at 45 bpm (quite slow, but has the nicest looking floats..).
+The format is `[value, time, duration]`. While it is readable for machines, it is quite unpractical for humans..
+
+_The important question_: How can we transform the first notation into the second?
+With it, the human interface would be the first, while the second one would be used for rendering / playback.
+
+## Calculating Absolute Time & Duration
+
+Let's find out how to calculate the absolute time and duration for each node, based on the tree.
+
+### Fraction Paths
+
+Let's identify each node by the index in its group of children:
+
+<State initial={{ node: null }}>
+  {({ state, setState }) => (
+    <>
+      <TreeVisitor
+        onNode={(node) => {
+          setState({ node });
+        }}
+        tree={(node, visited) =>
+          r2d3(bolero, (rhythm, path, parent) => {
+            path = path.map((p) => p[0]);
+            const isRoot = !path.length;
+            let color = 'darkgray';
+            const strPath = (p) => p?.join(' ') || '';
+            const isParent = strPath(node?.path).startsWith(strPath(path));
+            const isSelected = haveSameIndices(node?.path, path);
+            const isVisited = visited.find((v) => haveSameIndices(v.path, path));
+            if (isVisited) {
+              color = 'lightgray';
+            }
+            if (isParent || isSelected) {
+              color = isRoot ? 'darkgray' : 'red';
+            }
+            return {
+              ...toRhythmObject(rhythm),
+              color,
+              name: parent ? path[path.length - 1] : 'bolero',
+              path: [...path],
+            };
+          })
+        }
+      />
+      {!state.node?.path?.length && (
+        <p>
+          <i>Click step to walk the tree</i>
+        </p>
+      )}
+      {!!state.node?.path?.length && <BlockMath>{`path = [${state.node.path.join(', ')}]`}</BlockMath>}
+    </>
+  )}
+</State>
+<br />
+
+- When stepping into the tree, the path of indices uniquely identifies each node
+- This path will help us to calculate time and duration
+
+### Calculating Durations
+
+Let's divide each index by the number of children in that group:
+
+export const parentTree = (node, visited) => {
+  return r2d3(bolero, (rhythm, path, parent) => {
+    const isSelected = haveSameIndices(node?.path, path);
+    const strPath = (p) => p?.map((s) => s.join('/')).join(' ') || '';
+    let color = 'darkgray';
+    const isRoot = !path.length;
+    const isVisited = visited.find((v) => haveSameIndices(v.path, path));
+    if (isVisited) {
+      color = 'lightgray';
+    }
+    if (isSelected) {
+      color = 'red';
+    }
+    const isParent = strPath(node?.path).startsWith(strPath(path));
+    if (isParent && !isSelected) {
+      color = isRoot ? 'darkgray' : 'red';
+    }
+    return {
+      ...toRhythmObject(rhythm),
+      color,
+      name: parent ? path[path.length - 1].join('/') : '/',
+      path: [...path],
+    };
+  });
+};
+
+<State initial={{ node: null, calculation: null }}>
+  {({ state, setState }) => (
+    <>
+      <TreeVisitor
+        onNode={(node) => {
+          if (!node) {
+            setState({ node: null, calculation: null });
+            return;
+          }
+          const { path: pairs } = node;
+          const F = (n, d) => new Fraction(n, d);
+          const duration = pairs
+            //.concat([[1, 1]])
+            .map(([a, b]) => `\\frac{${a || 1}}{${b || 1}}`)
+            .join('*');
+          const d = pairs.reduce((product, [a, b]) => product.mul(F(1, b)), F(1, 1));
+          const time = pairs
+            .map(([a, b], i, p) =>
+              i
+                ? `\\frac{${a}}{${b}}*(${p
+                    .slice(0, i)
+                    .reverse()
+                    .map(([x, y]) => `\\frac{1}{${y}}`)
+                    .join('*')})`
+                : `\\frac{${a}}{${b}}`
+            )
+            .join(' + ');
+          const t = pairs
+            .map(([a, b]) => F(a, b))
+            .reduce((sum, p, i) => {
+              const div = pairs.slice(0, i).map(([_, d]) => d);
+              const m = div.reverse().reduce((product, d) => {
+                return product.div(d);
+              }, p);
+              return sum.add(m);
+            }, new Fraction(0));
+          const whole = 6;
+          const ta = t.mul(6).toFraction(false);
+          const da = d.mul(6).toFraction(false);
+          const cd = F(6, 4).mul(F(d.n, d.d));
+          const ct = F(6, 4).mul(F(t.n, t.d));
+          const calculation = (
+            <>
+              <p>The duration relative to the complete bolero length is:</p>
+              <BlockMath>{`duration_{r} = ${pairs.length > 1 ? duration + ' = ' : ''}\\frac{${d.n}}{${
+                d.d
+              }}`}</BlockMath>
+              <p>If 1 bolero takes 6s, the absolute duration of this node is:</p>
+              <BlockMath>{`duration_{a} = \\frac{${d.n}}{${d.d}} * 6s = ${da}s`}</BlockMath>
+            </>
+          );
+          setState({ node, calculation });
+        }}
+        tree={parentTree}
+      />
+      {!state.node && (
+        <p>
+          <i>Click step to walk the tree (prepare for math...)</i>
+        </p>
+      )}
+      {state.node && (
+        <BlockMath>{`path = [${state.node.path
+          //.concat([[1, 1]])
+          .map(([a, b]) => `\\frac{${a}}{${b}}`)
+          .join(', ')}]`}</BlockMath>
+      )}
+      {state.calculation && <>{state.calculation}</>}
+    </>
+  )}
+</State>
+<br />
+
+- If we divide each node index by the total number of children (also called branching factor), we get a fraction that represents the duration of each node in its group.
+- By multiplying that fraction with all the fractions of the node's parents, we get the relative duration fraction.
+- We can calculate the absolute duration by multiplying that relative duration by the total length of everything
+
+### Calculating Time
+
+To get something usable, we also need the absolute time for each node.
+The process is similar to calculating durations, with a slightly more complicated looking calculation:
+
+<State initial={{ node: null, calculation: null }}>
+  {({ state, setState }) => (
+    <>
+      <TreeVisitor
+        onNode={(node) => {
+          if (!node) {
+            setState({ node: null, calculation: null });
+            return;
+          }
+          const { path: pairs } = node;
+          const F = (n, d) => new Fraction(n, d);
+          const duration = pairs.map(([a, b]) => `\\frac{${a || 1}}{${b || 1}}`).join('*');
+          const d = pairs.reduce((product, [a, b]) => product.mul(F(1, b)), F(1, 1));
+          const time = pairs
+            .map(([a, b], i, p) =>
+              i
+                ? `\\frac{${a}}{${b}}*(${p
+                    .slice(0, i)
+                    .reverse()
+                    .map(([x, y]) => `\\frac{1}{${y}}`)
+                    .join('*')})`
+                : `\\frac{${a}}{${b}}`
+            )
+            .join(' + ');
+          const t = pairs
+            .map(([a, b]) => F(a, b))
+            .reduce((sum, p, i) => {
+              const div = pairs.slice(0, i).map(([_, d]) => d);
+              const m = div.reverse().reduce((product, d) => {
+                return product.div(d);
+              }, p);
+              return sum.add(m);
+            }, new Fraction(0));
+          const timeSimple = t.n ? `\\frac{${t.n}}{${t.d}}` : `0`;
+          const whole = 6;
+          const ta = t.mul(6).toFraction(false);
+          const da = d.mul(6).toFraction(false);
+          const cd = F(6, 4).mul(F(d.n, d.d));
+          const ct = F(6, 4).mul(F(t.n, t.d));
+          const calculation = (
+            <>
+              <p>The time relative to the complete bolero is:</p>
+              <BlockMath>{`time_{r} = ${time} = ${timeSimple}`}</BlockMath>
+              <p>If 1 bolero take 6s, the absolute time of this node is:</p>
+              <BlockMath>{`time_{a} = ${timeSimple} * 6s = ${ta}s`}</BlockMath>
+            </>
+          );
+          setState({ node, calculation });
+        }}
+        tree={parentTree}
+      />
+      {!state.node && (
+        <p>
+          <i>Click step to walk the tree (prepare for math...)</i>
+        </p>
+      )}
+      {state.node && (
+        <BlockMath>{`path = [${state.node.path.map(([a, b]) => `\\frac{${a}}{${b}}`).join(', ')}]`}</BlockMath>
+      )}
+      {state.calculation && <>{state.calculation}</>}
+    </>
+  )}
+</State>
+<br />
+
+- to calculate the relative time fraction, we need to sum the relative times of each node in the path
+- the relative time of a single node is the factor of its path and its parent's relative durations
+
+## Variable Durations
+
+In the bolero example, there are no duration fractions with a numerator other than 1.
+To be able to cover any rhythm of this world, we need to extend our paths.
+
+import { Score } from '../components/score/Score.tsx';
+import { rhythmicalScore } from '../components/score/score-utils.ts';
+
+Take this as an example:
+
+<Score
+  width={400}
+  height={100}
+  staves={[
+    [
+      ['C4', '2d'],
+      ['D4', 'q'],
+    ],
+    [
+      ['E4', 'q'],
+      ['D4', '2'],
+      ['B3', 'q'],
+    ],
+  ]}
+/>
+
+Using our current textual representation, this is impossible to express. We need a way to declare durations, for example:
+
+```json
+[
+  ["C4*3", "D4"],
+  ["E4", "D4*2", "B3"]
+]
+```
+
+If we just represent the durations as a tree, it looks like this:
+
+<Tree
+  width={620}
+  nodeRadius={10}
+  dx={20}
+  columns={[12, 12]}
+  data={ro2d3(
+    [
+      [{ value: 'C4', duration: 3 }, 'D4'],
+      ['E4', { value: 'D4', duration: 2 }, 'B3'],
+    ],
+    (rhythm, path) => ({
+      ...toRhythmObject(rhythm),
+      color: path.length ? colors[path.length - 1] : 'black',
+      name: path.length ? `${path[path.length - 1][2]}` : '1',
+      path: [...path],
+    })
+  )}
+  hideJson={true}
+/>
+
+### Calculating Variable Durations
+
+Now, to get the correct fractions, we cannot just use the indices like before.
+Instead, we can use the duration as the numerator and the sum of all durations for the denominator:
+
+<State initial={{ node: null }}>
+  {({ state, setState }) => (
+    <>
+      <TreeVisitor
+        onNode={(node) => {
+          if (!node) {
+            setState({ node: null, calculation: null });
+            return;
+          }
+          const { path: pairs } = node;
+          const F = (n, d) => new Fraction(n, d);
+          const duration = pairs
+            //.concat([[1, 1]])
+            .map(([_, b, a]) => `\\frac{${a || 1}}{${b || 1}}`)
+            .join('*');
+          const d = pairs.reduce((product, [_, b, a]) => product.mul(F(a || 1, b)), F(1, 1));
+          const whole = 8;
+          const da = d.mul(whole).toFraction(false);
+          const cd = F(whole, 4).mul(F(d.n, d.d));
+          const calculation = (
+            <>
+              <p>The duration relative to the length is:</p>
+              <BlockMath>{`duration_{r} = ${pairs.length > 1 ? duration + ' = ' : ''}\\frac{${d.n}}{${
+                d.d
+              }}`}</BlockMath>
+              <p>If the whole takes 8s, the absolute duration of this node is:</p>
+              <BlockMath>{`duration_{a} = \\frac{${d.n}}{${d.d}} * 8s = ${da}s`}</BlockMath>
+            </>
+          );
+          setState({ node, calculation });
+        }}
+        tree={(node, visited) =>
+          ro2d3(
+            [
+              [{ value: 'C4', duration: 3 }, 'D4'],
+              ['E4', { value: 'D4', duration: 2 }, 'B3'],
+            ],
+            (rhythm, path) => {
+              const isRoot = !path.length;
+              let color = 'darkgray';
+              const strPath = (p) => p?.map((s) => s.join('/')).join(' ') || '';
+              const isParent = strPath(node?.path).startsWith(strPath(path));
+              const isSelected = haveSameIndices(node?.path, path);
+              const isVisited = visited.find((v) => haveSameIndices(v.path, path));
+              if (isVisited) {
+                color = 'lightgray';
+              }
+              if (isSelected || (isParent && !isRoot)) {
+                color = 'red';
+              }
+              return {
+                ...toRhythmObject(rhythm),
+                color,
+                name: path.length ? `${path[path.length - 1][2]}/${path[path.length - 1][1]}` : '1',
+                path: [...path],
+              };
+            }
+          )
+        }
+        hideJson={true}
+      />
+      {state.calculation}
+    </>
+  )}
+</State>
+
+### Calculating Time With Variable Durations
+
+To know the time fraction, our numerator must be the sum of all durations that came before the node in question:
+
+<State initial={{ node: null }}>
+  {({ state, setState }) => (
+    <>
+      <TreeVisitor
+        onNode={(node) => {
+          if (!node) {
+            setState({ node: null, calculation: null });
+            return;
+          }
+          const { path: pairs } = node;
+          const F = (n, d) => new Fraction(n, d);
+          const duration = pairs.map(([a, b]) => `\\frac{${a || 1}}{${b || 1}}`).join('*');
+          const d = pairs.reduce((product, [a, b]) => product.mul(F(a || 1, b)), F(1, 1));
+          const time = pairs
+            .map(([a, b], i, p) =>
+              i
+                ? `\\frac{${a || 0}}{${b}}*(${p
+                    .slice(0, i)
+                    .reverse()
+                    .map(([x, y]) => `\\frac{${x || 1}}{${y}}`)
+                    .join('*')})`
+                : `\\frac{${a || 0}}{${b}}`
+            )
+            .join(' + ');
+          const t = pairs
+            .map(([a, b]) => F(a, b))
+            .reduce((sum, p, i) => {
+              const div = pairs.slice(0, i).map(([_, d]) => d);
+              const m = div.reverse().reduce((product, d) => {
+                return product.div(d);
+              }, p);
+              return sum.add(m);
+            }, new Fraction(0));
+          const timeSimple = t.n ? `\\frac{${t.n}}{${t.d}}` : `0`;
+          const whole = 8;
+          const ta = t.mul(whole).toFraction(false);
+          const da = d.mul(whole).toFraction(false);
+          const cd = F(whole, 4).mul(F(d.n, d.d));
+          const ct = F(whole, 4).mul(F(t.n, t.d));
+          const calculation = (
+            <>
+              <p>The time relative to the whole is:</p>
+              <BlockMath>{`time_{r} = ${time} = ${timeSimple}`}</BlockMath>
+              <p>If the whole takes 8s, the absolute time of this node is:</p>
+              <BlockMath>{`time_{a} = ${timeSimple} * 8s = ${ta}s`}</BlockMath>
+            </>
+          );
+          setState({ node, calculation });
+        }}
+        tree={(node, visited) =>
+          ro2d3(
+            [
+              [{ value: 'C4', duration: 3 }, 'D4'],
+              ['E4', { value: 'D4', duration: 2 }, 'B3'],
+            ],
+            (rhythm, path) => {
+              const isRoot = !path.length;
+              let color = 'darkgray';
+              const strPath = (p) => p?.map((s) => s.join('/')).join(' ') || '';
+              const isParent = strPath(node?.path).startsWith(strPath(path));
+              const isSelected = haveSameIndices(node?.path, path);
+              const isVisited = visited.find((v) => haveSameIndices(v.path, path));
+              if (isVisited) {
+                color = 'lightgray';
+              }
+              if (isSelected || (isParent && !isRoot)) {
+                color = 'red';
+              }
+              return {
+                ...toRhythmObject(rhythm),
+                color,
+                name: path.length ? `${path[path.length - 1][0]}/${path[path.length - 1][1]}` : '1',
+                path: [...path],
+              };
+            }
+          )
+        }
+        hideJson={true}
+      />
+      {state.calculation}
+    </>
+  )}
+</State>
+
+### Flat representation
+
+Using the calculated values above, we get this flat representation:
+
+```json
+[
+  ["C4", 0, 3],
+  ["D4", 3, 1],
+  ["E4", 4, 1],
+  ["D4", 5, 2],
+  ["B3", 7, 1]
+]
+```
+
+Nice! Now chewed through all the theory that is needed to calculate any rhythm.
+
+## Implementation
+
+Let's transfer the above ideas into code. In general, we need to
+
+1. Visit every node of the tree
+2. Calculate time and duration of every node
+
+### 1. Visiting every node of a tree
+
+#### Simple Walker
+
+This recursive [generator function](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Iterators_and_Generators) visits every tree node, while being agnostic about the tree structure:
+
+```js
+export function* walk(getChildren, tree) {
+  yield tree;
+  const children = getChildren(tree) || [];
+  for (let i = 0; i < children.length; ++i) {
+    yield* walk(getChildren, children[i]);
+  }
+}
+```
+
+Using the getChildren accessor function, we can stay agnostic about the tree structure. This is inspired by [d3-hierarchy](https://github.com/d3/d3-hierarchy#hierarchy).
+
+Walking over a simple nested array is pretty straightforward:
+
+```js
+const nestedWalker = (tree) => walk((node) => Array.isArray(node) && node, tree);
+const tree = ['A', ['B', 'C'], 'D'];
+
+for (let node of nestedWalker(tree)) {
+  console.log(node);
+}
+```
+
+Output:
+
+```js
+['A', ['B', 'C'], 'D']
+'A'
+['B', 'C']
+'B'
+'C'
+'D'
+```
+
+#### Walking rhythmical objects
+
+To be able to walk over a [rhythmical object](./rhythmical-objects), we just have to implement a different getChildren accessor:
+
+```js
+function getRhythmChildren(node) {
+  return Array.isArray(node) ? node : node?.parallel || node?.sequential;
+}
+const rhythmWalker = (tree) => walk(getRhythmChildren, tree);
+
+const rhythm = {
+  duration: 4,
+  sequential: [
+    [{ value: 'C3', duration: 3 }, 'D3'],
+    ['E3', { value: 'D3', duration: 2 }, 'B2'],
+  ],
+};
+
+for (let node of rhythmWalker(rhythm)) {
+  console.log(node);
+}
+```
+
+Output:
+
+```js
+{
+  duration: 4,
+  sequential: [ [ [Object], 'D3' ], [ 'E3', [Object], 'B2' ] ]
+}
+[ { value: 'C3', duration: 3 }, 'D3' ]
+{ value: 'C3', duration: 3 }
+D3
+[ 'E3', { value: 'D3', duration: 2 }, 'B2' ]
+E3
+{ value: 'D3', duration: 2 }
+B2
+```
+
+Now we are able to look at nodes one after the other. This is still too primitive to be usable.
+
+#### Exposing More Data
+
+The problem: We have no information about the current index or the siblings. So, instead of just yielding the node, let's enrich the data:
+
+```js
+export function* visit(getChildren, tree, index?, siblings?, parent?) {
+  const children = getChildren(tree) || [];
+  const isRoot = parent === undefined;
+  const isLeaf = !children?.length;
+  yield { node: tree, index, siblings, children, isBefore: true, isRoot, isLeaf, parent };
+  for (let i = 0; i < children.length; ++i) {
+    yield* visit(getChildren, children[i], i, children, tree);
+  }
+  yield { node: tree, index, siblings, children, isBefore: false, isRoot, isLeaf, parent };
+}
+```
+
+What's new:
+
+- the current index + siblings is fed back into the function
+- we are now yielding an object with more information on the state of the iteration
+- we are yielding again after the children have been processed, passing an isBefore flag
+
+#### Generating Index Paths
+
+Using that, we can build an index path like this:
+
+```js
+const nestedWalker = (tree) => visit((node) => Array.isArray(node) && node, tree);
+
+const tree = ['A', ['B', 'C'], 'D'];
+
+const path = []; // stack of indices
+const events = []; // collection of path states
+
+for (let { index, isBefore, isLeaf, isRoot } of nestedWalker(tree)) {
+  if (isBefore) {
+    // before children have been visited
+    !isRoot && path.push(index);
+    isLeaf && events.push([...path]); // we only care for leaves
+  } else {
+    // after children have been visited
+    !isRoot && path.pop();
+  }
+}
+expect(events).toEqual([[0], [1, 0], [1, 1], [2]]); // leaf index paths
+```
+
+- the path array acts as a stack of indices, where we add the index before and remove it after visiting the children
+- for each leaf, we add the current path to the events array
+
+### 2. Calculate time and duration of every node
+
+Now let's find out how we can perform the calculations in code.
+
+#### Division Paths
+
+Before we can calculate the time & duration, we need to keep track of the relative times and durations.
+
+```js
+function divisionPaths(tree) {
+  const path = [];
+  const events = [];
+  for (let { node, index, isBefore, isLeaf, siblings } of nestedWalker(tree)) {
+    if (isBefore) {
+      siblings && path.push([index, siblings.length]);
+      isLeaf && events.push({ node, path: path.join(' ') });
+    } else {
+      siblings && path.pop();
+    }
+  }
+  return events;
+}
+
+expect(getPaths(['A', ['B', 'C'], 'D'])).toEqual([
+  { node: 'A', path: '0,3' },
+  { node: 'B', path: '1,3 0,2' },
+  { node: 'C', path: '1,3 1,2' },
+  { node: 'D', path: '2,3' },
+]);
+```
+
+Like in [Calculating Durations](#calculating-durations), we represent the position of a node as a number pair of index and number of siblings.
+
+#### Calculating absolute times
+
+To turn those paths into concrete numbers we can run the following logic:
+
+```js
+function pathTimeDurationSimple(path, whole = 1) {
+  let time = 0;
+  let duration = whole;
+  for (let i = 0; i < path.length; i++) {
+    time = time + (path[i][0] / path[i][1]) * duration;
+    duration /= path[i][1];
+  }
+  return { time, duration };
+}
+
+const renderEvents = (tree, duration) =>
+  divisionPaths(tree).map(({ node, path }) => ({ node, ...pathTimeDurationSimple(path, duration) }));
+
+expect(renderEvents(['A', ['B', 'C'], 'D'], 6)).toEqual([
+  { node: 'A', time: 0, duration: 2 },
+  { node: 'B', time: 2, duration: 1 },
+  { node: 'C', time: 3, duration: 1 },
+  { node: 'D', time: 4, duration: 2 },
+]);
+```
+
+Et voir-la! This is it for rendering without variable durations.
+
+#### With variable durations
+
+To add variable durations, we can just add a third number to our path:
+
+```js
+function timeDurationPaths(walker, getDuration) {
+  const path = [];
+  const events = [];
+  const sumDurations = (nodes) => nodes.reduce((sum, current) => sum + getDuration(current), 0);
+  for (let { node, index, isBefore, isRoot, isLeaf, siblings } of walker) {
+    if (!isRoot && isBefore) {
+      siblings = siblings || [];
+      const time = sumDurations(siblings.slice(0, index));
+      const duration = getDuration(node);
+      const total = time + sumDurations(siblings.slice(index));
+      path.push([time, duration, total]);
+      isLeaf && events.push({ node, path: [...path] });
+    } else if (!isRoot) {
+      path.pop();
+    }
+  }
+  return events;
+}
+```
+
+Now we are using the sum of all preceding durations as time and the sum of all siblings durations as total duration.
+To stay agnostic of the node format, we just pass a function that should resolve the duration of a node.
+
+Before we test this, let's fix our calculation:
+
+```js
+export function pathTimeDuration(path, whole = 1) {
+  let time = 0;
+  let duration = whole;
+  for (let i = 0; i < path.length; i++) {
+    time = time + (path[i][0] / path[i][2]) * duration;
+    duration *= path[i][1] / path[i][2];
+  }
+  return { time, duration };
+}
+```
+
+Running this on our variable duration example:
+
+```js
+const renderEvents = (tree, duration, getDuration) =>
+  timeDurationPaths(nestedWalker(tree), getDuration).map(({ node, path }) => ({
+    node,
+    ...pathTimeDuration(path, duration),
+  }));
+
+expect(
+  renderEvents(
+    [
+      ['C4*3', 'D4'],
+      ['E4', 'D4*2', 'B3'],
+    ],
+    8,
+    (node) => (typeof node === 'string' ? +node.split('*')[1] || 1 : 1)
+  )
+).toEqual([
+  { node: 'C4*3', time: 0, duration: 3 },
+  { node: 'D4', time: 3, duration: 1 },
+  { node: 'E4', time: 4, duration: 1 },
+  { node: 'D4*2', time: 5, duration: 2 },
+  { node: 'B3', time: 7, duration: 1 },
+]);
+```
+
+And that's it!
+
+#### Rendering Rhythmical Objects
+
+Rendering a rhythmical object works like this:
+
+```js
+export default function renderRhythmTree(rhythm) {
+  const rhythmDuration = (node) => toRhythmObject(node).duration || 1;
+  const totalDuration = rhythmDuration(rhythm);
+  const path = [];
+  const events = [];
+  for (let { node, index, isBefore, isRoot, isLeaf, siblings, parent } of visit(getRhythmChildren, rhythm)) {
+    if (!isRoot && isBefore) {
+      path.push(rhythmFraction(node, index, siblings, parent));
+      isLeaf && events.push({ ...toRhythmObject(node), ...pathTimeDuration(path, totalDuration) });
+    } else if (!isRoot) {
+      path.pop();
+    }
+  }
+  return events;
+}
+```
+
+Here, the duration of the root node is interpreted as seconds. The path fraction can be calculated using sibling and parent information:
+
+```js
+export function rhythmFraction<T>(
+  node: RhythmNode<T>,
+  index?: number,
+  siblings?: RhythmNode<T>[],
+  parent?: RhythmNode<T>
+): Fraction {
+  const duration = (node as RhythmObject<T>).duration ?? 1;
+  if (!parent) {
+    // root node
+    return [0, duration, 1]
+  }
+  const durations = siblings.map((sibling: RhythmObject<T>) => sibling.duration ?? 1);
+  const total = sum(durations);
+  if ((parent as RhythmObject<T>)?.parallel) {
+    // parallel path
+    return [0, duration, max(durations)];
+  }
+  const time = sum(durations.slice(0, index));
+  // sequential path
+  return [time, duration, total]
+}
+```
+
+Now we can test the variable duration example from above:
+
+```js
+test('renderRhythmTree', () => {
+  expect(
+    renderRhythmTree({
+      duration: 8,
+      sequential: [
+        [{ value: 'C4', duration: 3 }, 'D4'],
+        ['E4', { value: 'D4', duration: 2 }, 'B3'],
+      ],
+    }).map(({ value, time, duration }) => [value, time, duration])
+  ).toEqual([
+    ['C4', 0, 3],
+    ['D4', 3, 1],
+    ['E4', 4, 1],
+    ['D4', 5, 2],
+    ['B3', 7, 1],
+  ]);
+});
+```
+
+And it works! Now we worked out a complete reimplementation of rendering [rhythmical objects](./rhythmical-objects).
+The complexity of the implementation is much lower, using less clutter.
+
+But enough of that cheap test sequence, let's render a much more complex tune:
+
+<Player fold={true} hierarchy={false} instruments={{ piano }} events={renderRhythmTree(swimming)} />
+
+<details>
+  <summary>show source</summary>
+
+I generated the tree json of this tune using some shorthand functions:
+
+```js
+const d = (e) => {
+  // duration short notation
+  const [value, duration] = e.split('*');
+  if (duration) {
+    return { sequential: [value], duration: parseInt(duration) };
+  }
+  return value;
+};
+const s = (str, duration = 1) => ({ sequential: str.split(' ').map(d), duration }); // sequential short notation
+const p = (str, duration = 1) => ({ parallel: str.split(' ').map(d), duration }); // parallel short notation
+const w = (str) => ['r', p(str), p(str)]; // waltz chord comping
+
+const swimming = {
+  name: 'Swimming',
+  composer: 'Koji Kondo',
+  duration: 51,
+  parallel: [
+    {
+      description: 'melody',
+      velocity: 1,
+      sequential: [
+        d('r*3'),
+        ['A5', s('F5*2 C5'), s('D5*2 F5'), 'F5'],
+        [s('C5*2 F5'), s('F5*2 C6'), 'A5', 'G5'],
+        ['A5', s('F5*2 C5'), s('D5*2 F5'), 'F5'],
+        [s('C5*2 F5'), ['Bb5', 'A5', 'G5'], d('F5*2')],
+        ['A5', s('F5*2 C5'), s('D5*2 F5'), 'F5'],
+        [s('C5*2 F5'), s('F5*2 C6'), 'A5', 'G5'],
+        ['A5', s('F5*2 C5'), s('D5*2 F5'), 'F5'],
+        [s('C5*2 F5'), ['Bb5', 'A5', 'G5'], d('F5*2')],
+        ['A5', s('F5*2 C5'), 'A5', 'F5'],
+        ['Ab5', s('F5*2 Ab5'), d('G5*2')],
+        ['A5', s('F5*2 C5'), 'A5', 'F5'],
+        ['Ab5', s('F5*2 C5'), d('C6*2')],
+        ['A5', s('F5*2 C5'), s('D5*2 F5'), 'F5'],
+        [s('C5*2 F5'), ['Bb5', 'A5', 'G5'], d('F5*2')],
+      ],
+    },
+    {
+      description: 'chords',
+      velocity: 0.6,
+      sequential: [
+        [
+          p('F4 Bb4 D5'),
+          [p('D4 G4 Bb4', 2), p('Bb3 D4 F4')],
+          [p('G3 C4 E4', 2), [p('Ab3 F4'), p('A3 Gb4')]],
+          p('Bb3 E4 G4'),
+        ],
+        [w('F3 A3 C3'), w('F3 A3 C3'), w('F3 Bb3 D3'), w('F3 Bb3 Db3')],
+        [w('F3 A3 C3'), w('F3 A3 C3'), w('F3 Bb3 D3'), w('F3 B3 D3')],
+        [w('F3 A3 C3'), w('F3 A3 C3'), w('F3 Bb3 D3'), w('F3 B3 D3')],
+        [w('A3 C4 E4'), w('Ab3 C4 Eb4'), w('F3 Bb3 D3'), w('G3 C4 E4')],
+        [w('F3 A3 C4'), w('F3 A3 C4'), w('F3 Bb3 D3'), w('F3 B3 D3')],
+        [w('F3 Bb3 D4'), w('F3 Bb3 C4'), w('F3 A3 C4'), w('F3 A3 C4')],
+        [w('F3 A3 C3'), w('F3 A3 C3'), w('F3 Bb3 D3'), w('F3 B3 D3')],
+        [w('A3 C4 E4'), w('Ab3 C4 Eb4'), w('F3 Bb3 D3'), w('G3 C4 E4')],
+        [w('F3 A3 C3'), w('F3 A3 C3'), w('F3 Bb3 D3'), w('F3 B3 D3')],
+        [w('F3 Bb3 D4'), w('F3 Bb3 C4'), w('F3 A3 C4'), w('F3 A3 C4')],
+        [w('Bb3 D3 F4'), w('Bb3 D3 F4'), w('A3 C4 F4'), w('A3 C4 F4')],
+        [w('Ab3 B3 F4'), w('Ab3 B3 F4'), w('G3 Bb3 F4'), w('G3 Bb3 E4')],
+        [w('Bb3 D3 F4'), w('Bb3 D3 F4'), w('A3 C4 F4'), w('A3 C4 F4')],
+        [w('Ab3 B3 F4'), w('Ab3 B3 F4'), w('G3 Bb3 F4'), w('G3 Bb3 E4')],
+        [w('F3 A3 C3'), w('F3 A3 C3'), w('F3 Bb3 D3'), w('F3 B3 D3')],
+        [w('F3 Bb3 D4'), w('F3 Bb3 C4'), w('F3 A3 C4'), w('F3 A3 C4')],
+      ],
+    },
+    {
+      description: 'bass',
+      sequential: [
+        ['G3', 'G3', 'C3', 'E3'],
+        ['F2', 'D2', 'G2', 'C2'],
+        ['F2', 'D2', 'G2', 'C2'],
+        ['F2', 'A2', 'Bb2', 'B2'],
+        ['A2', 'Ab2', 'G2', 'C2'],
+        ['F2', 'A2', 'Bb2', 'B2'],
+        ['G2', 'C2', 'F2', 'F2'],
+        ['F2', 'A2', 'Bb2', 'B2'],
+        ['A2', 'Ab2', 'G2', 'C2'],
+        ['F2', 'A2', 'Bb2', 'B2'],
+        ['G2', 'C2', 'F2', 'F2'],
+        ['Bb2', 'Bb2', 'A2', 'A2'],
+        ['Ab2', 'Ab2', 'G2', ['C2', 'D2', 'E2']],
+        ['Bb2', 'Bb2', 'A2', 'A2'],
+        ['Ab2', 'Ab2', 'G2', ['C2', 'D2', 'E2']],
+        ['F2', 'A2', 'Bb2', 'B2'],
+        ['G2', 'C2', 'F2', 'F2'],
+      ],
+    },
+  ],
+};
+```
+
+```js
+<Player fold={true} hierarchy={false} instruments={{ piano }} events={renderRhythmTree(swimming)} />
+```
+
+</details>
+
+That's it for today! In a future post, I want to implement plugins by tree mutation.

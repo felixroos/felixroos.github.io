@@ -38,7 +38,7 @@ export default {
     },
   },
   colors: {
-    primary: '#4169e1',
+    primary: '#307AC6',
     secondary: '#27a727',
     background: '#fff',
     text: '#1b1e21',
@@ -58,7 +58,7 @@ export default {
         text: '#fff',
         background: '#292C34',
         lite: '#333',
-        primary: 'cyan',
+        primary: '#85DEFB',
       },
     },
   },
