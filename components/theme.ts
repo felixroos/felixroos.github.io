@@ -32,8 +32,7 @@ export default {
     },
     tag: {
       color: 'primary',
-      border: '1px solid #4169e1',
-      borderRadius: 16,
+      border: theme => `1px solid ${theme.colors.primary}`,
       bg: 'background',
     },
   },
