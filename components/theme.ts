@@ -84,11 +84,10 @@ export default {
     },
     ul: {
       pt: 2,
-      pb: 1
     },
     li: {
       fontFamily: fontFamily,
-      marginBottom: 2
+      marginBottom: 14
     },
     a: {
       color: 'primary',
@@ -98,6 +97,24 @@ export default {
     },
     img: {
       maxWidth: '100%'
+    },
+    table: {
+      width: '100%',
+      borderSpacing: '0px'
+    },
+    td: {
+      padding: 2,
+      textAlign: 'left',
+      borderBottom: '1px solid black'
+    },
+    th: {
+      padding: 2,
+      fontSize: 1,
+      textAlign: 'left',
+      borderBottom: '1px solid black'
+    },
+    'input[type=checkbox]': {
+
     }
   }
 };

@@ -5,8 +5,8 @@
 ### general
 
 - [ ] dark / light switcher as icon
-- [ ] coolere list styles?
-- [ ] listen styles
+- [x] listen styles
+- [x] table styles
 - [ ] checkbox styles
 - [ ] title image in frontmatter ausprobieren
 - [ ] add prev / next post links
@@ -40,6 +40,10 @@ This may cause theme propagation issues, broken class names, specificity issues,
 - [ ] "Warning: componentWillReceiveProps has been renamed, and is not recommended for use. See https://reactjs.org/link/unsafe-component-lifecycles for details"
 - [ ] hovering does not start audiocontext - add button to start deliberately?
 - [ ] when hovering the partial bars, sometimes they sound won't stop on mouse leave
+
+### http://localhost:3000/intervals
+
+
 
 ## Standard README (NextJS - Typescript - MDX - Blog)
 

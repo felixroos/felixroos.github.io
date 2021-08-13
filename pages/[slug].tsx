@@ -39,6 +39,12 @@ const Post = ({ code, frontmatter }) => {
   // https://github.com/kentcdodds/mdx-bundler#globals
   const Component = React.useMemo(() => getMDXComponent(code) as any, [code]);
   const H = (size) => (props) => <Heading {...props} as={`h${size}`} sx={{ mb: 2, mt: 4 }} />;
+  /* const CustomInput = (props) => {
+    if (props.type === 'checkbox') {
+      return <input style={{ border: '1px solid black' }} {...props} />;
+    }
+    return <input {...props} />;
+  }; */
   return (
     <Layout>
       <Box as="article">
@@ -63,6 +69,11 @@ const Post = ({ code, frontmatter }) => {
               ul: Themed.ul,
               li: Themed.li,
               img: Themed.img,
+              table: Themed.table,
+              td: Themed.td,
+              th: Themed.th,
+              tr: Themed.tr,
+              /* input: CustomInput, */
             }}
           />
         </Box>

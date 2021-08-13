@@ -2,7 +2,6 @@ import NextHead from 'next/head';
 import { useRouter } from 'next/router';
 import React from 'react';
 import { MetaProps } from '../types/layout';
-import 'katex/dist/katex.min.css';
 
 export const WEBSITE_HOST_URL = 'https://felixroos.github.io';
 
@@ -22,6 +21,12 @@ const Head = ({ customMeta }: { customMeta?: MetaProps }): JSX.Element => {
       <meta content={meta.description} name="description" />
       <meta property="og:url" content={`${WEBSITE_HOST_URL}${router.asPath}`} />
       <link rel="canonical" href={`${WEBSITE_HOST_URL}${router.asPath}`} />
+      <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
+        integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
+        crossOrigin="anonymous"
+      />
       <meta property="og:type" content={meta.type} />
       <meta property="og:site_name" content="Loophole Letters" />
       <meta property="og:description" content={meta.description} />
