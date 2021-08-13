@@ -7,8 +7,8 @@ const { lefthand } = VoicingDictionary;
 import { piano } from '../../../instruments/piano';
 import { Note, Range } from '@tonaljs/tonal';
 import ChordSymbol from '../../score/ChordSymbol';
-import Keyboard from '../../Keyboard';
 import useStateRef from '../../common/useStateRef';
+import Keyboard from '../../music/Keyboard';
 
 const dictionary = lefthand,
   voiceLeading = topNoteDiff;

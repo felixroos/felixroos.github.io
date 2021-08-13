@@ -1,0 +1,271 @@
+---
+title: Analyzing iReal Chord Changes
+date: '2020-06-14'
+tags: ['tools', 'music theory']
+description: 'Now that we have a huge dataset of chord changes, we can do some data mining on it.'
+image: ./img/ireal-composers.png 
+---
+
+import Grid from '@material-ui/core/Grid';
+import standards from './ireal/jazz1350.json';
+import pop400 from './ireal/pop400.json';
+import { RealRanking, RealTransitions, RealChords, RealDiversity } from '../components/ireal/RealParser.tsx';
+
+Now that we have a huge dataset of chord changes, we can do some data mining on it.
+
+## Metadata Rankings
+
+As a warmup, let's do a ranking of metadata values. Here are some rankings for the 1350 Jazz Standards set, (but you can paste any url from the [forum](https://www.irealb.com/forums/)).
+
+<RealRanking url={standards} property="composer" />
+
+<details>
+<summary>show relevant code</summary>
+
+```ts
+export function countUnique(values) {
+  return values
+    .filter((c, i, a) => a.indexOf(c) === i) // filter out duplicates
+    .map((value) => ({
+      // count items that have the value
+      value,
+      count: values.filter((v) => v === value).length,
+    }));
+}
+export function topValues(songs, property) {
+  return countUnique(songs.map((song) => song[property]))
+    .sort((a, b) => b.count - a.count) // sort by count
+    .slice(0, 20); // only use top 20
+}
+```
+
+</details>
+
+<br />
+
+## Most Common Chords
+
+To find out which chords are the most common, we can
+
+- collect all chords of all songs
+- count the occurrence of each chord, either relative (without root) or absolute (with root)
+- calculate the "regularity" with count/totalChords
+- for each song, we can then calculate the average regularity of all chords to know how common it is in general
+- you can click chords to show only songs who include the selected chords
+
+<RealChords url={standards} />
+
+### Interpretation
+
+And the gold medal for the most boring chords goes to... "Sunshine of your Love by Cream" (that does not mean the song is bad in general).
+
+The songs at the top of the list are the ones that contain only the most common chords.
+If you learn one of those, you will automatically learn many other songs too.
+The songs at the bottom of the list contain only exotic, unusual chords, so learning one of those will not be as effective.
+
+Note that this is still a little bit too specific, for example the algorithm treats -9 chords different from -7 chords, but in (jazz) practice, you will mostly play -9 anyway.
+The accuracy could be improved by adding a layer of abstraction that groups together chords that are more or less interchangeable.
+
+## Most Common Chord Transitions
+
+We can find out the most common chord transitions by looking at each single transition between two chords.
+Essentially, a chord transition consists of:
+
+- from symbol to symbol
+- interval (relative) or from root to root (absolute)
+
+So if we map each transition to a string of the format:
+
+```js
+`${from.symbol}.${to.symbol}.${interval}`;
+```
+
+... and then count all unique values, we can find out which chord progressions are the most used.
+Let's try it out with the pop 400 playlist:
+
+<RealTransitions url={pop400} />
+
+<details>
+<summary>show relevant code</summary>
+
+```ts
+function getChord(_chord) {
+  const [chord, bass] = (_chord || '').split('/');
+  const symbol = chord.replace(/[A-G][b#]*/g, '');
+  return {
+    root: chord.replace(symbol, ''),
+    symbol: symbol || 'M',
+    bass,
+  };
+}
+function getTransitions(songs, relative = true, semitones = false) {
+  let changes = [];
+  songs.forEach((song) => {
+    const transitions = song.music.measures
+      .flat() // flatten measures as we don't care about rhythm
+      .map((chord, index, chords) => {
+        const [from, to] = [chord || '0', chords[(index + 1) % chords.length] || '0'].map((c) => getChord(c)); // parse chords
+        if (relative) {
+          // relative does only care for interval
+          let interval = Interval.distance(from.root, to.root);
+          if (semitones) {
+            // don't care about enharmonic equivalent intervals
+            interval = Interval.semitones(interval) + '';
+          }
+          return `${from.symbol}.${to.symbol}.${interval}`; // format to id string
+        }
+        return `${from.root}.${from.symbol}.${to.root}.${to.symbol}`;
+      });
+    changes = changes.concat(transitions); // concat song transitions
+  });
+  changes = changes.filter((change) => {
+    // filter changes where nothing changes..
+    const [fromSymbol, toSymbol, interval] = change.split('.');
+    return fromSymbol !== toSymbol || interval !== '1P';
+  });
+  // count unique and sort by count
+  return countUnique(changes).sort((a, b) => b.count - a.count);
+}
+```
+
+</details>
+
+<br />
+
+Note that we are running the script on the music.measures which are not 100% correct for all tunes (see last post), but it should be accurate enough to find out the most common chord progressions.
+
+### Interpretation
+
+And the gold medal for the most boring chords goes to: Massachusetts by the Bee Gees.
+
+Most of this is no surprise, but let's try to describe the most common transitions for two big pop and jazz playlists:
+
+<Grid spacing={0} container style={{ width: 800 }}>
+  <Grid item xs={6}>
+    <strong>
+      <a href="https://www.irealb.com/forums/showthread.php?8483-Pop-400">Pop 400</a>
+    </strong>
+    <br />
+    <ul>
+      <li>
+        <strong>M.M.5P</strong> I to V triads
+      </li>
+      <li>
+        <strong>M.M.4P</strong> I to IV triads
+      </li>
+      <li>
+        <strong>7.M.4P</strong> V7 to I
+      </li>
+      <li>
+        <strong>M.M.2M</strong> IV to V with triads
+      </li>
+      <li>
+        <strong>M.-.2M</strong> V to VI-
+      </li>
+      <li>
+        <strong>M.M.7m</strong> I to bVII in mixolydian
+      </li>
+      <li>
+        <strong>-.M.7m</strong> I- to bVII
+      </li>
+      <li>
+        <strong>M.7.2M</strong> IV to V7 in major
+      </li>
+      <li>
+        <strong>-7.-7.4P</strong> I- to IV- or III- to VI-
+      </li>
+      <li>
+        <strong>M.-.6M</strong> I to VI-
+      </li>
+      <li>
+        <strong>-.M.6M</strong> I to VI-
+      </li>
+      <li>
+        <strong>-7.7.4P</strong> II-7 V7
+      </li>
+      <li>
+        <strong>7.-.4P</strong> V7 to I-
+      </li>
+      <li>
+        <strong>sus.M.1P</strong> suspended I
+      </li>
+    </ul>
+  </Grid>
+  <Grid item xs={6}>
+    <strong>
+      <a href="https://www.irealb.com/forums/showthread.php?12753-Jazz-1350-Standards">Jazz 1350</a>
+    </strong>
+    <br />
+    <ul>
+      <li>
+        <strong>-7.7.4P</strong> II- V
+      </li>
+      <li>
+        <strong>7.^7.4P</strong> V7 I^7, V/IV^7
+      </li>
+      <li>
+        <strong>7.7.4P</strong> dominant in fourths
+      </li>
+      <li>
+        <strong>7.-7.4P</strong> V/II-7, V/III-7, V/VI-7
+      </li>
+      <li>
+        <strong>7.6.4P</strong> V7 I6
+      </li>
+      <li>
+        <strong>-7.-7.4P</strong> I- IV-, III- VI-, VI- II-
+      </li>
+      <li>
+        <strong>7.-7.5P</strong> V7 II- ?!
+      </li>
+      <li>
+        <strong>7.-7.1P</strong> V/V7 II-7
+      </li>
+      <li>
+        <strong>^7.-7.6M</strong> I^7 VI-7
+      </li>
+      <li>
+        <strong>^7.-7.2M</strong> I^7 II-7
+      </li>
+      <li>
+        <strong>h7.7b9.4P</strong> II-7b5 V7b9
+      </li>
+      <li>
+        <strong>7b9.-7.4P</strong> V7b9 I-7
+      </li>
+      <li>
+        <strong>7.7.7M</strong> chromatic dominant
+      </li>
+      <li>
+        <strong>7.-7.6M</strong> V7 III-7
+      </li>
+    </ul>
+  </Grid>
+</Grid>
+
+Note that those transitions could also describe other degree transitions, but I just picked the most common ones (which should make up the greatest part).
+
+If you sat down at a piano and just learned the top 10 of each, you would be able to learn many songs really quickly..
+
+## Chord Diversity
+
+Another song feature that is interesting to determine how difficult it is to learn is chord diversity.
+
+<RealDiversity url={pop400} />
+
+<br />
+
+## Most Difficult Songs
+
+What makes a song's changes difficult? I would say:
+
+- uncommon chords
+- uncommon chord transitions
+- high diversity
+
+and of course, the opposite is true for the easiest songs..
+
+### Next Steps
+
+- Find good tune learning path by including all the features
+- Generate Markov Models for chord transitions to generate authentic chord progressions

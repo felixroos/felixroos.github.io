@@ -58,6 +58,7 @@ const Post = ({ code, frontmatter }) => {
           {format(parseISO(frontmatter.date), 'MMMM dd, yyyy')}
         </Paragraph>
         <Box>
+          {/* frontmatter.image && <img src={frontmatter.image} /> */}
           <Component
             components={{
               a: CustomLink,

@@ -1,0 +1,372 @@
+---
+title: Rhythmical Ties
+date: '2020-07-10'
+tags: ['rhythmical', 'code']
+description: "In modern music, ties across barlines are a common way of adding interest to a melody. Let's add tie support to rhythmical"
+image: ./img/rhythmical-tie.png
+---
+
+import { tieReducer } from '../components/rhythmical/reducers.ts';
+import { renderRhythmObject } from '../components/rhythmical/rhythmical.ts';
+import Player from '../components/rhythmical/components/Player.tsx';
+import { MK2md2 } from '../instruments/rhodes';
+import { rhythmicalScore } from '../components/score/score-utils.ts';
+import { Score } from '../components/score/Score.tsx';
+import { Note, Interval } from '@tonaljs/tonal';
+
+In modern music, ties across barlines are a common way of adding interest to a melody. For example, take the beginning of the tune "Blue Monk" by Thelonious Monk:
+
+<Score
+  width={600}
+  height={100}
+  staves={[
+    [
+      { key: 'd4', duration: 8 },
+      { key: 'eb4', duration: 8 },
+      { key: 'e4', duration: 8 },
+      { key: 'f4', duration: 8 },
+      { key: 'f4', duration: '2', tie: true }, //TBD: implement this for rhythmicalScore
+    ],
+  ]}
+/>
+
+In this post, I want to implement that for [rhythmical](../rhythmical-arrays/). Syntax proposal:
+
+```js
+[['d4', 'eb4', 'e4', 'f4'], '_'];
+```
+
+The "\_" sign will tie the note to the previous.
+
+## Render Implementation
+
+If we render the above events:
+
+```js
+renderRhythmObject({
+  duration: 8,
+  sequential: [['d4', 'eb4', 'e4', 'f4'], '_'],
+});
+```
+
+... the result (without path) looks like this:
+
+```json
+[
+  {
+    "value": "d4",
+    "time": 0,
+    "duration": 1
+  },
+  {
+    "value": "eb4",
+    "time": 1,
+    "duration": 1
+  },
+  {
+    "value": "e4",
+    "time": 2,
+    "duration": 1
+  },
+  {
+    "value": "f4",
+    "time": 3,
+    "duration": 1
+  },
+  {
+    "value": "_",
+    "time": 4,
+    "duration": 4
+  }
+]
+```
+
+The last event would not be suitable for playback, as "\_" is not a valid note name.
+
+To fix that, we can apply a tie by adding its duration to the preceeding event:
+
+```js
+const tieReducer = (filter) => (events, event, index, array) => {
+  if (filter) {
+    array = array.filter(filter);
+  }
+  // check if next event is a tie
+  if (index + 1 < array.length && array[index + 1].value === '_') {
+    return events.concat([{ ...event, duration: event.duration + array[index + 1].duration }]); // adds duration of next event to current
+  }
+  if (event.value === '_') {
+    return events; // ignore tie
+  }
+  return events.concat([event]); // next event is no tie
+};
+// to apply the reducer, we use it with reduce on the rendered events:
+renderRhythmObject({
+  duration: 8,
+  sequential: [['d4', 'eb4', 'e4', 'f4'], '_'],
+}).reduce(tieReducer(), []);
+```
+
+Result (again without path):
+
+```json
+[
+  {
+    "value": "d4",
+    "time": 0,
+    "duration": 1
+  },
+  {
+    "value": "eb4",
+    "time": 1,
+    "duration": 1
+  },
+  {
+    "value": "e4",
+    "time": 2,
+    "duration": 1
+  },
+  {
+    "value": "f4",
+    "time": 3,
+    "duration": 5
+  }
+]
+```
+
+Now the last event has a duration of 5, which is 1 (duration of "f4") + 4 (duration of "\_")!
+These events are now suitable for playback:
+
+<Player
+  fold={true}
+  events={renderRhythmObject({
+    duration: 2,
+    sequential: [['d4', 'eb4', 'e4', 'f4'], '_'],
+  }).reduce(tieReducer(), [])}
+/>
+
+Forgive me that this example doesn't swing like it should.. you have to wait for that feature to be implemented...
+
+## Score implementation
+
+In a score, we have to keep the events seperated, but add the tie flag:
+
+```js
+export function rhythmicalScore(rhythm: NestedRhythm<string>) {
+  return Rhythm.render(rhythm, rhythm.length)
+    .map((e) => [e.value, Math.floor(e.time), 1 / e.duration])
+    .reduce((groups: any[][], [note, bar, duration]) => {
+      // added this part
+      let tie = false;
+      if (note === '_') {
+        let lastNote;
+        if (groups.length && groups[groups.length - 1].length) {
+          const lastGroup = groups[groups.length - 1];
+          lastNote = lastGroup[lastGroup.length - 1];
+        }
+        note = lastNote ? lastNote.key : 'r';
+        tie = lastNote ? true : false;
+      }
+      // end of tie logic
+      if (!groups.length || bar > groups.length - 1) {
+        groups.push([]);
+      }
+      if (duration === 4) {
+        duration = 'q';
+      }
+      if (note === 'r') {
+        duration = duration + 'r';
+        note = 'b4';
+      }
+      groups[groups.length - 1].push({ key: note, duration, tie }); // changed to object syntax
+      return groups;
+    }, []);
+}
+```
+
+Now the tie symbol works in the score:
+
+<Score width={600} height={100} staves={rhythmicalScore([[['d4', 'eb4', 'e4', 'f4'], '_']])} />
+
+```js
+<Score width={600} height={100} staves={rhythmicalScore([[['d4', 'eb4', 'e4', 'f4'], '_']])} />
+```
+
+## sandman
+
+Now here's a more sophisticated (non swung) example:
+
+<Player
+  fold={true}
+  instruments={{ MK2md2 }}
+  events={renderRhythmObject({
+    duration: 48,
+    parallel: [
+      [
+        ['c5', [{ value: '_', duration: 3 }, 'c5']],
+        ['d5', ['_', 'g4']],
+        ['c5', [{ value: '_', duration: 3 }, 'c5']],
+        ['d5', ['_', 'r']],
+        ['r', 'r'],
+        ['r', 'r'],
+        ['r', 'r'],
+        ['r', 'r'],
+        ['r', 'r'],
+        ['r', 'r'],
+        ['r', 'r'],
+        ['r', 'r'],
+        ['r', 'r'],
+        ['r', 'r'],
+        ['r', 'r'],
+        ['r', 'r'],
+        ['r', 'r'],
+        ['r', 'r'],
+        ['r', 'r'],
+        ['r', 'r'],
+      ],
+      [
+        [
+          ['r', { value: 'e5', duration: 3 }],
+          ['_', [{ value: 'e5', duration: 3 }, 'r']],
+        ],
+        [
+          ['r', { value: 'f5', duration: 3 }],
+          ['_', 'r'],
+        ],
+        [
+          ['r', { value: 'e5', duration: 3 }],
+          ['_', [{ value: 'e5', duration: 3 }, 'r']],
+        ],
+        [
+          ['r', { value: 'f5', duration: 3 }],
+          ['_', 'r'],
+        ],
+        'r',
+        'r',
+        'r',
+        'r',
+        'r',
+        'r',
+        'r',
+        'r',
+        'r',
+        'r',
+        'r',
+        'r',
+        'r',
+        'r',
+        'r',
+        'r',
+      ],
+      [
+        [
+          ['r', 'g5'],
+          [
+            ['_', 'g5'],
+            [{ value: '_', duration: 3 }, 'r'],
+          ],
+        ],
+        [['r', 'a5'], 'r'],
+        [
+          ['r', 'g5'],
+          [
+            ['_', 'g5'],
+            [{ value: '_', duration: 3 }, 'r'],
+          ],
+        ],
+        [['r', 'a5'], 'r'],
+        'r',
+        'r',
+        'r',
+        'r',
+        'r',
+        'r',
+        'r',
+        'r',
+        'r',
+        'r',
+        'r',
+        'r',
+        'r',
+        'r',
+        'r',
+        'r',
+      ],
+      {
+        sequential: [
+          [
+            ['r', 'r', 'r', 'b5'],
+            ['a5', 'r', 'r', 'r'],
+          ],
+          [
+            ['r', 'r', 'r', 'c6'],
+            ['b5', 'r'],
+          ],
+          [
+            ['r', 'r', 'r', 'b5'],
+            ['a5', 'r', 'r', 'r'],
+          ],
+          [
+            ['r', 'r', 'r', 'c6'],
+            ['b5', ['g5', 'a5']],
+          ],
+          [['b5', { value: 'a5', duration: 3 }], ['_']],
+          [['b5', 'b5', 'f#5', 'b5'], ['_']],
+          [
+            ['r', 'c6', 'c6', 'b5'],
+            ['c6', { value: 'c6', duration: 2 }, 'b5'],
+          ],
+          [['f5', 'f5', 'e5', 'f5'], ['_']],
+          [
+            ['r', 'b5', 'b5', 'a5'],
+            ['b5', { value: 'r', duration: 2 }, 'a5'],
+          ],
+          [
+            ['e5', 'e5', 'd5', 'e5'],
+            ['_', { value: 'g5', duration: 3 }],
+          ],
+          [
+            ['r', 'd6', 'd6', 'c6'],
+            ['d6', 'c6', 'd6', 'c6'],
+          ],
+          [
+            ['eb6', 'eb6'],
+            ['e6', { value: 'd6', duration: 3 }],
+          ], // repeat
+          [['b5', { value: 'a5', duration: 3 }], ['_']],
+          [['b5', 'b5', 'a5', 'b5'], ['_']],
+          [
+            ['r', 'c6', 'c6', 'b5'],
+            ['c6', { value: 'c6', duration: 2 }, 'b5'],
+          ],
+          [['f5', ['e5', 'f5']], ['_']],
+          [
+            ['d5', ['f5', 'a5']],
+            ['_', 'd6', 'd6', 'c6'],
+          ],
+          [['d6'], ['r', ['c6', 'd6']]],
+          [
+            ['e6', 'e6'],
+            ['e6', 'c6', 'e6', 'c6'],
+          ],
+          [['_'], ['r', 'g4', 'a4', 'b4']],
+        ],
+      },
+    ],
+  })
+    .reduce(tieReducer(), [])
+    .map((event) => ({
+      ...event,
+      value: event.value !== 'r' ? Note.transpose(event.value, Interval.fromSemitones(-15)) : 'r',
+    }))}
+/>
+
+Caution: Only press play if you're on WIFI as it uses ~46MB of samples
+
+## Next Steps
+
+In a future post, I want to implement more "post processing" features, which will operate on the rendered events, like:
+
+- swing
+- dynamics from pitch
+- auto tie (do not attack repeated notes again)
+- test tie feature in a polyphonic setting (could need extra fixes)

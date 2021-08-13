@@ -1,0 +1,940 @@
+---
+title: Voicing Permutation
+date: '2020-08-11'
+tags: ['music theory', 'algorithms', 'voicings']
+image: ./img/voicing-permutation.png
+description: Let's try to generate any possible voicing by permutation.
+---
+
+In the [rhythmical chords post](https://felixroos.github.io/blog/rhythmical-chords/)
+I talked about two possible methods to generate chord voicings and implemented the first of them: voicing dictionaries.
+In this this post, I will tackle the second, much more difficult method: voicing permutation.
+
+import { BlockMath } from 'react-katex';
+import {
+  renderUp,
+  permutateVoicings,
+  permutateTree,
+  permutateTreeUnique,
+  flatPermutations,
+  arrangePermutations,
+  sortByMeanMidi,
+  pitchesInRange,
+  colorID,
+  permutate,
+  flatTree,
+} from '../components/combinatorial-search/pitchPermutation';
+import Keyboard from '../components/music/Keyboard.tsx';
+import { Range, Note } from '@tonaljs/tonal';
+import PermutationTree from '../components/combinatorial-search/PermutationTree.tsx';
+import VoicingPermutator from '../components/combinatorial-search/VoicingPermutator.tsx';
+import tinypiano from '../instruments/tinypiano.ts';
+import Player from '../components/rhythmical/components/Player.tsx';
+import { renderRhythm } from '../components/rhythmical/rhythmical.ts';
+import { inherit } from '../components/rhythmical/features/inherit.ts';
+import { interpolateWarm, interpolateSinebow } from 'd3-scale-chromatic';
+import { Interval } from '@tonaljs/tonal';
+
+## Permutation Basics
+
+Permutation means generating all possible combinations of elements within certain rules.
+If you want a better understanding of the source code below the examples, read [my post about combinatorial search](https://felixroos.github.io/blog/combinatorial-search/).
+Before we get to voicings, let's talk about some basic models:
+
+### The Combination Lock 🔓
+
+The permutations of a 3 digit combination lock can be visualized with this "decision tree":
+
+<div style={{ height: 400, overflow: 'auto' }}>
+  <PermutationTree
+    height={11000}
+    children={permutate({
+      find: (path, solutions) => {
+        if (path.length < 3) {
+          return Array.from({ length: 10 }, (_, i) => i);
+        }
+        return [];
+      },
+      validate: (path) => path.length === 3,
+    })}
+  />
+</div>
+
+<details>
+  <summary>show source</summary>
+
+This function creates the permutation tree:
+
+```js
+function permutate(options, path = [], solutions = []) {
+  let { find, validate, map } = options;
+  map = map || ((e) => e);
+  const candidates = find(path, solutions); // find candidates
+  const isValid = validate(path, solutions); // validate current path
+  if (isValid) {
+    solutions.push(path); // add solution
+  }
+  return map({
+    name: path[path.length - 1] ?? '',
+    path,
+    isValid,
+    children: candidates.map(
+      (e) => permutate(options, path.concat([e]), solutions) // recur
+    ),
+  });
+}
+```
+
+Usage:
+
+```js
+<PermutationTree
+  height={11000}
+  children={permutate({
+    find: (path, solutions) => {
+      if (path.length < 3) {
+        return Array.from({ length: 10 }, (_, i) => i);
+      }
+      return [];
+    },
+    validate: (path) => path.length === 3,
+  })}
+/>
+```
+
+PermutationTree:
+
+```js
+import React from 'react';
+import { select } from 'd3-selection';
+import { cluster, hierarchy } from 'd3-hierarchy';
+
+export default function PermutationTree(props) {
+  let { width = 600, height = 200, children, onClick } = props;
+  const root: any = tree(children, width);
+  return (
+    <svg
+      viewBox={`-10 ${-height / 2} ${width} ${height}`}
+      ref={(el) => {
+        const svg = select(el);
+        // lines
+        svg
+          .append('g')
+          .attr('fill', 'none')
+          .attr('stroke', '#555')
+          .attr('stroke-opacity', 0.4)
+          .attr('stroke-width', 1.5)
+          .selectAll('path')
+          .data(root.links())
+          .join('path')
+          .attr(
+            'd',
+            (d: any) => `
+        M${d.target.y},${d.target.x}
+        C${d.source.y + root.dy / 2},${d.target.x}
+         ${d.source.y + root.dy / 2},${d.source.x}
+         ${d.source.y},${d.source.x}`
+          );
+        // circles
+        svg
+          .append('g')
+          .selectAll('circle')
+          .data(root.descendants())
+          .join('circle')
+          .attr('cx', (d: any) => d.y)
+          .attr('cy', (d: any) => d.x)
+          .attr('r', 3)
+          .attr('fill', (d: any) => {
+            return d.data.color || (d.children ? '#555' : '#999');
+          });
+        // labels
+        svg
+          .append('g')
+          .attr('font-family', 'sans-serif')
+          .attr('font-size', 10)
+          .attr('stroke-linejoin', 'round')
+          .attr('stroke-width', 3)
+          .attr('cursor', 'pointer')
+          .selectAll('text')
+          .data(root.descendants())
+          .join('text')
+          .on('click', (e, d) => {
+            onClick && onClick(d);
+          })
+          .attr('x', (d: any) => d.y)
+          .attr('y', (d: any) => d.x)
+          .attr('dy', '0.31em')
+          .attr('dx', (d: any) => (d.children ? -6 : 6))
+          .text((d: any) => (d.children ? d.data.name : d.data.name + ' ➡ ' + d.data.path.join(' ')))
+          .filter((d: any) => d.children)
+          .attr('text-anchor', 'end')
+          .clone(true)
+          .lower()
+          .attr('stroke', 'white');
+        // svg.attr('viewBox', autoBox as any);
+      }}
+    />
+  );
+}
+
+export function tree(nodes, width = 600) {
+  const root: any = hierarchy(nodes);
+  root.dx = 10;
+  root.dy = width / (root.height + 1);
+  return cluster().nodeSize([root.dx, root.dy])(root);
+}
+```
+
+This tree will be used throughout the post to vizualize permutation hierarchies.
+
+</details>
+
+
+
+
+For each of the 3 digits, we have 10 possible numbers to pick, so we get a total of 1000 or 10<sup>3</sup> different combinations.
+The model has the following rules:
+
+- strict order (e.g. 123 is not 321)
+- non unique picks (e.g. 121 is valid)
+
+### Seat Orderings 👩 👳 👶
+
+Let's say we have 3 people: 👩 👳 👶. If we want to make a nice family photo and let them sit on 3 chairs, we have the following possibilities:
+
+<PermutationTree
+  height={200}
+  children={permutate({
+    find: (path, solutions) => {
+      if (path.length < 3) {
+        return ['👩', '👳', '👶'].filter((e) => !path.includes(e));
+      }
+      return [];
+    },
+    validate: (path) => path.length === 3,
+  })}
+/>
+
+<details>
+  <summary>show source</summary>
+
+```js
+<PermutationTree
+  height={200}
+  children={permutate({
+    find: (path, solutions) => {
+      if (path.length < 3) {
+        return ['👩', '👳', '👶'].filter((e) => !path.includes(e));
+      }
+      return [];
+    },
+    validate: (path) => path.length === 3,
+  })}
+/>
+```
+
+</details>
+<br/>
+
+As opposed to the numbers in the combination lock, people cannot be duplicated. So we get a total of 3! = 3\*2\*1 = 6 different combinations.
+The rules are:
+
+- strict order
+- unique picks
+
+### Lottery Urn ⚱
+
+In a lottery Urn (at least the ones I know), 6 balls are pulled out of a pool of 49 unique numbered balls. The Rules:
+
+- no strict order
+- unique picks
+- picking only a subset
+
+According to math people, the number of combinations can be calculated with:
+
+<BlockMath>{`\\frac{n!}{r! * (n - r)!} = \\frac{49!}{6! * (49 - 6)!} = 13983816`}</BlockMath>
+
+So to get all numbers correct, you have roughly a chance of 1:14 million.
+For that reason I will not show a graph here, but we will see a simpler graph the same type soon.
+
+Now that we know of the basic methods of permutation, where do voicings belong?
+Let's try out different models..
+
+## Permutating Pitches
+
+If we permutate without octaves, we can basically use all possible chord notes and arrange them in different orders.
+The equivalent above would be the seat orderings 👩 👳 👶, but with unique pitches instead of persons.
+
+For example, let's permutate the notes of a C major chord:
+
+<VoicingPermutator
+  options={{
+    find: (path, solutions) => {
+      if (path.length < 3) {
+        return ['C', 'E', 'G'].filter((e) => !path.includes(e));
+      }
+      return [];
+    },
+    validate: (path) => path.length === 3,
+  }}
+/>
+
+<details>
+  <summary>show source</summary>
+
+```js
+<VoicingPermutator
+  options={{
+    find: (path, solutions) => {
+      if (path.length < 3) {
+        return ['C', 'E', 'G'].filter((e) => !path.includes(e));
+      }
+      return [];
+    },
+    validate: (path) => path.length === 3,
+  }}
+/>
+```
+
+```js
+function VoicingPermutator({ range, options }) {
+  const piano = useMemo(() => tinypiano.load(), []);
+  const playNode =
+    (hasOctaves = false) =>
+    ({ data: { path, isLeaf } }) => {
+      const notes = hasOctaves ? path : renderUp(path, 3);
+      notes.forEach((note) => piano.triggerAttackRelease(note, 4));
+    };
+  const tree = permutate(options);
+
+  return (
+    <>
+      <PermutationTree height={200} onClick={playNode(false)} children={tree} />
+      <Player
+        instruments={{ tinypiano }}
+        fold={false}
+        events={renderRhythm(
+          {
+            duration: 8,
+            sequential: flatTree(tree).reduce(arrangePermutations(range), []).sort(sortByMeanMidi),
+          },
+          [inherit('color')]
+        )}
+      />
+    </>
+  );
+}
+```
+
+Render notes:
+
+```js
+export function renderUp(pitches, bottomOctave) {
+  const res = [];
+  let octave = bottomOctave;
+  pitches.forEach((pitch, index) => {
+    if (index && Note.chroma(pitches[index - 1]) >= Note.chroma(pitch)) {
+      octave += 1;
+    }
+    res.push(pitch + octave);
+  });
+  return res;
+}
+
+function flatTree(tree) {
+  return flatObject(tree, {
+    isDeep: ({ children }) => children?.length,
+    getChildren: ({ children }) => children
+  } as any)
+    .filter(({ isValid }) => isValid)
+    .map(({ path }) => path);
+}
+// takes 2D pitch array and arranges all possible transpositions
+export const arrangePermutations = (range = ['C3', 'C5']) => (voicings, combination) => {
+  return voicings.concat(
+    setsInRange(combination, range).map((notes) => ({
+      parallel: notes,
+    }))
+  );
+}
+
+export function setsInRange(pitches, range = ['D3', 'A4']) {
+  const notesInRange = Range.chromatic(range) // gives array of notes inside range
+  // get all possible start notes for voicing
+  const starts = notesInRange
+    // only get the start notes:
+    .filter(note => Note.chroma(note) === Note.chroma(pitches[0]))
+    // replace Range.chromatic notes with the correct enharmonic equivalents
+    .map(note => enharmonicEquivalent(note, pitches[0]))
+  // render one voicing for each start note
+  return starts.map(start => renderUp(pitches, Note.octave(start)))
+    // filter out voicings that contain notes that overshoot
+    .filter(notes => !notes.find(note => Note.midi(note) > Note.midi(range[1])));
+}
+```
+
+- [enharmonicEquivalent](https://felixroos.github.io/blog/rhythmical-chords/#enharmonic-considerations)
+- [flatObject](https://felixroos.github.io/blog/rhythmical-reducers/#back-to-the-basics)
+
+</details>
+<br />
+
+I now rendered the combinations inside a specific range + sorted them by mean height.
+
+Some of those combinations are pretty wide.. We will look at ways to filter those
+out later.
+
+### Allowing Doubled Notes
+
+When voicing a chord, we might want to double a note. This would be equivalent to a 3 digits combination lock where each digit can have 3 possible values 🔓:
+
+<VoicingPermutator
+  hidePlayer={true}
+  height={400}
+  options={{
+    find: (path, solutions) => {
+      if (path.length < 3) {
+        return ['C', 'E', 'G'];
+      }
+      return [];
+    },
+    validate: (path) => path.length === 3,
+  }}
+/>
+
+<details>
+<summary>show source</summary>
+
+```js
+<VoicingPermutator
+  hidePlayer={true}
+  height={400}
+  options={{
+    find: (path, solutions) => {
+      if (path.length < 3) {
+        return ['C', 'E', 'G'];
+      }
+      return [];
+    },
+    validate: (path) => path.length === 3,
+  }}
+/>
+```
+
+</details>
+
+Now now we have a total of 3<sup>3</sup> = 27 different combinations, where many of them are unpractical.
+We might filter out..
+
+- those who do not contain the third (E), as it is the most essential note
+- those who repeat the same note directly
+
+<VoicingPermutator
+  options={{
+    find: (path, solutions) => {
+      if (path.length < 3) {
+        return ['C', 'E', 'G'].filter((e) => !path.length || path[path.length - 1] !== e);
+      }
+      return [];
+    },
+    validate: (path) => path.length === 3 && path.includes('E'),
+  }}
+/>
+
+<details>
+  
+  <summary>show source</summary>
+
+```js
+<VoicingPermutator
+  options={{
+    find: (path, solutions) => {
+      if (path.length < 3) {
+        return ['C', 'E', 'G'].filter((e) => !path.length || path[path.length - 1] !== e);
+      }
+      return [];
+    },
+    validate: (path) => path.length === 3 && path.includes('E'),
+  }}
+/>
+```
+
+</details>
+<br/>
+
+Note that some dots are red, which indicates an invalid leaf.
+In this case these are combinations without the pitch E.
+
+### Allowing Less Notes
+
+Additionally, we might also pick less notes, for example voicing C major with two notes:
+
+<VoicingPermutator
+  options={{
+    find: (path, solutions) => {
+      if (path.length < 2) {
+        return ['C', 'E', 'G'].filter((e) => !path.length || path[path.length - 1] !== e);
+      }
+      return [];
+    },
+    validate: (path) => path.length === 2 && path.includes('E'),
+  }}
+/>
+
+- no doubling
+- E is required
+
+This is now like a lottery urn ⚱ where we pull 2 out of 3, but with strict order.
+
+### Allowing More Notes
+
+Of course, we can also voice a C major chord with four notes (if we are allowed to double).
+Here are just some examples that would come out:
+
+<VoicingPermutator
+  height={1100}
+  scrollHeight={400}
+  hidePlayer={true}
+  options={{
+    find: (path, solutions) => {
+      if (path.length < 4) {
+        return ['C', 'E', 'G'];
+      }
+      return [];
+    },
+    validate: (path) => path.length === 4,
+  }}
+/>
+
+If we forbid doubles and require E:
+
+<VoicingPermutator
+  height={380}
+  hidePlayer={false}
+  options={{
+    find: (path, solutions) => {
+      if (path.length < 4) {
+        return ['C', 'E', 'G'].filter((e) => !path.length || path[path.length - 1] !== e);
+      }
+      return [];
+    },
+    validate: (path) => path.length === 4 && path.includes('E'),
+  }}
+/>
+
+<details>
+<summary>show source</summary>
+
+```js
+<VoicingPermutator
+  height={380}
+  hidePlayer={false}
+  options={{
+    find: (path, solutions) => {
+      if (path.length < 4) {
+        return ['C', 'E', 'G'].filter((e) => !path.length || path[path.length - 1] !== e);
+      }
+      return [];
+    },
+    validate: (path) => path.length === 4 && path.includes('E'),
+  }}
+/>
+```
+
+</details>
+<br/>
+
+### Max Interval Limit
+
+As some voicings are pretty wide, we could limit the distance between notes.
+Let's refresh our ears and use D-7 this time:
+
+<VoicingPermutator
+  height={300}
+  hidePlayer={false}
+  options={{
+    find: (path, solutions) => {
+      if (path.length >= 4) {
+        return [];
+      }
+      return ['D', 'F', 'A', 'C'].filter((e) => {
+        if (path.length && path[path.length - 1] === e) {
+          // forbid immediate doubling
+          return false;
+        }
+        if (path.length && Interval.semitones(Interval.distance(path[path.length - 1], e)) > 5) {
+          return false;
+        }
+        return true;
+      });
+    },
+    validate: (path) => path.length === 4 && path.includes('F'),
+  }}
+/>
+
+<details>
+<summary>show source</summary>
+
+```js
+<VoicingPermutator
+  height={250}
+  hidePlayer={false}
+  options={{
+    find: (path, solutions) => {
+      if (path.length >= 4) {
+        return [];
+      }
+      return ['D', 'F', 'A', 'C'].filter((e) => {
+        if (path.length && path[path.length - 1] === e) {
+          // forbid immediate doubling
+          return false;
+        }
+        if (path.length && Interval.semitones(Interval.distance(path[path.length - 1], e)) > 5) {
+          return false;
+        }
+        return true;
+      });
+    },
+    validate: (path) => path.length === 4 && path.includes('F'),
+  }}
+/>
+```
+
+</details>
+<br/>
+
+Here, the next note is constrained to be &lt;= 5 semitones away.
+If we look at the tree, we see that it starts to get asymmetrical.
+
+### Min Interval Limit
+
+We could also avoid intervals that are too small:
+
+<VoicingPermutator
+  height={500}
+  hidePlayer={false}
+  range={['C3', 'G5']}
+  options={{
+    find: (path, solutions) => {
+      if (path.length >= 4) {
+        return [];
+      }
+      return ['D', 'F', 'A', 'C'].filter((e) => {
+        if (path.length && path[path.length - 1] === e) {
+          // forbid immediate doubling
+          return false;
+        }
+        if (path.length && Interval.semitones(Interval.distance(path[path.length - 1], e)) < 5) {
+          return false;
+        }
+        return true;
+      });
+    },
+    validate: (path) => path.length === 4 && path.includes('F'),
+  }}
+/>
+
+<details>
+<summary>show source</summary>
+
+```js
+<VoicingPermutator
+  height={250}
+  hidePlayer={false}
+  range={['C3', 'G5']}
+  options={{
+    find: (path, solutions) => {
+      if (path.length >= 4) {
+        return [];
+      }
+      return ['D', 'F', 'A', 'C'].filter((e) => {
+        if (path.length && path[path.length - 1] === e) {
+          // forbid immediate doubling
+          return false;
+        }
+        if (path.length && Interval.semitones(Interval.distance(path[path.length - 1], e)) < 5) {
+          return false;
+        }
+        return true;
+      });
+    },
+    validate: (path) => path.length === 4 && path.includes('F'),
+  }}
+/>
+```
+
+</details>
+<br/>
+
+Here, the next note must be at least 5 semitones away.
+
+### Limitations
+
+In all of the above permutations, we just used the pitches. This has some serious limitations:
+
+- we cannot express voicings where the interval between two siblings exceeds 1 octave
+- the extra step to generate the absolute notes seems redundant
+- we cannot apply permutation rules that depend on pitch height (like lower interval limits)
+
+If you think this is minor, or you do not really understand what I'm talking about, wait until you see the alternative.
+
+## Permutating Notes
+
+Instead of using just pitches, we could start with all possible notes (with octave) inside a range, and permutate with that. For example, D-7:
+
+<Keyboard
+  options={{
+    range: ['C3', 'C5'],
+    scaleX: 1,
+    scaleY: 1,
+    colorize: [
+      {
+        keys: pitchesInRange(['D', 'F', 'A', 'C'], ['C3', 'C5']),
+        color: interpolateSinebow(0.5),
+      },
+    ],
+  }}
+/>
+
+<details>
+  <summary>show source</summary>
+
+```js
+export function pitchesInRange(pitches, range = ['C3', 'C5']) {
+  return Range.chromatic(range)
+    .filter((note) => pitches.find((pitch) => Note.chroma(pitch) === Note.chroma(note)))
+    .map((note) =>
+      enharmonicEquivalent(
+        note,
+        pitches.find((pitch) => Note.chroma(pitch) === Note.chroma(note))
+      )
+    );
+}
+```
+
+</details>
+
+The colored keys are all possible notes we can pick inside our range (C3-C5).
+Now we should ignore the order, as all notes are now unique.
+This brings us to the lottery model e.g. 3 out of 4:
+
+<VoicingPermutator
+  height={400}
+  hidePlayer={false}
+  range={['C3', 'C5']}
+  hasOctaves={true}
+  options={{
+    find: (path, solutions) => {
+      if (path.length >= 4) {
+        return [];
+      }
+      // this should not be calculated everytime (throw pitchesInRange outside)...
+      return pitchesInRange(['D', 'F', 'A', 'C'], ['C3', 'C5']).filter((e, i, array) => {
+        if (path.length && array.indexOf(e) <= array.indexOf(path[path.length - 1])) {
+          // picks from left to right
+          return false;
+        }
+        if (path.length && Interval.semitones(Interval.distance(path[path.length - 1], e)) > 5) {
+          return false;
+        }
+        return true;
+      });
+    },
+    validate: (path) => path.length === 4 && path.find((p) => Note.chroma(p) === Note.chroma('F')),
+  }}
+/>
+
+<details>
+  <summary>show source</summary>
+
+```js
+<VoicingPermutator
+  height={400}
+  hidePlayer={false}
+  range={['C3', 'C5']}
+  hasOctaves={true}
+  options={{
+    find: (path, solutions) => {
+      if (path.length >= 4) {
+        return [];
+      }
+      // this should not be calculated everytime (throw pitchesInRange outside)...
+      return pitchesInRange(['D', 'F', 'A', 'C'], ['C3', 'C5']).filter((e, i, array) => {
+        if (path.length && array.indexOf(e) <= array.indexOf(path[path.length - 1])) {
+          // picks from left to right
+          return false;
+        }
+        if (path.length && Interval.semitones(Interval.distance(path[path.length - 1], e)) > 5) {
+          return false;
+        }
+        return true;
+      });
+    },
+    validate: (path) => path.length === 4 && path.find((p) => Note.chroma(p) === Note.chroma('F')),
+  }}
+/>
+```
+
+</details>
+<br/>
+
+### Top Pitch Classes
+
+We could restrict our voicings to certain top pitch classes:
+
+<VoicingPermutator
+  height={200}
+  hidePlayer={false}
+  range={['C3', 'C5']}
+  hasOctaves={true}
+  options={{
+    find: (path, solutions) => {
+      if (path.length >= 4) {
+        return [];
+      }
+      // this should not be calculated everytime (throw pitchesInRange outside)...
+      return pitchesInRange(['D', 'F', 'A', 'C'], ['C3', 'C5']).filter((e, i, array) => {
+        if (!path.length && !['C', 'F'].map(Note.chroma).includes(Note.chroma(e))) {
+          return false;
+        }
+        if (path.length && array.indexOf(e) >= array.indexOf(path[path.length - 1])) {
+          // picks from right to left !
+          return false;
+        }
+        if (path.length && Interval.semitones(Interval.distance(e, path[path.length - 1])) > 5) {
+          return false;
+        }
+        return true;
+      });
+    },
+    validate: (path) => path.length === 4 && path.find((p) => Note.chroma(p) === Note.chroma('F')),
+  }}
+/>
+
+<details>
+  <summary>show source</summary>
+
+```js
+<VoicingPermutator
+  height={200}
+  hidePlayer={false}
+  range={['C3', 'C5']}
+  hasOctaves={true}
+  options={{
+    find: (path, solutions) => {
+      if (path.length >= 4) {
+        return [];
+      }
+      // this should not be calculated everytime (throw pitchesInRange outside)...
+      return pitchesInRange(['D', 'F', 'A', 'C'], ['C3', 'C5']).filter((e, i, array) => {
+        if (!path.length && !['C', 'F'].map(Note.chroma).includes(Note.chroma(e))) {
+          return false;
+        }
+        if (path.length && array.indexOf(e) >= array.indexOf(path[path.length - 1])) {
+          // picks from right to left !
+          return false;
+        }
+        if (path.length && Interval.semitones(Interval.distance(e, path[path.length - 1])) > 5) {
+          return false;
+        }
+        return true;
+      });
+    },
+    validate: (path) => path.length === 4 && path.find((p) => Note.chroma(p) === Note.chroma('F')),
+  }}
+/>
+```
+
+</details>
+<br/>
+
+Here, only voicings with C or F at the top are valid.
+The trick here is that we permutate from the top down, to be able to start with the top note to cut most branches.
+
+### Bottom Pitch Classes
+
+Let's flip the previous example around..
+
+<VoicingPermutator
+  height={240}
+  hidePlayer={false}
+  range={['C3', 'C5']}
+  hasOctaves={true}
+  options={{
+    find: (path, solutions) => {
+      if (path.length >= 4) {
+        return [];
+      }
+      // this should not be calculated everytime (throw pitchesInRange outside)...
+      return pitchesInRange(['D', 'F', 'A', 'C'], ['C3', 'C5']).filter((e, i, array) => {
+        if (!path.length && !['C', 'F'].map(Note.chroma).includes(Note.chroma(e))) {
+          return false;
+        }
+        if (path.length && array.indexOf(e) <= array.indexOf(path[path.length - 1])) {
+          // picks from left to right
+          return false;
+        }
+        if (path.length && Interval.semitones(Interval.distance(path[path.length - 1], e)) > 5) {
+          return false;
+        }
+        return true;
+      });
+    },
+    validate: (path) => path.length === 4 && path.find((p) => Note.chroma(p) === Note.chroma('F')),
+  }}
+/>
+
+This example accepts either C of F as bottom note. Now we are going from bottom up again.
+
+<details>
+  <summary>show source</summary>
+
+```js
+<VoicingPermutator
+  height={240}
+  hidePlayer={false}
+  range={['C3', 'C5']}
+  hasOctaves={true}
+  options={{
+    find: (path, solutions) => {
+      if (path.length >= 4) {
+        return [];
+      }
+      // this should not be calculated everytime (throw pitchesInRange outside)...
+      return pitchesInRange(['D', 'F', 'A', 'C'], ['C3', 'C5']).filter((e, i, array) => {
+        if (!path.length && !['C', 'F'].map(Note.chroma).includes(Note.chroma(e))) {
+          return false;
+        }
+        if (path.length && array.indexOf(e) <= array.indexOf(path[path.length - 1])) {
+          // picks from left to right
+          return false;
+        }
+        if (path.length && Interval.semitones(Interval.distance(path[path.length - 1], e)) > 5) {
+          return false;
+        }
+        return true;
+      });
+    },
+    validate: (path) => path.length === 4 && path.find((p) => Note.chroma(p) === Note.chroma('F')),
+  }}
+/>
+```
+
+</details>
+<br/>
+
+## Outlook
+
+As this post now exceeds the magical limit of 1000 lines (only the MDX part), I will postpone the rest to a future post.
+
+- formulate an object format for voicing rules
+- migrate rules from Voicing.getCombinations
+- note importance rule => turn chord symbol to note importance hierarchy
+- write rhythmical plugin that generate voicing permutations
+- think about different ways to sort voicings
+- read bill evans voicing book and apply rules
+- http://www.thejazzpianosite.com/jazz-piano-lessons/jazz-chord-voicings/chord-voicing-rules/
+- https://en.wikipedia.org/wiki/Voicing_(music)
+- use https://observablehq.com/@d3/d3-hierarchy?collection=@d3/d3-hierarchy e.g. path
+- or https://observablehq.com/@d3/collapsible-tree?collection=@d3/d3-hierarchy
+- maybe even replace flatObject with d3.hierarchy https://github.com/d3/d3-hierarchy#hierarchy

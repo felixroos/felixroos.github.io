@@ -21,7 +21,27 @@ export const Index = ({ posts }: IndexProps): JSX.Element => {
         Welcome to my blog! This is where I write about music and coding stuff that I find interesting.
       </Paragraph>
       {posts.map((post) => (
-        <Box as="article" sx={{ mb: 4 }} key={post.slug}>
+        <Box as="article" sx={{ mb: 4, clear: 'both' }} key={post.slug}>
+          <Box sx={{ float: 'left' }}>
+            <div
+              style={{
+                margin: 10,
+                marginTop: 0,
+                width: 120,
+                height: 120,
+                borderRadius: '50%',
+                border: '1px solid gray',
+                overflow: 'hidden',
+                ...(post.frontmatter.image
+                  ? {
+                      backgroundImage: `url(${post.frontmatter.image})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                    }
+                  : { backgroundColor: 'gray' }),
+              }}
+            ></div>
+          </Box>
           <Box sx={{ float: 'right' }}>
             {post.frontmatter.tags?.map((tag, i) => (
               <Tag key={i}>{tag}</Tag>

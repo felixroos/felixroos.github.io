@@ -1,5 +1,5 @@
 import { curry } from 'ramda';
-import { Harmony } from './../../drafts/voicing/Harmony';
+import { Harmony } from '../voicing/Harmony';
 import { ValueChild } from './helpers/objects';
 
 export type EventReducer = (events: ValueChild<string>[], event: ValueChild<string>, index: number, array: ValueChild<string>[]) => ValueChild<string>[];

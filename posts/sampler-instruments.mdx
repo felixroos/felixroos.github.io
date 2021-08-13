@@ -1,0 +1,398 @@
+---
+title: Using Sampled Instruments with Tone.js
+date: '2020-07-08'
+tags: ['tone.js', 'web audio', 'code']
+description: "To get away from cheap synth sounds, let's implement instruments that use samples, with the help of Tone.js."
+image: ./img/piano-code.png
+---
+
+import { State } from 'react-powerplug';
+import tinypiano from '../instruments/tinypiano.ts';
+import drums from '../instruments/tidal';
+import { piano } from '../instruments/piano';
+import { MK2md2 } from '../instruments/rhodes';
+import * as Tone from 'tone';
+import { renderRhythmObject } from '../components/rhythmical/rhythmical.ts';
+import PlayButton from '../components/rhythmical/components/PlayButton.tsx';
+import Player from '../components/rhythmical/components/Player.tsx';
+import { inheritProperty } from '../components/rhythmical/features/inherit';
+import { Interval, Note } from '@tonaljs/tonal';
+
+Caution: Playing the examples will load ~60MB of samples. Make sure you are on Wifi!
+
+To get away from cheap synth sounds, let's implement instruments that use samples, with the help of Tone.js.
+
+## Rack for drums
+
+So far, we already used samples for drums, implemented with a rack, using Tone.Players:
+
+```ts
+// rack.ts
+import * as Tone from 'tone';
+export function rack(samples: { [key: string]: any }, options = {}) {
+  options = { volume: -12, attack: 0.05, ...options };
+  let players = new Tone.Players(samples, options);
+
+  const s = {
+    customSymbols: Object.keys(samples),
+    triggerAttackRelease: (key, duration, time, velocity) => {
+      if (!players.has(key)) {
+        console.warn(`key ${key} not found for playback`);
+        return;
+      }
+      const player = players.get(key);
+      player.start(time);
+      player.stop(time + duration);
+    },
+    connect: (dest) => {
+      players.connect(dest);
+      return s;
+    },
+    toMaster: () => {
+      players.toDestination();
+      return s;
+    },
+  };
+  return s;
+}
+```
+
+Here we are essentially creating a triggerAttackRelease method for Players to have more control and to be able to use one unified method for all instruments later.
+
+We can package a drum instrument like this:
+
+```ts
+// tidal.ts
+import { rack } from './rack';
+const tidalsounds = {
+  bd: require('./bd/BT0A0D0.wav'),
+  sn: require('./sn/ST0T0S3.wav'),
+  hh: require('./hh/000_hh3closedhh.wav'),
+  cp: require('./cp/HANDCLP0.wav'),
+  mt: require('./mt/MT0D3.wav'),
+  ht: require('./ht/HT0D3.wav'),
+  lt: require('./lt/LT0D3.wav'),
+};
+export default rack(tidalsounds).toDestination();
+```
+
+You can download the samples from the [Dirt-Samples repo](https://github.com/tidalcycles/Dirt-Samples).
+
+Then we can play sounds like this:
+
+```js
+import * as Tone from 'tone';
+import drums from './tidal';
+import { State } from 'react-powerplug';
+
+const seq = new Tone.Sequence(
+  (time, note, duration) => drums.triggerAttackRelease(note, 0.5, time),
+  ['bd', 'hh', 'cp', 'hh', 'bd', 'hh', 'cp', 'hh'],
+  '8n'
+);
+function toggleSeq() {
+  if (seq.state !== 'started') {
+    Tone.Transport.start('+0.1');
+    seq.start();
+  } else {
+    Tone.Transport.stop();
+    seq.stop();
+  }
+}
+document.getElementById('#playButton').addEventListener('click', () => toggleSeq());
+// in your dom: <button id="playButton">toggle</button>
+```
+
+<Player
+  instruments={{ drums }}
+  fold={true}
+  events={renderRhythmObject(
+    {
+      duration: 2,
+      sequential: ['bd', 'hh', 'cp', 'hh', 'bd', 'hh', 'cp', 'hh'],
+    },
+    [inheritProperty('instrument')]
+  )}
+/>
+
+With this approach, we can map any string to any sound, which is good for drums and non pitched sounds.
+
+## Sampler for pitched sounds
+
+To use samples for playing back pitched sounds, we can use Tone.Sampler:
+
+```ts
+// sampler.ts
+
+import { Distance, Interval, Note } from 'tonal';
+import * as Tone from 'tone';
+
+export function sampler(samples, options = {}) {
+  options = { volume: -12, attack: 0.05, ...options };
+  let sampler = new Tone.Sampler(samples, options);
+  const s = {
+    triggerAttackRelease: (note, duration, velocity) => {
+      if (options['transpose']) {
+        note = Distance.transpose(note, Interval.fromSemitones(options['transpose']));
+      }
+      sampler.triggerAttackRelease(Note.simplify(note), duration, velocity);
+    },
+    connect: (dest) => {
+      sampler.connect(dest);
+      return s;
+    },
+    toMaster: () => {
+      sampler.toDestination();
+      return s;
+    },
+  };
+  return s;
+}
+```
+
+To package an instrument, we need samples of different pitches of the instrument:
+
+```js
+export const piano = {
+  C1: require('./C1.mp3'),
+  C2: require('./C2.mp3'),
+  C3: require('./C3.mp3'),
+  C4: require('./C4.mp3'),
+  C5: require('./C5.mp3'),
+  C6: require('./C6.mp3'),
+  C7: require('./C7.mp3'),
+};
+
+import { sampler } from '../../../components/rhythmical/instruments/sampler';
+
+export default sampler(piano).toDestination();
+```
+
+The good thing about Tone.Sampler, is that it is able to fill the gaps between non existing pitches.
+This allows much smaller sample payloads, for example, the above piano only has 217KB of samples.
+If we add a sample for each key from C1 to B7, we have a payload of 2,2MB.
+
+You can compare the two and judge for yourself:
+
+<Player
+  instruments={{ piano }}
+  fold={true}
+  events={renderRhythmObject({
+    duration: 4,
+    sequential: [['c3', 'e3', 'g3', 'b3'], ['a3', 'g3', 'e3', 'c3'], ['d3', 'f3', 'a3', 'c4'], 'b3'],
+  })}
+/>
+
+<Player
+  instruments={{ tinypiano }}
+  fold={true}
+  events={renderRhythmObject({
+    duration: 4,
+    sequential: [['c3', 'e3', 'g3', 'b3'], ['a3', 'g3', 'e3', 'c3'], ['d3', 'f3', 'a3', 'c4'], 'b3'],
+  })}
+/>
+
+This time, we play it back using rhythmical + Tone.Part (as Tone.Sequence does not support durations):
+
+```js
+const duration = 4;
+const seq = (instr) => {
+  const sequence = new Tone.Part(
+    (time, { value, duration }) => instr.triggerAttackRelease(value, duration, time),
+    renderRhythmObject({
+      duration,
+      sequential: [['c3', 'e3', 'g3', 'b3'], ['a3', 'g3', 'e3', 'c3'], ['d3', 'f3', 'a3', 'c4'], 'b3'],
+    })
+  );
+  sequence.loop = true;
+  sequence.loopEnd = duration;
+  return sequence;
+};
+const cheapLoop = seq(tinypiano);
+const goodLoop = seq(piano);
+function toggleSeq(sequence) {
+  if (sequence.state !== 'started') {
+    Tone.Transport.start('+0.1');
+    sequence.start();
+  } else {
+    Tone.Transport.stop();
+    sequence.stop();
+  }
+}
+```
+
+## Extracting Samples from Kontakt
+
+If you do not have the time or equipment to record your large collection of vintage instruments at home, you can for example extract samples from [Kontakt](https://www.native-instruments.com/de/products/komplete/samplers/kontakt-6/):
+
+0. purchase (or download a free) kontakt instrument
+1. open instrument kontakt standalone version
+2. open expert > groups
+3. select all and click download, make sure you deselect the compress option
+
+Now you have all samples that are used by the kontakt instrument as wav on your hard drive!
+
+## Converting wav samples to mp3
+
+If you have a large amount of wav files, it is best to compress them, as a wav file for every key can get quite large.
+For example, I extracted samples from a rhodes instrument which add up to over 170MB only for one sample per key (same velocity).
+It would be nice to have a quick way to convert all wavs to a more compressed format like mp3.
+
+We can do that using node-lame:
+
+```js
+const Lame = require('node-lame').Lame;
+const path = require('path');
+const fs = require('fs');
+const folder = process.argv[2];
+if (!folder) {
+  console.log('no folder given!');
+} else {
+  //joining path of directory
+  const directoryPath = path.join(__dirname, folder);
+  console.log('convert ', directoryPath);
+  //passsing directoryPath and callback function
+  fs.readdir(directoryPath, function (err, files) {
+    //handling error
+    if (err) {
+      return console.log('Unable to scan directory: ' + err);
+    }
+    files
+      .filter((file) => file.split('.')[1] === 'wav')
+      .forEach(function (file) {
+        const encoder = new Lame({
+          output: `${directoryPath}/${file.split('.')[0]}.mp3`,
+          bitrate: 192,
+        }).setFile(`${directoryPath}/${file.split('.')[0]}.wav`);
+        encoder
+          .encode()
+          .then(() => console.log(`encoded ${directoryPath}/${file.split('.')[0]}.mp3`))
+          .catch((error) => console.log(`error encoding ${directoryPath}/${file.split('.')[0]}.mp3: ${error}`));
+      });
+  });
+}
+```
+
+This allowed me to reduce the size by 73% (from 756MB to 206MB for all articulations / from 170MB to 40MB for medium articulation)
+
+## Demo
+
+So here are a few demos using a rhodes sound with 40MB payload:
+
+### Mr Sandman
+
+<Player
+  instruments={{ MK2md2 }}
+  fold={true}
+  events={renderRhythmObject({
+    duration: 8,
+    parallel: [
+      {
+        parallel: [
+          ['c3', 'a2', 'd3', 'g2'],
+          ['r', 'g3', 'r', 'e3', 'r', 'a3', 'r', 'd3'],
+          ['r', 'e4', 'r', 'c4', 'r', 'f4', 'r', 'b3'],
+        ],
+      },
+      {
+        sequential: [['c5', 'e5', 'g5', 'b5'], ['a5', 'g5', 'e5', 'c5'], ['d5', 'f5', 'a5', 'c6'], ['b5']],
+      },
+    ],
+  })}
+/>
+
+### green onions
+
+<Player
+  instruments={{ MK2md2 }}
+  fold={true}
+  events={renderRhythmObject(
+    {
+      duration: 2,
+      parallel: [
+        ['r', 'f4', 'eb4', 'd4'],
+        ['r', 'c4', 'c4', 'bb3'],
+        ['r', 'ab3', 'ab3', 'f3'],
+        ['f2', 'f2', 'ab2', 'bb2'],
+      ],
+    },
+    [inheritProperty('instrument')]
+  )}
+/>
+
+### schlechter empfang
+
+<Player
+  instruments={{ MK2md2 }}
+  fold={true}
+  events={renderRhythmObject(
+    {
+      duration: 10,
+      parallel: [
+        {
+          instrument: 'MK2md2',
+          sequential: [
+            ['r', ['a3', 'c4', 'f4', 'r'], ['a4', 'r', 'r', 'f4'], ['r', 'r', 'c4', 'r']],
+            ['r', ['a3', 'c#4', 'f4', 'r'], ['a4', 'r', 'r', 'f4'], ['r', 'r', 'c#4', 'r']],
+            ['r', ['b3', 'd4', 'f4', 'r'], ['a4', 'r', 'r', 'f4'], ['r', 'r', 'd4', 'r']],
+            ['r', ['c4', 'e4', 'g4', 'r'], ['c5', 'r', 'r', 'bb4'], ['r', 'r', 'g4', 'r']],
+          ],
+        },
+        {
+          instrument: 'MK2md2',
+          color: 'steelblue',
+          parallel: [
+            ['a3', 'a3', ['a3', ['g3', 'f3']], ['f3', { sequential: 'e3', duration: 3 }]],
+            ['f3', 'f3', 'd3', ['d3', { sequential: 'c3', duration: 3 }]],
+            ['c3', 'c#3', 'b2', 'bb2'],
+          ],
+        },
+      ],
+    },
+    [inheritProperty('instrument')]
+  )}
+/>
+
+### microtonality
+
+Sadly, Tone.Sampler will round frequencies to equal temperament, making it impossible to play microtonal music:
+
+How it sounds:
+
+<Player
+  instruments={{ MK2md2 }}
+  events={renderRhythmObject({
+    duration: 4,
+    sequential: [400, 410, 420, 430, 440, 450, 460, 470],
+  })}
+/>
+
+How it should sound:
+
+<Player
+  events={renderRhythmObject({
+    duration: 4,
+    sequential: [400, 410, 420, 430, 440, 450, 460, 470],
+  })}
+/>
+
+source:
+
+```js
+<Player
+  instruments={{ MK2md2 }}
+  events={renderRhythmObject({
+    duration: 4,
+    sequential: [400, 410, 420, 430, 440, 450, 460, 470],
+  })}
+/>
+```
+
+## Further ideas
+
+- implement multiple samples per key for different velocities
+- implement looping sections
+- write script that trims samples to a max length
+- learn KSP
+- find way to load samples only after accepting huge payload (40MB is much on mobile)
+- find ways to humanize playback e.g. velocity curves, timing variances + swing

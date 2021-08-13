@@ -1,0 +1,860 @@
+---
+title: Rhythmical Chords
+date: '2020-07-30'
+tags: ['rhythmical', 'code']
+description: 'To bring rhythmical one step closer to being a hackable backing track player, I want to implement one of the most important things: chord symbols'
+image: ./img/rhythmical-chords.png
+---
+
+import {
+  chordReducer,
+  voicingDictionaryReducer,
+  lefthandBad,
+  voicingReducer,
+} from '../components/voicing-permutation/old.ts';
+import { tieReducer } from '../components/rhythmical/reducers.ts';
+import { renderRhythmObject } from '../components/rhythmical/rhythmical.ts';
+import { inheritProperty } from '../components/rhythmical/features/inherit.ts';
+import { voicingsInRange } from '../components/rhythmical/voicings/voicingsInRange.ts';
+import { lefthand } from '../components/rhythmical/voicings/dictionary.ts';
+import Player from '../components/rhythmical/components/Player.tsx';
+import tinypiano from '../instruments/tinypiano.ts';
+import { interpolateWarm } from 'd3-scale-chromatic';
+import drums from '../instruments/tidal';
+import piano from '../instruments/tinypiano.ts';
+
+To bring rhythmical one step closer to being a hackable backing track player, I want to implement one of the most important things: chord symbols.
+
+Disclaimer: To get the most out of this post, you might want to read those posts first:
+
+- [Rhythmical Arrays](https://felixroos.github.io/blog/rhythmical-arrays/)
+- [Rhythmical Objects](https://felixroos.github.io/blog/rhythmical-objects/)
+
+After this post, we will be able play chords like this:
+
+<Player
+  instruments={{ tinypiano }}
+  fold={false}
+  events={renderRhythmObject({
+    duration: 64,
+    sequential: [
+      ['Fm7', 'Bbm7', 'Eb7', 'Ab^7'],
+      ['Db^7', ['Dm7', 'G7'], 'C^7', '_'],
+      ['Cm7', 'Fm7', 'Bb7', 'Eb^7'],
+      ['Ab^7', ['Am7', 'D7'], 'G^7', '_'],
+      ['Am7', 'D7', 'G^7', '_'],
+      ['F#m7b5', 'B7b9', 'E^7', 'C7b13'],
+      ['Fm7', 'Bbm7', 'Eb7', 'Ab^7'],
+      ['Db^7', 'DbmM7', 'Cm7', 'Bo7'],
+      ['Bbm7', 'Eb7', 'Ab^7', ['Gm7b5', 'C7b9']],
+    ],
+  })
+    .reduce(tieReducer(), [])
+    .reduce(voicingReducer(lefthand, ['G3', 'G5']), [])}
+/>
+
+<details>
+  <summary>show source</summary>
+
+```js
+<Player
+  instruments={{ tinypiano }}
+  fold={false}
+  events={renderRhythmObject({
+    duration: 64,
+    sequential: [
+      ['Fm7', 'Bbm7', 'Eb7', 'Ab^7'],
+      ['Db^7', ['Dm7', 'G7'], 'C^7', '_'],
+      ['Cm7', 'Fm7', 'Bb7', 'Eb^7'],
+      ['Ab^7', ['Am7', 'D7'], 'G^7', '_'],
+      ['Am7', 'D7', 'G^7', '_'],
+      ['F#m7b5', 'B7b9', 'E^7', 'C7b13'],
+      ['Fm7', 'Bbm7', 'Eb7', 'Ab^7'],
+      ['Db^7', 'DbmM7', 'Cm7', 'Bo7'],
+      ['Bbm7', 'Eb7', 'Ab^7', ['Gm7b5', 'C7b9']],
+    ],
+  })
+    .reduce(tieReducer(), [])
+    .reduce(voicingReducer(lefthand, ['G3', 'G5']), [])}
+/>
+```
+
+</details>
+<br/>
+
+Without having anything implemented yet, let's [render](https://felixroos.github.io/blog/rhythmical-objects/) the following two bars of major chords:
+
+```js
+renderRhythmObject({
+  duration: 8,
+  sequential: [['F', 'G'], 'C'],
+});
+```
+
+...and look at the result:
+
+```js
+[
+  {
+    value: 'F',
+    time: 0,
+    duration: 2,
+  },
+  {
+    value: 'G',
+    time: 2,
+    duration: 2,
+  },
+  {
+    value: 'C',
+    time: 4,
+    duration: 4,
+  },
+];
+```
+
+...obviously, we cannot use that for playback, as these are chord symbols, and we need single notes with octaves.
+
+## Most Basic Chord Reducer
+
+As our goal is to get playable events, we need to transform the chord symbols to notes, using [Chord.get](https://github.com/tonaljs/tonal/tree/master/packages/chord#chordgetname-string-) and [Note.transpose](https://github.com/tonaljs/tonal/tree/master/packages/note#transposenote-string-interval-string--string) of [tonaljs](https://github.com/tonaljs/tonal):
+
+```ts
+import { Chord, Note } from '@tonaljs/tonal';
+
+export function chordReducer(events, event, index, array) {
+  if (typeof event.value === 'string') {
+    const { intervals, tonic } = Chord.get(event.value);
+    const notes = intervals.map((interval) => Note.transpose(tonic + '3', interval));
+    return events.concat(notes.map((note) => ({ ...event, value: note })));
+  }
+  return events;
+}
+```
+
+to apply the reducer, we can now just use [reduce](https://developer.mozilla.org/de/docs/Web/JavaScript/Reference/Global_Objects/Array/Reduce):
+
+```js
+renderRhythmObject({
+  duration: 8,
+  sequential: [['F', 'G'], 'C'],
+}).reduce(chordReducer, []);
+```
+
+Result:
+
+<div style={{maxHeight:400,overflow:'auto',borderRadius:10,marginBottom:10}}>
+
+```js
+[
+  {
+    value: 'F3',
+    time: 0,
+    duration: 2,
+  },
+  {
+    value: 'A3',
+    time: 0,
+    duration: 2,
+  },
+  {
+    value: 'C4',
+    time: 0,
+    duration: 2,
+  },
+  {
+    value: 'G3',
+    time: 2,
+    duration: 2,
+  },
+  {
+    value: 'B3',
+    time: 2,
+    duration: 2,
+  },
+  {
+    value: 'D4',
+    time: 2,
+    duration: 2,
+  },
+  {
+    value: 'C3',
+    time: 4,
+    duration: 4,
+  },
+  {
+    value: 'E3',
+    time: 4,
+    duration: 4,
+  },
+  {
+    value: 'G3',
+    time: 4,
+    duration: 4,
+  },
+];
+```
+
+</div>
+
+...which we can now play back:
+
+<Player
+  instruments={{ tinypiano }}
+  fold={false}
+  events={renderRhythmObject({
+    duration: 8,
+    sequential: [['F', 'G'], 'C'],
+  }).reduce(chordReducer, [])}
+/>
+
+<details>
+  <summary>show source</summary>
+
+```js
+<Player
+  instruments={{ tinypiano }}
+  fold={false}
+  events={renderRhythmObject({
+    duration: 8,
+    sequential: [['F', 'G'], 'C'],
+  }).reduce(chordReducer, [])}
+/>
+```
+
+</details>
+<br/>
+
+## Is this good music yet?
+
+Even besides the fact that this is played back by a cheap piano without rhythm, you might not be satisfied with the way the chords are played.
+
+A good pianist would never play chords like this, as their voices are moving with big steps. The voice leading would be much better if the end result sounded something like this:
+
+<Player
+  fold={false}
+  instruments={{ tinypiano }}
+  events={renderRhythmObject({
+    duration: 8,
+    sequential: [
+      [{ parallel: ['F3', 'A3', 'C4'] }, { parallel: ['D3', 'G3', 'B3'] }],
+      { parallel: ['E3', 'G3', 'C4'] },
+    ],
+  })}
+/>
+
+<details>
+  <summary>show source</summary>
+
+```js
+<Player
+  fold={false}
+  instruments={{ tinypiano }}
+  events={renderRhythmObject({
+    duration: 8,
+    sequential: [
+      [{ parallel: ['F3', 'A3', 'C4'] }, { parallel: ['D3', 'G3', 'B3'] }],
+      { parallel: ['E3', 'G3', 'C4'] },
+    ],
+  })}
+/>
+```
+
+</details>
+
+Here, we start on F major in [root position](https://en.wikipedia.org/wiki/Root_position) (1 3 5), transition to G major in 2nd inversion (5 1 3) to land on C major in 1st inversion (3 5 1).
+
+If we look at the movement between individual notes (voices), we only have small steps between 0 and 3 semitones, as opposed to 2-5 semitones in the previous example.
+The result is a much smoother sound.
+
+## Voicings & Voice leading
+
+The problem above brings us to the topic of Voicings and Voice Leading.
+
+A _voicing_ of a chord is one of many ways to play it, like different inversions. Another way to voice chords is by using wider intervals or doubling notes in different octaves. If you have no clue what I'm talking about, [watch this video](https://www.youtube.com/watch?v=VR3o45Pwx9Y).
+
+_Voice Leading_ describes the transition between different voicings of chords, with the general aim to create smooth transitions.
+
+## Two approaches to algorithmic voicings
+
+So far, I came across two approaches to generate voicings automatically:
+
+### Voicing Dictionaries
+
+Many applications (like iReal pro) use dictionaries that contain multiple voicings for each chord, then picking the one with the best voice leading.
+This is similar to how beginner and intermediate improvising piano players learn chords: Practising different voicings and pressing them on the fly.
+This is the approach that I want to implement today.
+
+### Voicing Permutation
+
+More advanced improvisers will think in terms of scales/modes and voicings that fit inside, which offers much more freedom.
+This approach can be mapped by using permutation: Taking all possible notes that can be selected for a chord, and going through all possible combinations one by one.
+As there are almost endless combinations, especially for chords with more notes, we need to come up with some rules that filter out combinations we do not want + find a way to permutate efficiently.
+This can be done via [combinatorial search](https://felixroos.github.io/blog/combinatorial-search/), which will be the topic for a future post.
+
+## Implementing a Voicing Dictionary
+
+A small fragment of a voicing dictionary could look like this:
+
+```js
+export const lefthand = {
+  m7: ['3m 5P 7m 9M', '-2M 2M 3m 5P', '7m 9M 10m 12P'],
+  7: ['3M 6M 7m 9M', '-2M 2M 3M 6M', '7m 9M 10M 13M'],
+  '^7': ['3M 5P 7M 9M', '-2m 2M 3M 5P', '7M 9M 10M 12P'],
+};
+```
+
+These are typical [rootless lefthand voicings](https://www.youtube.com/watch?v=5uoD6LfaDoE), notated using .
+If we now want to resolve chords with good voice leading, we can do it like this:
+
+<div style={{maxHeight:400,overflow:'auto',borderRadius:10,marginBottom:10}}>
+
+```ts
+import { Chord, Note } from '@tonaljs/tonal';
+
+export const voicingDictionaryReducer = (dictionary) => (events, event) => {
+  if (typeof event.value !== 'string') {
+    return events;
+  }
+  const { tonic, aliases } = Chord.get(event.value);
+  const symbol = Object.keys(dictionary).find((_symbol) => aliases.includes(_symbol));
+  if (!symbol) {
+    console.log(`no voicings found for chord "${event.value}"`);
+    return events;
+  }
+  let intervals;
+  const voicings = dictionary[symbol].map((i) => i.split(' ')); // split interval strings
+  const root = tonic + '3';
+  const bass = tonic + '2';
+  if (!events.length) {
+    // first chord => just use first voicing
+    intervals = voicings[0];
+  } else {
+    // not first chord => find smoothest voicing
+    const lastNote = events[events.length - 1].value; // last voiced note (top note)
+    // calculates the distance between the last note and the given voicings top note
+    const diff = (voicing) =>
+      Math.abs(Note.midi(lastNote) - Note.midi(Note.transpose(root, voicing[voicing.length - 1])));
+    // sort voicings by lowest top note difference
+    intervals = voicings.sort((a, b) => diff(a) - diff(b))[0];
+  }
+  // transpose to root
+  const notes = intervals.map((interval) => Note.transpose(root, interval));
+  return events.concat([{ ...event, value: bass }]).concat(notes.map((note) => ({ ...event, value: note })));
+};
+```
+
+</div>
+
+Now, a 251 sounds like this:
+
+<Player
+  fold={false}
+  instruments={{ tinypiano }}
+  events={renderRhythmObject({
+    duration: 8,
+    sequential: [['Dm7', 'G7'], 'C^7'],
+  }).reduce(voicingDictionaryReducer(lefthandBad), [])}
+/>
+
+Ahhh.. yeahhh, niccce. Let's try a tune that only uses 251s but goes through different tonal centers, like joy spring:
+
+<Player
+  fold={false}
+  instruments={{ tinypiano }}
+  events={renderRhythmObject({
+    duration: 64,
+    sequential: [
+      ['F^7', ['Gm7', 'C7'], 'F^7', ['Bbm7', 'Eb7']],
+      [['Am7', 'Ab7'], ['Gm7', 'C7'], 'F^7', ['Abm7', 'Db7']],
+      ['Gb^7', ['Abm7', 'Db7'], 'Gb^7', ['Bm7', 'E7']],
+      [['Bbm7', 'A7'], ['Abm7', 'Db7'], 'Gb^7', ['Am7', 'D7']],
+      ['G^7', ['Gm7', 'C7'], 'F^7', ['Fm7', 'Bb7']],
+      ['Eb^7', ['Abm7', 'Db7'], 'Gb^7', ['Gm7', 'C7']],
+      ['F^7', ['Gm7', 'C7'], 'F^7', ['Bbm7', 'Eb7']],
+      [['Am7', 'Ab7'], ['Gm7', 'C7'], 'F^7', ['Gm7', 'C7']],
+    ],
+  }).reduce(voicingDictionaryReducer(lefthandBad), [])}
+/>
+
+<details>
+  <summary>show source</summary>
+
+```js
+<Player
+  fold={false}
+  instruments={{ tinypiano }}
+  events={renderRhythmObject({
+    duration: 64,
+    sequential: [
+      ['F^7', ['Gm7', 'C7'], 'F^7', ['Bbm7', 'Eb7']],
+      [['Am7', 'Ab7'], ['Gm7', 'C7'], 'F^7', ['Abm7', 'Db7']],
+      ['Gb^7', ['Abm7', 'Db7'], 'Gb^7', ['Bm7', 'E7']],
+      [['Bbm7', 'A7'], ['Abm7', 'Db7'], 'Gb^7', ['Am7', 'D7']],
+      ['G^7', ['Gm7', 'C7'], 'F^7', ['Fm7', 'Bb7']],
+      ['Eb^7', ['Abm7', 'Db7'], 'Gb^7', ['Gm7', 'C7']],
+      ['F^7', ['Gm7', 'C7'], 'F^7', ['Bbm7', 'Eb7']],
+      [['Am7', 'Ab7'], ['Gm7', 'C7'], 'F^7', ['Gm7', 'C7']],
+    ],
+  }).reduce(voicingDictionaryReducer(lefthand), [])}
+/>
+```
+
+</details>
+<br/>
+
+### Observations
+
+Apart from the fact that this still sounds robotic due to the lame rhythm and non existing articulation, we can observe:
+
+- the basic voice leading works good
+- sometimes, it still jumps after getting too low
+- this is (partly) good, as voicings that are too low sound muddy
+- for many tunes (like joy spring), it is inevitable that the tightest possible voice leading is going out of range at some point
+- so at some point, a non optimal voice leading has to be chosen to get back to the sugar range
+
+### Range Considerations
+
+Let's review, how we are transposing the intervals to get the notes:
+
+```ts
+const root = tonic + '3';
+const notes = intervals.map((interval) => Note.transpose(root, interval));
+```
+
+This will give us a lowest possible root of C3 and a highest of B3.
+
+If we use the following intervals:
+
+```js
+export const lefthand = {
+  m7: ['3m 5P 7m 9M', '-2M 2M 3m 5P', '7m 9M 10m 12P'],
+  7: ['3M 6M 7m 9M', '-2M 2M 3M 6M', '7m 9M 10M 13M'],
+  '^7': ['3M 5P 7M 9M', '-2m 2M 3M 5P', '7M 9M 10M 12P'],
+};
+```
+
+... we have a minimum transposition of -2M and a maximum of 13M. Applying those to our min and max roots we get a note range of:
+
+- lowest note: C3 - 2M = Bb2
+- highest note: B3 + 13M = G#4
+
+To test some range edge cases, I want to create an example where the voicings get really low. As the first voicing will always use the first interval set:
+
+```js
+if (!events.length) {
+  // first chord => just use first voicing
+  intervals = voicings[0];
+}
+```
+
+...which is:
+
+- '3m 5P 7m 9M' for m7
+- '3M 6M 7m 9M' for 7
+- '3M 5P 7M 9M' for ^7
+
+... we will not even use the min or max intervals. If we want to reach them, we have to construct chords so that their smoothest voice leading will go down:
+
+<Player
+  fold={false}
+  instruments={{ tinypiano }}
+  events={renderRhythmObject({
+    duration: 6,
+    sequential: ['Cm7', 'Em7', 'Dm7', { value: 'Cm7', duration: 2 }, 'Bm7'],
+  }).reduce(voicingDictionaryReducer(lefthandBad), [])}
+/>
+
+<details>
+  <summary>show source</summary>
+
+```js
+<Player
+  fold={false}
+  instruments={{ tinypiano }}
+  events={renderRhythmObject({
+    duration: 6,
+    sequential: ['Cm7', 'Em7', 'Dm7', { value: 'Cm7', duration: 2 }, 'Bm7'],
+  }).reduce(voicingDictionaryReducer(lefthand), [])}
+/>
+```
+
+</details>
+
+Now we reach the lowest possible note (Bb2) on the second Cm7 (the long one). This is kind of low, but still more or less acceptable. What's less acceptable, is the last chord:
+
+I've set up the Bm7 to create a disjoint after the low Cm7. It may not sound unpleasant but for the goal of smooth voice leading, the Bm7 goes higher than it should.
+
+If we add another, even lower octave to our m7 voicings:
+
+```ts
+{
+m7: ['3m 5P 7m 9M', '-6M -4P -2M 2M', '-2M 2M 3m 5P', '7m 9M 10m 12P'],
+/* */
+}
+```
+
+... we get this:
+
+<Player
+  fold={false}
+  instruments={{ tinypiano }}
+  events={renderRhythmObject({
+    duration: 6,
+    sequential: ['Cm7', 'Em7', 'Dm7', { value: 'Cm7', duration: 2 }, 'Bm7'],
+  }).reduce(
+    voicingDictionaryReducer({
+      m7: ['3m 5P 7m 9M', '-6M -4P -2M 2M', '-2M 2M 3m 5P', '7m 9M 10m 12P'],
+      '7': ['3M 6M 7m 9M', '-6m -3m -2M 2M', '-2M 2M 3M 6M', '7m 9M 10M 13M'],
+      '^7': ['3M 5P 7M 9M', '-2m 2M 3M 5P', '7M 9M 10M 12P'],
+    }),
+    []
+  )}
+/>
+
+Now, the Bm7 does not "overshoot" and leads much smoother to the higher Cm7. Ok fine, so should we just use that addition?
+
+Before we do that, let's modify the example slightly, spinning an extra round to get even lower:
+
+<Player
+  fold={false}
+  instruments={{ tinypiano }}
+  events={renderRhythmObject({
+    duration: 12,
+    sequential: ['Cm7', 'Em7', 'Db^7', 'Cm7', 'Em7', 'Dm7', { value: 'Cm7', duration: 2 }, 'Bm7'],
+  }).reduce(
+    voicingDictionaryReducer({
+      m7: ['3m 5P 7m 9M', '-6M -4P -2M 2M', '-2M 2M 3m 5P', '7m 9M 10m 12P'],
+      '7': ['3M 6M 7m 9M', '-6m -3m -2M 2M', '-2M 2M 3M 6M', '7m 9M 10M 13M'],
+      '^7': ['3M 5P 7M 9M', '-2m 2M 3M 5P', '7M 9M 10M 12P'],
+    }),
+    []
+  )}
+/>
+
+```js
+['Cm7', 'Em7', 'Db^7', 'Cm7', 'Em7', 'Dm7', { value: 'Cm7', duration: 2 }, 'Bm7'];
+```
+
+Here, we are getting much too low on the longer Cm7...
+
+### The dilemma
+
+So now we have the classic coding dilemma: We had a problem (Bm7 did not go low enough), came up with a fix that solved it (add lower voicing), but we created another problem (other voicings are now too low)...
+This often happens when we are using a wrong abstraction, in this case, using root transposition to create voicings.
+
+The essential problem: We end up having different ranges for different roots. Also, we have no direct control over the range of the voicings.
+Additionally, it does not feel right for a voicing appear twice in the dictionary, only differing in octave.
+
+### What makes a voicing unpleasant
+
+When a voicing gets too low, some intervals at the bottom end are getting so close together that their overtones create nasty dissonances, as they get more and more audible.
+
+### Solution
+
+It would be great to control the range directly, not indirectly through the dictionary. Let's remove the clutter from our dictionary:
+
+```js
+export const lefthand = {
+  m7: ['3m 5P 7m 9M', '7m 9M 10m 12P'],
+  7: ['3M 6M 7m 9M', '7m 9M 10M 13M'],
+  '^7': ['3M 5P 7M 9M', '7M 9M 10M 12P'],
+};
+```
+
+Now I want to find a way to get all possible voicings inside a given note range. Lets use:
+
+```js
+['G2', 'C5'];
+```
+
+like proposed [here](https://youtu.be/5uoD6LfaDoE?t=523).
+
+Now we want this:
+
+```js
+const possibleVoicings = voicingsInRange('Cm7', lefthand, ['G2', 'C5']);
+/* [
+  ['Eb3','G3','Bb3','D4'],
+  ['Bb2','D3','Eb3','G3'],
+  ['Bb3','D4','Eb4','G4'],
+]*/
+```
+
+Now those 3 voicings are all possible Cm7 voicings inside the given range, using the provided dictionary.
+
+<Player
+  fold={false}
+  instruments={{ tinypiano }}
+  events={renderRhythmObject({
+    duration: 4,
+    sequential: [
+      { parallel: ['Bb2', 'D3', 'Eb3', 'G3'] },
+      { parallel: ['Eb3', 'G3', 'Bb3', 'D4'] },
+      { parallel: ['Bb3', 'D4', 'Eb4', 'G4'], duration: 2 },
+    ],
+  })}
+/>
+
+### Proper Range Implementation
+
+After some back and forth, I ended up implementing the method like this:
+
+<div style={{maxHeight:'400px',overflow:'auto',borderRadius:'10px',marginBottom:'10px'}}>
+
+```js
+import { Chord, Range, Note, Interval } from '@tonaljs/tonal';
+
+export function voicingsInRange(chord, dictionary, range) {
+  const { tonic, aliases } = Chord.get(chord);
+  // find equivalent symbol that is used as a key in dictionary:
+  const symbol = Object.keys(dictionary).find((_symbol) => aliases.includes(_symbol));
+  // resolve array of interval arrays for the wanted symbol
+  const voicings = dictionary[symbol].map((intervals) => intervals.split(' '));
+  const notesInRange = Range.chromatic(range); // gives array of notes inside range
+  return voicings.reduce((voiced, voicing) => {
+    // transpose intervals relative to first interval (e.g. 3m 5P > 1P 3M)
+    const relativeIntervals = voicing.map((interval) => Interval.substract(interval, voicing[0]));
+    // interval from bottom to top note
+    const voicingSpan = relativeIntervals[relativeIntervals.length - 1];
+    // get enharmonic correct pitch class the bottom note
+    const bottomPitchClass = Note.transpose(tonic, voicing[0]);
+    // get all possible start notes for voicing
+    const starts = notesInRange
+      // only get the start notes:
+      .filter((note) => Note.chroma(note) === Note.chroma(bottomPitchClass))
+      // filter out start notes that will overshoot the top end of the range
+      .filter((note) => Note.midi(Note.transpose(note, voicingSpan)) <= Note.midi(range[1]))
+      // replace Range.chromatic notes with the correct enharmonic equivalents
+      .map((note) => enharmonicEquivalent(note, bottomPitchClass));
+    // render one voicing for each start note
+    const notes = starts.map((start) => relativeIntervals.map((interval) => Note.transpose(start, interval)));
+    return voiced.concat(notes);
+  }, []);
+}
+```
+
+</div>
+
+using [Range.chromatic](https://github.com/tonaljs/tonal/tree/master/packages/range) to create the range + a custom enharmonicEquivalent function to get the accidentals right.
+
+#### Enharmonic Considerations
+
+One tricky part of the implementation above was the enharmonicEquivalent method.
+
+To understand the problem, let's try to create an edge case, by rendering the chord Fm7b5 with a specific voicing:
+
+<div style={{maxHeight:'400px',overflow:'auto',borderRadius:'10px',marginBottom:'10px'}}>
+
+```js
+const tonic = 'F';
+let voicing = ['5d 7m 8P 10m'];
+const range = ['A2', 'C4'];
+const notesInRange = Range.chromatic(range);
+// ['A2','Bb2','B2','C3','Db3','D3','Eb3','E3','F3','Gb3','G3','Ab3','A3','Bb3','B3','C4']
+voicing = voicing.split(' '); // ['5d', '7m', '8P', '10m']
+// map intervals relative to start
+const relativeIntervals = voicing.map((interval) => Interval.substract(interval, voicing[0])); // ['1P', '3M', '4A', '6M']
+// interval from bottom to top note:
+const voicingSpan = relativeIntervals[relativeIntervals.length - 1]; // 6M
+// find out the bottom pitch class
+const bottomPitchClass = Note.transpose(tonic, voicing[0]); // F + 5d = Cb
+// filter the range
+let starts = notesInRange
+  // .. only keep notes that are enharmonically equivalent to Cb
+  .filter((note) => Note.chroma(note) === Note.chroma(bottomPitchClass)) // ['B2','B3']
+  // .. only keep notes that stay within range when added the voicingSpan
+  .filter((note) => Note.midi(Note.transpose(note, voicingSpan)) <= Note.midi(range[1])); // ['B2']
+// .map(note => enharmonicEquivalent(note, bottomPitchClass)) // intentionally left out
+// render one voicing for each start note
+const notes = starts.map((start) => relativeIntervals.map((interval) => Note.transpose(start, interval))); // ['1P', '3M', '4A', '6M'].map((interval) => Note.transpose('B2', interval))
+// yields ['B2','D#3','E#3', 'G#3']
+// but we want ['Cb3','Eb3','F3','Ab3']
+```
+
+</div>
+
+So the last piece of the puzzle is a function that turns the B2 to a Cb3 before calculating the notes.
+
+My first attempt at this was just swapping the octave number:
+
+```js
+function enharmonicEquivalent(note, pitchClass) {
+  const { oct } = Note.get(note);
+  return pitchClass + oct;
+}
+// enharmonicEquivalent('F2', 'E#') => E#2 => fine
+// enharmonicEquivalent('B2', 'Cb') => Cb2 => not fine => 1 octave too low
+// enharmonicEquivalent('C2', 'B#') => B#2 => not fine => 1 octave too high
+```
+
+But for cases where the enharmonic equivalents have a different octave number, this results in octave shifts.
+I finally implemented it like this:
+
+```ts
+export function enharmonicEquivalent(note: string, pitchClass: string): string {
+  const { alt, letter } = Note.get(pitchClass);
+  let { oct } = Note.get(note);
+  const letterChroma = Note.chroma(letter) + alt;
+  if (letterChroma > 11) {
+    oct--;
+  } else if (letterChroma < 0) {
+    oct++;
+  }
+  return pitchClass + oct;
+}
+// enharmonicEquivalent('F2', 'E#') => E#2 => fine
+// enharmonicEquivalent('B2', 'Cb') => Cb3 => fine
+// enharmonicEquivalent('C2', 'B#') => B#1 => fine
+```
+
+### Conclusion
+
+Finally the "problematic" chord progression sounds like this:
+
+<Player
+  fold={false}
+  instruments={{ tinypiano, drums }}
+  events={renderRhythmObject({
+    duration: 12,
+    sequential: [
+      'Cm7',
+      'Em7',
+      'Dm7',
+      'Cm7',
+      'Em7',
+      'Dm7',
+      { value: 'Cm7', duration: 2 },
+      { value: 'Bm7', duration: 2 },
+    ],
+  }).reduce(voicingReducer(lefthand, ['C3', 'C6']), [])}
+/>
+
+<details>
+  <summary>show source</summary>
+
+```js
+<Player
+  fold={false}
+  instruments={{ tinypiano, drums }}
+  events={renderRhythmObject({
+    duration: 12,
+    sequential: [
+      'Cm7',
+      'Em7',
+      'Dm7',
+      'Cm7',
+      'Em7',
+      'Dm7',
+      { value: 'Cm7', duration: 2 },
+      { value: 'Bm7', duration: 2 },
+    ],
+  }).reduce(voicingReducer(lefthand, ['C3', 'C6']), [])}
+/>
+```
+
+</details>
+<br />
+
+Now this seems to work perfectly, the only jump remains at the repetition, which could be fixed by regenerating the voicing each round, which I will implement in the future.
+
+Now to close the gap, here's the basic cadence again, this time generated algorithmically:
+
+<Player
+  fold={true}
+  instruments={{ tinypiano }}
+  events={renderRhythmObject({
+    duration: 4,
+    sequential: [['F', 'G'], 'C'],
+  }).reduce(
+    voicingReducer(
+      {
+        M: ['1P 3M 5P', '3M 5P 8P', '5P 8P 10M'],
+      },
+      ['C3', 'A4']
+    ),
+    []
+  )}
+/>
+
+<details>
+  <summary>show source</summary>
+
+```js
+<Player
+  fold={true}
+  instruments={{ tinypiano }}
+  events={renderRhythmObject({
+    duration: 4,
+    sequential: [['F', 'G'], 'C'],
+  }).reduce(
+    voicingReducer(
+      {
+        M: ['1P 3M 5P', '3M 5P 8P', '5P 8P 10M'],
+      },
+      ['C3', 'A4']
+    ),
+    []
+  )}
+/>
+```
+
+</details>
+
+Let's try some autumn leaves (with more voicings added to the dictionary):
+
+<Player
+  instruments={{ piano }}
+  fold={false}
+  events={renderRhythmObject({
+    duration: 64,
+    sequential: [
+      ['Cm7', 'F7', 'Bb^7', 'Eb^7'],
+      ['Am7b5', 'D7b13', 'Gm6', '_'],
+      ['Cm7', 'F7', 'Bb^7', 'Eb^7'],
+      ['Am7b5', 'D7b13', 'Gm6', '_'],
+      ['Am7b5', 'D7b13', 'Gm6', '_'],
+      ['Cm7', 'F7', 'Bb^7', 'Eb^7'],
+      ['Am7b5', 'D7b13', ['Gm7', 'Gb7'], ['Fm7', 'E7']],
+      ['Am7b5', 'D7b13', 'Gm6', '_'],
+    ],
+  })
+    .reduce(tieReducer(), [])
+    .reduce(voicingReducer(lefthand, ['D3', 'E5']), [])}
+/>
+
+<details>
+  <summary>show source</summary>
+
+```js
+<Player
+  instruments={{ piano }}
+  fold={false}
+  events={renderRhythmObject({
+    duration: 64,
+    sequential: [
+      ['Cm7', 'F7', 'Bb^7', 'Eb^7'],
+      ['Am7b5', 'D7b13', 'Gm6', '_'],
+      ['Cm7', 'F7', 'Bb^7', 'Eb^7'],
+      ['Am7b5', 'D7b13', 'Gm6', '_'],
+      ['Am7b5', 'D7b13', 'Gm6', '_'],
+      ['Cm7', 'F7', 'Bb^7', 'Eb^7'],
+      ['Am7b5', 'D7b13', ['Gm7', 'Gb7'], ['Fm7', 'E7']],
+      ['Am7b5', 'D7b13', 'Gm6', '_'],
+    ],
+  })
+    .reduce(tieReducer(), [])
+    .reduce(voicingReducer(lefthand, ['E3', 'G5']), [])}
+/>
+```
+
+</details>
+<br/>
+
+## TBD
+
+- error handling !
+- remove hard coded bass from voicingReducer => add bassReducer
+- add filterReducer + combineReducers => apply voicing reducer only to chords
+- add duplicateReducer (removes duplicate events) => remove notes that are covered by melody
+- add rangeReducer (remove notes outside a certain range) => remove notes above melody

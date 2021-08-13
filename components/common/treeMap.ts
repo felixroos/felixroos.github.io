@@ -44,8 +44,8 @@ export default function treeMap(container, data) {
     .append("text")
     .attr('width', function (d) { return d.x1 - d.x0; })
     .attr("x", function (d) { return d.x0 + 5 }) // +10 to adjust position (more right)
-    .attr("y", function (d) { return d.y0 + 20 }) // +20 to adjust position (lower)
+    .attr("y", function (d) { return d.y0 + 25 }) // +20 to adjust position (lower)
     .text(function (d) { return d.data.name })
-    .attr("font-size", "12px")
-    .attr("fill", "black")
+    .attr("font-size", "20px")
+    .attr("fill", "white")
 }

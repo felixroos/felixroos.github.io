@@ -3,6 +3,7 @@ title: Plotting Functions with React and d3.js
 date: '2020-04-18'
 tags: ['code', 'd3']
 description: As the basis of many upcoming visualizations.
+image: ./img/plot.png
 ---
 
 import { Plot } from '../components/common/Plot.tsx';
@@ -13,7 +14,7 @@ import { FunctionPlotA, FunctionPlotB } from '../components/common/FunctionPlot.
 As the basis of many upcoming visualizations, I will use libraries of [the huge d3 ecosystem](https://github.com/d3/d3/blob/master/API.md).
 For many applications, for example to animate vibrating strings, it want to plot functions:
 
-<Plot functions={[(x) => Math.sin(x), (x) => Math.cos(x)]} range={{ x: [-Math.PI, Math.PI], y: [-1, 1] }} />
+<Plot strokeWidth={5} functions={[(x) => Math.sin(x), (x) => Math.cos(x)]} range={{ x: [-Math.PI, Math.PI], y: [-1, 1] }} />
 
 The code:
 

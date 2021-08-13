@@ -1,0 +1,1006 @@
+---
+title: Rhythmical Mutations
+date: '2020-08-02'
+image: ./img/pianoroll-color.png
+tags: ['rhythmical', 'code']
+description: In this post, I want to develop the idea of mutation to allow more flexibility.
+---
+
+So far, rhythmical knows two ways of data transformation/mutation:
+
+1. [plugins](../rhythmical-objects/#feature-encapsulation) as preprocessors
+2. [reducers](../rhythmical-ties) as postprocessors
+
+In this post, I want to develop the idea of mutation to allow more flexibility.
+
+import { renderRhythmObject, renderRhythm } from '../components/rhythmical/rhythmical.ts';
+import { inheritProperty, inherit } from '../components/rhythmical/features/inherit.ts';
+import { chords } from '../components/rhythmical/features/chords.ts';
+import Player from '../components/rhythmical/components/Player.tsx';
+import {
+  tieReducer,
+  bassNotes,
+  parallel,
+  track,
+  idleReducer,
+  applyReducers,
+} from '../components/rhythmical/reducers.ts';
+import { voicings } from '../components/rhythmical/deprecated.ts';
+import { triads } from '../components/rhythmical/voicings/dictionary.ts';
+import RhythmicalTree from '../components/rhythmical/components/RhythmicalTree.tsx';
+import tinypiano from '../instruments/tinypiano.ts';
+import { lefthand } from '../components/rhythmical/voicings/dictionary.ts';
+import { Chord, Note } from '@tonaljs/tonal';
+
+## Reducers
+
+With reducers, flat rhythmical events can be mutated after rendering:
+
+```js
+renderRhythmObject({
+  duration: 8,
+  sequential: [['d4', 'eb4', 'e4', 'f4'], '_'],
+}).reduce(tieReducer(), []); // appends "_" event to "f4" event
+```
+
+or
+
+```js
+renderRhythmObject({
+  duration: 8,
+  sequential: [['F', 'G'], 'C'],
+}).reduce(voicings(triads, ['C3', 'A4']), []);
+// generates notes in range for each chord symbol (implemented in last post)
+```
+
+As a reducer runs, the previous state of the events is lost, for example, the chord symbols will be vanished after the voicing reducer.
+
+### Bass Reducer
+
+As another example, I want to introduce this simple reducer:
+
+```js
+// reduces events to bass notes
+export const bassNotes: EventReducer = (events, event, index, array) => {
+  if (typeof event.value !== 'string') {
+    return events;
+  }
+  const bassNote = getBassNote(event.value);
+  return events.concat([{ ...event, value: bassNote + '2' }]);
+};
+// returns bass note of given chord
+function getBassNote(chord: string, ignoreSlash = false) {
+  if (!chord) {
+    return null;
+  }
+  if (!ignoreSlash && chord.includes('/')) {
+    return chord.split('/')[1];
+  }
+  const match = chord.match(/^([A-G][b|#]?)/);
+  if (!match || !match.length) {
+    return '';
+  }
+  return match[0];
+}
+```
+
+It takes chord symbols and returns only the bass note in a fixed octave:
+
+<Player
+  instruments={{ tinypiano }}
+  fold={false}
+  events={renderRhythmObject({
+    duration: 8,
+    sequential: [['F', 'G'], 'C'],
+  }).reduce(bassNotes, [])}
+/>
+
+<details>
+  <summary>show source</summary>
+
+```js
+<Player
+  instruments={{ tinypiano }}
+  fold={false}
+  events={renderRhythmObject({
+    duration: 8,
+    sequential: [['F', 'G'], 'C'],
+  }).reduce(bassNotes, [])}
+/>
+```
+
+</details>
+
+I will improve this later, adding a range option + error handling..
+
+### Voicing Reducer
+
+Another reducer that works with chord symbols is the voicing reducer introduced [in the last post](../rhythmical-chords).
+I now removed the hard coded bass note from it.
+
+If we run the voicings reducer on the same rhythm object, we get:
+
+<Player
+  instruments={{ tinypiano }}
+  fold={false}
+  events={renderRhythmObject({
+    duration: 8,
+    sequential: [['F', 'G'], 'C'],
+  }).reduce(voicings(triads, ['C3', 'A4']), [])}
+/>
+
+<details>
+  <summary>show source</summary>
+
+```js
+<Player
+  instruments={{ tinypiano }}
+  fold={false}
+  events={renderRhythmObject({
+    duration: 8,
+    sequential: [['F', 'G'], 'C'],
+  }).reduce(voicings(triads, ['C3', 'A4']), [])}
+/>
+```
+
+</details>
+
+### Running two reducers on the same array
+
+To get chords + bassline, we could combine both reducers like this:
+
+<Player
+  instruments={{ tinypiano }}
+  fold={false}
+  events={(() => {
+    const events = renderRhythmObject({
+      duration: 8,
+      sequential: [['F', 'G'], 'C'],
+    });
+    return [...events.reduce(voicings(triads, ['C3', 'A4']), []), ...events.reduce(bassNotes, [])];
+  })()}
+/>
+
+<details>
+  <summary>show source</summary>
+
+```js
+<Player
+  instruments={{ tinypiano }}
+  fold={false}
+  events={(() => {
+    const events = renderRhythmObject({
+      duration: 8,
+      sequential: [['F', 'G'], 'C'],
+    });
+    return [...events.reduce(voicings(triads, ['C3', 'A4']), []), ...events.reduce(bassNotes, [])];
+  })()}
+/>
+```
+
+</details>
+
+But this is kind of ugly if we want to use a single function call (like needed for MDX), which requires wrapping it in an [IIFE](https://flaviocopes.com/javascript-iife/).. It would be nice to have something like this:
+
+```js
+<Player
+  instruments={{ tinypiano }}
+  fold={false}
+  events={renderRhythmObject({
+    duration: 8,
+    sequential: [['F', 'G'], 'C'],
+  }).reduce(parallel([voicings(triads, ['C3', 'A4']), bassNotes]), [])}
+/>
+```
+
+The parallel reducer will run both reducers on the same events in parallel.
+
+### parallel reducer
+
+The implementation is pretty straightforward:
+
+```js
+export const parallel: (reducers: EventReducer[]) => EventReducer = (reducers) => {
+  return (events, event, index, array) => {
+    reducers.forEach((r) => {
+      events = r(events, event, index, array);
+    });
+    return events;
+  };
+};
+```
+
+That's it!
+
+<Player
+  instruments={{ tinypiano }}
+  fold={false}
+  events={renderRhythmObject({
+    duration: 8,
+    sequential: [['F', 'G'], 'C'],
+  }).reduce(parallel([voicings(triads, ['C3', 'A4']), bassNotes]), [])}
+/>
+
+<details>
+  <summary>show source</summary>
+
+```js
+<Player
+  instruments={{ tinypiano }}
+  fold={false}
+  events={renderRhythmObject({
+    duration: 8,
+    sequential: [['F', 'G'], 'C'],
+  }).reduce(parallel([voicings(triads, ['C3', 'A4']), bassNotes]), [])}
+/>
+```
+
+</details>
+<br/>
+
+Let's try a more sophisticated example:
+
+<Player
+  instruments={{ tinypiano }}
+  fold={false}
+  events={renderRhythmObject({
+    duration: 64,
+    sequential: [
+      ['Fm7', 'Bbm7', 'Eb7', 'Ab^7'],
+      ['Db^7', ['Dm7', 'G7'], 'C^7', '_'],
+      ['Cm7', 'Fm7', 'Bb7', 'Eb^7'],
+      ['Ab^7', ['Am7', 'D7'], 'G^7', '_'],
+      ['Am7', 'D7', 'G^7', '_'],
+      ['F#m7b5', 'B7b9', 'E^7', 'C7b13'],
+      ['Fm7', 'Bbm7', 'Eb7', 'Ab^7'],
+      ['Db^7', 'DbmM7', 'Cm7', 'Bo7'],
+      ['Bbm7', 'Eb7', 'Ab^7', ['Gm7b5', 'C7b9']],
+    ],
+  })
+    .reduce(tieReducer(), [])
+    .reduce(parallel([voicings(lefthand, ['G3', 'G5']), bassNotes]), [])}
+/>
+
+<details>
+  <summary>show source</summary>
+
+```js
+<Player
+  instruments={{ tinypiano }}
+  fold={false}
+  events={renderRhythmObject({
+    duration: 64,
+    sequential: [
+      ['Fm7', 'Bbm7', 'Eb7', 'Ab^7'],
+      ['Db^7', ['Dm7', 'G7'], 'C^7', '_'],
+      ['Cm7', 'Fm7', 'Bb7', 'Eb^7'],
+      ['Ab^7', ['Am7', 'D7'], 'G^7', '_'],
+      ['Am7', 'D7', 'G^7', '_'],
+      ['F#m7b5', 'B7b9', 'E^7', 'C7b13'],
+      ['Fm7', 'Bbm7', 'Eb7', 'Ab^7'],
+      ['Db^7', 'DbmM7', 'Cm7', 'Bo7'],
+      ['Bbm7', 'Eb7', 'Ab^7', ['Gm7b5', 'C7b9']],
+    ],
+  })
+    .reduce(tieReducer(), [])
+    .reduce(parallel([voicings(lefthand, ['G3', 'G5']), bassNotes]), [])}
+/>
+```
+
+</details>
+<br/>
+
+To make the parallel reducer work with voicings, I had to adjust the voicings reducer (see comments):
+
+```js
+export const voicings = (dictionary, range, sorter = topNoteSort) => (events, event) => {
+  if (typeof event.value !== 'string') {
+    return events
+  }
+  let voicings = voicingsInRange(event.value, dictionary, range);
+  const { tonic, aliases } = Chord.get(event.value);
+  const symbol = Object.keys(dictionary).find(_symbol => aliases.includes(_symbol));
+  if (!symbol) {
+    console.log(`no voicings found for chord "${event.value}"`);
+    return events;
+  }
+  let notes;
+  // here we filter the events for having a chord set (skips bass notes)
+  const lastVoiced = events.filter(e => !!e.chord);
+  if (!lastVoiced.length) {
+    notes = voicings[Math.ceil(voicings.length / 2)];
+  } else {
+    notes = voicings.sort(sorter(lastVoiced))[0];
+  }
+  // here we pass the chord symbol that generated the note
+  return events.concat(notes.map((note) => ({ ...event, value: note, chord: event.value })));
+```
+
+In general, to make a reducer work in parallel, we need to add some filterable property (like chord property above).
+Without filtering, other events from parallel reducers will pollute the array (like bass notes in a voicing reducer).
+
+### track reducer
+
+What if we want to run reducers only on a certain set of events? For example, if we add a melody, we want the voicing reducer to ignore that part. For this case, I wrote this track reducer:
+
+```js
+export const track = (track, reducer = idleReducer) => {
+  const trackFilter = ({ track: t }) => t === track;
+  return (events, event, ...args) => {
+    return trackFilter(event as any) ? reducer(events, event, ...args) : events;
+  };
+};
+// if no reducer passed to track, all events are used as is
+export const idleReducer = (events, event) => events.concat([event]);
+```
+
+In Action:
+
+<Player
+  instruments={{ tinypiano }}
+  fold={false}
+  events={renderRhythmObject(
+    {
+      duration: 8,
+      parallel: [
+        {
+          track: 'melody',
+          sequential: [['A4', ['C5', 'A4'], 'B4', 'D5'], 'E5'],
+        },
+        {
+          track: 'chords',
+          sequential: [['F', 'G'], 'C'],
+        },
+      ],
+    },
+    [inheritProperty('track')]
+  ).reduce(
+    parallel([track('melody'), track('chords', bassNotes), track('chords', voicings(triads, ['C3', 'G4']))]),
+    []
+  )}
+/>
+
+<details>
+  <summary>show source</summary>
+
+```js
+<Player
+  instruments={{ tinypiano }}
+  fold={false}
+  events={renderRhythmObject(
+    {
+      duration: 8,
+      parallel: [
+        {
+          track: 'melody',
+          sequential: [['A4', ['C5', 'A4'], 'B4', 'D5'], 'E5'],
+        },
+        {
+          track: 'chords',
+          sequential: [['F', 'G'], 'C'],
+        },
+      ],
+    },
+    [inheritProperty('track')]
+  ).reduce(
+    parallel([track('melody'), track('chords', bassNotes), track('chords', voicings(triads, ['C3', 'G4']))]),
+    []
+  )}
+/>
+```
+
+</details>
+
+Now the bassNotes and voicings reducers only run on events on the chords track, while the melody track stays as it is.
+
+### Mutation Inheritance
+
+We could also inherit mutation functions:
+
+<Player
+  instruments={{ tinypiano }}
+  fold={false}
+  events={renderRhythmObject(
+    {
+      duration: 8,
+      parallel: [
+        [['A4', ['C5', 'A4'], 'B4', 'D5'], 'E5'],
+        {
+          sequential: [['F', 'G'], 'C'],
+          reducer: parallel([voicings(triads, ['C3', 'G4']), bassNotes]),
+        },
+      ],
+    },
+    [inheritProperty('reducer')]
+  )
+    .reduce(applyReducers(true), [])
+    .filter((e) => !!Note.midi(e.value))}
+/>
+
+<details>
+  <summary>show source</summary>
+
+```js
+<Player
+  instruments={{ tinypiano }}
+  fold={false}
+  events={renderRhythmObject(
+    {
+      duration: 8,
+      parallel: [
+        [['A4', ['C5', 'A4'], 'B4', 'D5'], 'E5'],
+        {
+          sequential: [['F', 'G'], 'C'],
+          reducer: parallel([voicings(triads, ['C3', 'G4']), bassNotes]),
+        },
+      ],
+    },
+    [inheritProperty('reducer')]
+  )
+    .reduce(applyReducers(true), [])
+    .filter((e) => !!Note.midi(e.value))} // filter out chords
+/>
+```
+
+</details>
+<br/>
+
+```js
+export const applyReducers: (keepEventsWithoutReducer: boolean) => EventReducer =
+  (keepEventsWithoutReducer = true) =>
+  (events, event, ...args) => {
+    if (event.reducer) {
+      events = event.reducer(events, event, ...args);
+    }
+    if (keepEventsWithoutReducer) {
+      return events.concat([event]);
+    }
+    return events;
+  };
+```
+
+Pro
+
+- no track reducer filter magic needed
+- much shorter
+
+Contra
+
+- JS in JSON => not serializable
+- chords pollute final event array => need to filter non usable events
+
+### Thoughts on Reducers
+
+Reducers are a handy way of postprocessing events. On the other hand, it starts to get a little bit magical and untransparent when having different purpose tracks and nesting...
+Also, it seems kind of odd that there are now two hierarchial structures: the rhythmical object and the postprocessing tree.
+
+## Plugins
+
+As opposed to reducers, plugins (previously called [features](../rhythmical-objects/#feature-encapsulation)) are applied while the rhythmical tree is processed.
+It would be nice if some of the above reducer functionality could be added as plugins, for example:
+
+```js
+<Player
+  instruments={{ tinypiano }}
+  events={renderRhythmObject(
+    {
+      duration: 8,
+      parallel: [
+        {
+          sequential: [['A4', ['C5', 'A4'], 'B4', 'D5'], 'E5'],
+        },
+        {
+          plugin: 'chords',
+          sequential: [['F', 'G'], 'C'],
+        },
+      ],
+    },
+    [inherit('plugin'), chords({ dictionary: triads })]
+  )}
+/>
+```
+
+The above snippet would produce the same output as this notation:
+
+```js
+<Player
+  instruments={{ tinypiano }}
+  events={renderRhythmObject({
+    duration: 8,
+    parallel: [
+      {
+        sequential: [['A4', ['C5', 'A4'], 'B4', 'D5'], 'E5'],
+      },
+      {
+        sequential: [
+          [{ parallel: ['C3', 'F3', 'A3'] }, { parallel: ['D3', 'G3', 'B3'] }],
+          { parallel: ['E3', 'G3', 'C4'] },
+        ],
+      },
+    ],
+  })}
+/>
+```
+
+which can be rendered normally:
+
+<Player
+  instruments={{ tinypiano }}
+  events={renderRhythm({
+    duration: 8,
+    parallel: [
+      {
+        sequential: [['A4', ['C5', 'A4'], 'B4', 'D5'], 'E5'],
+      },
+      {
+        plugin: 'chords',
+        sequential: [
+          [{ parallel: ['C3', 'F3', 'A3'] }, { parallel: ['D3', 'G3', 'B3'] }],
+          { parallel: ['E3', 'G3', 'C4'] },
+        ],
+      },
+    ],
+  })}
+/>
+
+### back to the basics
+
+For the above ideas to work, I first needed to add more flexibility to the [flatObject](https://felixroos.github.io/blog/rhythmical-objects/#flattening-nested-objects) method:
+
+```js
+export function flatObject<T>(agnostic: AgnosticChild<T>, props: FlatObjectProps<T> = {}): ValueChild<T>[] {
+  const getChildren: ChildrenResolver<T> = props.getChildren || getChildrenWithPath;
+  // this function decides if the given child should be flattened or not
+  const isDeep: (child: ValueChild<T>) => boolean =
+    props.isDeep || ((child) => child.value && typeof child.value === 'object');
+  let flat: ValueChild<T>[] = [];
+  const children = getChildren(agnostic, props);
+  children.forEach((child, index) => {
+    if (typeof props.mapChild === 'function') {
+      // this function will mutate the child
+      child = props.mapChild({
+        child,
+        isLeaf: !isDeep(child),
+        index,
+        props,
+        siblings: children,
+        parent: agnostic,
+      });
+    }
+    if (isDeep(child)) {
+      flat = flat.concat(flatObject(child, props));
+    } else {
+      flat.push(child);
+    }
+  });
+  return flat;
+}
+```
+
+- isDeep can now be passed as a function to override the exit condition of the recursion
+- mapChild can be used to manipulate children before the exit condition runs
+
+### new renderRhythm method
+
+renderRhythmObject is now replaced by renderRhythm, which uses isDeep and mapChild:
+
+```js
+export function renderRhythm<T>(agnostic: AgnosticChild<T>, rhythmPlugins = []) {
+  const root = toObject(agnostic);
+  const totalDuration = root.duration || 1; // outer duration
+  return flatObject(agnostic, {
+    getChildren: rhythmChildren,
+    // dont stop recursion if child has parallel or sequential props
+    isDeep: (child) =>
+      ['value', 'parallel', 'sequential'] // this spares the sequential child mess from earlier
+        .reduce((deep, prop) => deep || (child[prop] && typeof child[prop] === 'object'), false),
+    // apply features to children
+    mapChild: renderRhythmPlugins(rhythmPlugins),
+  }).map((event) => {
+    let { path } = event;
+    const [time, duration] = getTimeDuration(path, totalDuration);
+    return { ...event, time, duration, path };
+  });
+}
+function renderRhythmPlugins(rhythmPlugins = []) {
+  return (props) => {
+    rhythmPlugins.forEach((plugin) => {
+      props.child = plugin(props);
+    });
+    return props.child;
+  };
+}
+function rhythmChildren<T>(agnostic: AgnosticChild<T>) {
+  const parent = toObject(applyFeatures(agnostic, [sequentialParent, parallelParent]));
+  const children = toArray(parent.value) || [];
+  return children;
+}
+```
+
+### inherit plugin
+
+Now, plugins look much sexier than the old features. The [inherit](https://felixroos.github.io/blog/rhythmical-objects/#inheritance) plugin can be implemented like this:
+
+```js
+export function inherit(property) {
+  return ({ child, parent }) => {
+    return { ...child, [property]: child[property] ?? parent[property] };
+  };
+}
+```
+
+<details>
+  <summary>compare this to the old inheritProperty feature</summary>
+
+```js
+function inheritProperty(property) {
+  return (_parent) => {
+    const parent = toObject(_parent);
+    if (!parent[property] || !parent.value) {
+      return parent;
+    }
+    return {
+      ...parent,
+      value: toArray(parent.value).map((child) => {
+        const childObj = toObject(child);
+        return {
+          ...childObj,
+          [property]: childObj[property] || parent[property],
+        };
+      }),
+    };
+  };
+}
+```
+
+</details>
+<br/>
+
+### chords plugin
+
+Chord voicings can be resolved like this:
+
+```js
+export const chords =
+  ({ dictionary, range }) =>
+  ({ child, isLeaf, props, parent }) => {
+    if (!isLeaf || parent.chord || child.plugin !== 'chords') {
+      // prevent infinite loop
+      return child;
+    }
+    let options = voicingsInRange(child.value, child.dictionary || dictionary, child.range || range);
+    if (props.lastVoicing) {
+      // if not the first => voice leading
+      const diff = (
+        voicing // returns distance between top notes
+      ) =>
+        Math.abs(Note.midi(props.lastVoicing[props.lastVoicing.length - 1]) - Note.midi(voicing[voicing.length - 1]));
+      options = options.sort((a, b) => diff(a) - diff(b)); // sort by min top note distance
+    }
+    props.lastVoicing = options[0]; // pick best voicing
+    return {
+      ...child,
+      chord: child.value, // this is needed to stop the plugin from running again on its children
+      value: options[0],
+      type: 'parallel',
+    };
+  };
+```
+
+In action:
+
+<Player
+  instruments={{ tinypiano }}
+  fold={false}
+  events={renderRhythm(
+    {
+      duration: 8,
+      parallel: [
+        {
+          sequential: [['A4', 'C5', 'Ab4', 'C5'], 'G4'],
+          color: 'darksalmon',
+        },
+        {
+          sequential: [['F', 'Fm'], 'C'],
+          plugin: 'chords',
+          velocity: 0.6,
+        },
+      ],
+    },
+    [inherit('plugin'), inherit('color'), inherit('velocity'), chords({ dictionary: triads })]
+  )}
+/>
+
+<details>
+  <summary>show source</summary>
+
+```js
+<Player
+  instruments={{ tinypiano }}
+  fold={false}
+  events={renderRhythm(
+    {
+      duration: 8,
+      parallel: [
+        {
+          sequential: [['A4', 'C5', 'Ab4', 'C5'], 'G4'],
+          color: 'darksalmon',
+        },
+        {
+          sequential: [['F', 'Fm'], 'C'],
+          plugin: 'chords',
+          velocity: 0.6,
+        },
+      ],
+    },
+    [inherit('plugin'), inherit('color'), inherit('velocity'), chords({ dictionary: triads })]
+  )}
+/>
+```
+
+</details>
+<br/>
+
+### Thoughts on Plugins
+
+Comparing the above snippet with the reducer version, I like it much more.
+The good thing about plugins is that the structural information of the object is not yet lost.
+Being able to add a plugin anywhere in the tree spares all the indirect track selection stuff from earlier.
+
+The only thing that is not yet solved is running two plugins on the same source, like voicings and bass notes.
+
+## Multiple Mutation Data Flow
+
+There are different scenarios how data can flow through multiple mutations:
+
+1. sequential: data flows out of one plugin into the nexxt
+2. parallel: data flows from the source into each plugin
+
+So this is basically polyphony for mutation functions!
+
+### sequential mutation
+
+This applies one mutation after the other.
+For example, we could first apply a voicing plugin and then use the generated notes as an input of a pattern plugin:
+
+```js
+<Player
+  instruments={{ tinypiano }}
+  events={renderRhythm(
+    {
+      duration: 12,
+      sequential: ['E-', 'E-', 'G', 'G', 'B-', 'B-', 'D', 'D'],
+      mutate: [
+        // those mutations are applied sequentially
+        'chords',
+        { pattern: [{ parallel: [0, 3] }, 2, { parallel: [1, 3] }, 2] },
+      ],
+    },
+    [chords({ dictionary: triads }), patternPlugin]
+  )}
+/>
+```
+
+After only the chord mutation, it could sound like this:
+
+<Player
+  instruments={{ tinypiano }}
+  events={renderRhythm({
+    duration: 12,
+    sequential: [
+      { parallel: ['E3', 'G3', 'B3', 'E4'] },
+      { parallel: ['E3', 'G3', 'B3', 'E4'] },
+      { parallel: ['D3', 'G3', 'B3', 'D4'] },
+      { parallel: ['D3', 'G3', 'B3', 'D4'] },
+      { parallel: ['D3', 'F#3', 'B3', 'D4'] },
+      { parallel: ['D3', 'F#3', 'B3', 'D4'] },
+      { parallel: ['D3', 'F#3', 'A3', 'D4'] },
+      { parallel: ['D3', 'F#3', 'A3', 'D4'] },
+    ],
+  })}
+/>
+
+Now only the pattern mutation is left:
+
+```js
+<Player
+  instruments={{ tinypiano }}
+  events={renderRhythm({
+    duration: 12,
+    sequential: [
+      { parallel: ['E3', 'G3', 'B3', 'E4'] },
+      { parallel: ['E3', 'G3', 'B3', 'E4'] },
+      { parallel: ['D3', 'G3', 'B3', 'D4'] },
+      { parallel: ['D3', 'G3', 'B3', 'D4'] },
+      { parallel: ['D3', 'F#3', 'B3', 'D4'] },
+      { parallel: ['D3', 'F#3', 'B3', 'D4'] },
+      { parallel: ['D3', 'F#3', 'A3', 'D4'] },
+      { parallel: ['D3', 'F#3', 'A3', 'D4'] },
+    ],
+    mutate: [{ pattern: [{ parallel: [0, 3] }, 2, { parallel: [1, 3] }, 2] }],
+  })}
+/>
+```
+
+After the pattern mutation:
+
+<Player
+  instruments={{ tinypiano }}
+  events={renderRhythm({
+    duration: 12,
+    sequential: [
+      [{ parallel: ['E3', 'E4'] }, 'B3', { parallel: ['G3', 'E4'] }, 'B3'],
+      [{ parallel: ['E3', 'E4'] }, 'B3', { parallel: ['G3', 'E4'] }, 'B3'],
+      [{ parallel: ['D3', 'D4'] }, 'B3', { parallel: ['G3', 'D4'] }, 'B3'],
+      [{ parallel: ['D3', 'D4'] }, 'B3', { parallel: ['G3', 'D4'] }, 'B3'],
+      [{ parallel: ['D3', 'D4'] }, 'B3', { parallel: ['F#3', 'D4'] }, 'B3'],
+      [{ parallel: ['D3', 'D4'] }, 'B3', { parallel: ['F#3', 'D4'] }, 'B3'],
+      [{ parallel: ['D3', 'D4'] }, 'A3', { parallel: ['F#3', 'D4'] }, 'A3'],
+      [{ parallel: ['D3', 'D4'] }, 'A3', { parallel: ['F#3', 'D4'] }, 'A3'],
+    ],
+  })}
+/>
+
+```js
+<Player
+  instruments={{ tinypiano }}
+  events={renderRhythm({
+    duration: 12,
+    sequential: [
+      [{ parallel: ['E3', 'E4'] }, 'B3', { parallel: ['G3', 'E4'] }, 'B3'],
+      [{ parallel: ['E3', 'E4'] }, 'B3', { parallel: ['G3', 'E4'] }, 'B3'],
+      [{ parallel: ['D3', 'D4'] }, 'B3', { parallel: ['G3', 'D4'] }, 'B3'],
+      [{ parallel: ['D3', 'D4'] }, 'B3', { parallel: ['G3', 'D4'] }, 'B3'],
+      [{ parallel: ['D3', 'D4'] }, 'B3', { parallel: ['F#3', 'D4'] }, 'B3'],
+      [{ parallel: ['D3', 'D4'] }, 'B3', { parallel: ['F#3', 'D4'] }, 'B3'],
+      [{ parallel: ['D3', 'D4'] }, 'A3', { parallel: ['F#3', 'D4'] }, 'A3'],
+      [{ parallel: ['D3', 'D4'] }, 'A3', { parallel: ['F#3', 'D4'] }, 'A3'],
+    ],
+  })}
+/>
+```
+
+#### How musicians think
+
+If we look again at the notation:
+
+```js
+<Player
+  instruments={{ tinypiano }}
+  events={renderRhythm(
+    {
+      duration: 8,
+      sequential: ['E-', 'E-', 'G', 'G', 'B-', 'B-', 'D', 'D'],
+      mutate: [
+        // those mutations are applied sequentially
+        'chords',
+        { pattern: [{ parallel: [0, 3] }, 2, { parallel: [1, 3] }, 2] },
+      ],
+    },
+    [chords({ dictionary: triads }), patternPlugin]
+  )}
+/>
+```
+
+This is structurally similar to how a musician would remember a piece of music by creating "chunks":
+
+- the info needed to play (render) the piece are abtract chunks of information (chord symbols)
+- each abstract chunk has a recipe (mutation) that is applied to get to the notes
+- by using mutations in a certain order, interesting results could be achieved quickly, which is good for algorithmic composition
+
+### Parallel Mutation
+
+Parallel mutation will pass the same data to each plugin. For example to render chords and bass notes for a set of chord symbols:
+
+```js
+<Player
+  instruments={{ tinypiano }}
+  fold={false}
+  events={renderRhythm(
+    {
+      duration: 8,
+      sequential: [['F', 'Fm'], 'C'],
+      mutate: { parallel: ['chords', 'bass'] },
+    },
+    [chords({ dictionary: triads }), bass({ octave: 2 })]
+  )}
+/>
+```
+
+after mutation:
+
+<Player
+  instruments={{ tinypiano }}
+  fold={false}
+  events={renderRhythm({
+    duration: 8,
+    parallel: [
+      [[{ parallel: ['F3', 'A3', 'C3'] }, { parallel: ['F3', 'Ab3', 'C3'] }], { parallel: ['E3', 'G3', 'C3'] }],
+      [['F2', 'F2'], 'C2'],
+    ],
+  })}
+/>
+
+```js
+<Player
+  instruments={{ tinypiano }}
+  fold={false}
+  events={renderRhythm({
+    duration: 8,
+    parallel: [
+      [[{ parallel: ['F3', 'A3', 'C3'] }, { parallel: ['F3', 'Ab3', 'C3'] }], { parallel: ['E3', 'G3', 'C3'] }],
+      [['F2', 'F2'], 'C2'],
+    ],
+  })}
+/>
+```
+
+As this post now exceeds the limit of 1000 lines, I will stop here and implement polyphonic mutation in another post.
+
+## Conclusion
+
+With reducers and plugins, many musical abstractions can be achieved.
+Some are more practical using reducers (like micro time adjustems e.g. swing), others are easier implemented using plugins (anything that needs structural info).
+
+I cannot wait to finish the mutation data flow and play around with it!
+When it's done, many possibilities are open, like grooves, arpeggios, patterns, melodies etc..
+
+<Player
+  instruments={{ tinypiano }}
+  fold={false}
+  events={renderRhythm(
+    {
+      duration: 64,
+      plugin: 'chords',
+      sequential: [
+        ['Fm7', 'Bbm7', 'Eb7', 'Ab^7'],
+        ['Db^7', ['Dm7', 'G7'], 'C^7', 'C^7'],
+        ['Cm7', 'Fm7', 'Bb7', 'Eb^7'],
+        ['Ab^7', ['Am7', 'D7'], 'G^7', 'G^7'],
+        ['Am7', 'D7', 'G^7', 'G^7'],
+        ['F#m7b5', 'B7b9', 'E^7', 'C7b13'],
+        ['Fm7', 'Bbm7', 'Eb7', 'Ab^7'],
+        ['Db^7', 'DbmM7', 'Cm7', 'Bo7'],
+        ['Bbm7', 'Eb7', 'Ab^7', ['Gm7b5', 'C7b9']],
+      ],
+    },
+    [inherit('plugin'), chords({ dictionary: lefthand, range: ['G3', 'G5'] })]
+  )}
+/>
+
+<details>
+  <summary>show source</summary>
+
+```js
+<Player
+  instruments={{ tinypiano }}
+  fold={false}
+  events={renderRhythm(
+    {
+      duration: 64,
+      plugin: 'chords',
+      sequential: [
+        ['Fm7', 'Bbm7', 'Eb7', 'Ab^7'],
+        ['Db^7', ['Dm7', 'G7'], 'C^7', 'C^7'],
+        ['Cm7', 'Fm7', 'Bb7', 'Eb^7'],
+        ['Ab^7', ['Am7', 'D7'], 'G^7', 'G^7'],
+        ['Am7', 'D7', 'G^7', 'G^7'],
+        ['F#m7b5', 'B7b9', 'E^7', 'C7b13'],
+        ['Fm7', 'Bbm7', 'Eb7', 'Ab^7'],
+        ['Db^7', 'DbmM7', 'Cm7', 'Bo7'],
+        ['Bbm7', 'Eb7', 'Ab^7', ['Gm7b5', 'C7b9']],
+      ],
+    },
+    [inherit('plugin'), chords({ dictionary: lefthand, range: ['G3', 'G5'] })]
+  )}
+/>
+```
+
+</details>
+
+<br />
+
+### TBD
+
+- find way to implement tieReducer as plugin (cannot use ties in above)
+- implement polyphonic mutations

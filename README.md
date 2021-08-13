@@ -14,6 +14,9 @@
 - [ ] add similar posts (at least one common tag)
 - [ ] "The ScriptProcessorNode is deprecated. Use AudioWorkletNode instead"
 - [ ] "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
+- [ ] really keep system-ui ?
+- [ ] maybe replace material ui with antd?
+- [ ] replace absolute links to felixroos.github.com/blog with relative links
 
 ### http://localhost:3000/svg-piano
 
@@ -36,14 +39,12 @@
 ### http://localhost:3000/harmonics
 
 - [ ] "It looks like there are several instances of `@material-ui/styles` initialized in this application.
-This may cause theme propagation issues, broken class names, specificity issues, and makes your application bigger without a good reason."
+      This may cause theme propagation issues, broken class names, specificity issues, and makes your application bigger without a good reason."
 - [ ] "Warning: componentWillReceiveProps has been renamed, and is not recommended for use. See https://reactjs.org/link/unsafe-component-lifecycles for details"
 - [ ] hovering does not start audiocontext - add button to start deliberately?
 - [ ] when hovering the partial bars, sometimes they sound won't stop on mouse leave
 
 ### http://localhost:3000/intervals
-
-
 
 ## Standard README (NextJS - Typescript - MDX - Blog)
 
