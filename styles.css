@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Merriweather&display=swap');
 #gatsby-focus-wrapper>div>header>div, #gatsby-focus-wrapper>div>header+div>div {
   max-width: 672px;
 }

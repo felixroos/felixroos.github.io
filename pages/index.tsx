@@ -25,8 +25,8 @@ export const Index = ({ posts }: IndexProps): JSX.Element => {
           <Box sx={{ float: 'left' }}>
             <div
               style={{
-                margin: 10,
-                marginTop: 0,
+                marginRight: 16,
+                marginBottom: 10,
                 width: 120,
                 height: 120,
                 borderRadius: '50%',

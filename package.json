@@ -26,6 +26,7 @@
     "@material-ui/core": "^4.12.2",
     "@material-ui/icons": "^4.11.2",
     "@rebass/preset": "^4.0.5",
+    "@theme-ui/typography": "^0.10.0",
     "@tonaljs/tonal": "^4.6.2",
     "bb-chord-symbol": "^1.0.10",
     "d3": "^7.0.0",
@@ -76,6 +77,7 @@
     "theme-ui": "^0.10.0",
     "tone": "^14.7.77",
     "treeify": "^1.1.0",
+    "typography-theme-wordpress-2016": "^0.16.19",
     "vexflow": "^3.0.9",
     "webmidi": "^2.5.2",
     "zippa": "^0.3.1"

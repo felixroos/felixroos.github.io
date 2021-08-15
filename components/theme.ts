@@ -1,7 +1,13 @@
 // const fontFamily = `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif`;
 const fontFamily = `'Merriweather','Georgia',serif`;
+/* import { toTheme } from '@theme-ui/typography'
+import wp2016 from 'typography-theme-wordpress-2016' */
+import merge from 'deepmerge'
 
-export default {
+// const typography = toTheme(wp2016);
+const typography = {};
+
+export default merge(typography, {
   useCustomProperties: true,
   useColorSchemeMediaQuery: true,
   fonts: {
@@ -77,9 +83,10 @@ export default {
   },
   styles: {
     p: {
-      fontSize: 18,
+      fontSize: 16,
       fontWeight: 400,
       lineHeight: 1.75,
+      fontFamily
     },
     ul: {
       pt: 2,
@@ -116,4 +123,4 @@ export default {
 
     }
   }
-};
+});
