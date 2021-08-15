@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "export": "next build && next export -o docs",
+    "export": "next build && next export -o docs && cp .nojekyll docs",
     "start": "next start",
     "type-check": "tsc --pretty --noEmit",
     "format": "prettier --write .",
