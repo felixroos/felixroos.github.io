@@ -12,6 +12,7 @@ import math from 'remark-math'
 import katex from 'rehype-katex'
 
 export const POSTS_PATH = path.join(process.cwd(), "posts");
+export const ROOT = process.cwd();
 
 export const getSourceOfFile = (fileName) => {
   return fs.readFileSync(path.join(POSTS_PATH, fileName));
@@ -36,7 +37,23 @@ export const getAllPosts = () => {
 
 export const getSinglePost = async (slug) => {
   const source = getSourceOfFile(slug + ".mdx") as any;
-
+  console.log('bundle:', slug);
+  if (process.platform === "win32") {
+    process.env.ESBUILD_BINARY_PATH = path.join(
+      ROOT,
+      "node_modules",
+      "esbuild",
+      "esbuild.exe"
+    );
+  } else {
+    process.env.ESBUILD_BINARY_PATH = path.join(
+      ROOT,
+      "node_modules",
+      "esbuild",
+      "bin",
+      "esbuild"
+    );
+  }
   const { code, frontmatter } = await bundleMDX(source, {
     xdmOptions(options) {
       // this is the recommended way to add custom remark/rehype plugins:

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "export": "next build && next export -o docs",
     "start": "next start",
     "type-check": "tsc --pretty --noEmit",
     "format": "prettier --write .",
@@ -28,11 +29,13 @@
     "@tonaljs/tonal": "^4.6.2",
     "bb-chord-symbol": "^1.0.10",
     "d3": "^7.0.0",
+    "d3-array": "^2.12.1",
     "d3-axis": "^3.0.0",
     "d3-scale": "^4.0.0",
     "d3-scale-chromatic": "^3.0.0",
     "d3-selection": "^3.0.0",
     "date-fns": "^2.19.0",
+    "formik": "^2.2.9",
     "fraction.js": "^4.1.1",
     "gray-matter": "^4.0.3",
     "install": "^0.13.0",
@@ -50,6 +53,7 @@
     "ramda": "^0.27.1",
     "react": "^17.0.2",
     "react-audio-player": "^0.17.0",
+    "react-codemirror2": "^7.2.1",
     "react-color": "^2.19.3",
     "react-d3-tree": "^3.1.1",
     "react-diff-viewer": "^3.1.1",
@@ -71,6 +75,7 @@
     "svg-piano": "^0.3.1",
     "theme-ui": "^0.10.0",
     "tone": "^14.7.77",
+    "treeify": "^1.1.0",
     "vexflow": "^3.0.9",
     "webmidi": "^2.5.2",
     "zippa": "^0.3.1"
@@ -96,6 +101,7 @@
     "postcss": "^8.3.5",
     "prettier": "^2.0.2",
     "rehype": "^11.0.0",
+    "ts-node": "^10.2.0",
     "typescript": "^4.3.4"
   }
 }

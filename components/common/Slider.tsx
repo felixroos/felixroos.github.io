@@ -1,6 +1,6 @@
 import React from 'react';
 
-export function Slider({ value, min, max, onChange, onMouseDown, onMouseUp, step, ...rest }) {
+export function Slider({ value, min, max, onChange, onMouseDown, onMouseUp, step, ...rest }: any) {
   return (
     <input
       type="range"

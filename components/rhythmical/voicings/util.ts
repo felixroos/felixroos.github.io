@@ -4,4 +4,4 @@ export function tonalAliases(chord) {
   return Chord.get(chord)?.aliases?.length;
 }
 
-export function tokenizeChord
+// export function tokenizeChord

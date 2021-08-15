@@ -26,7 +26,7 @@ export default function DynamicSchedule() {
       console.log('loaded!', loaded);
     });
   }, []);
-  const nextEvent = useRef();
+  const nextEvent = useRef<any>();
   const slice = 2;
   function query(time) {
     const availableChords = ['C^7', 'Dm7', 'F^7', 'Fm7', 'Bb7', /* 'Db^7', 'Db7', */ 'G7', 'Am7' /*  'Dm7b5' */].filter(
@@ -45,10 +45,11 @@ export default function DynamicSchedule() {
   }
   // TODO: try using Tone.Loop
   function scheduleNext(_time) {
-    nextEvent.current = Tone.Transport.scheduleOnce((time) => {
+    console.log('TODO');
+    /* nextEvent.current = Tone.Transport.scheduleOnce((time) => {
       query(time);
       scheduleNext(_time + slice);
-    }, _time);
+    }, _time); */
   }
   function start() {
     Tone.start();

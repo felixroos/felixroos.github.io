@@ -104,8 +104,8 @@ export default function Claviature({ options, onClick }: any) {
   const svg = getClaviature({ options, onClick });
   return (
     <svg {...svg.attributes}>
-      {svg.children.map((el) => (
-        <rect {...el.attributes} />
+      {svg.children.map((el, i) => (
+        <rect key={i} {...el.attributes} />
       ))}
     </svg>
   );

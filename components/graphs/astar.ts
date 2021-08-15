@@ -10,12 +10,10 @@ export default function astar(
   getTargets: (source: NodeID) => Target[]
 ): any[] {
   let state: ConnectionState;
-  while (true) {
+  while (!state?.winner) {
     state = openNext(startNodes, endNodes, getTargets, state);
-    if (state.winner) {
-      return state.winner;
-    }
   }
+  return state.winner;
 }
 
 export function* generateAstar(

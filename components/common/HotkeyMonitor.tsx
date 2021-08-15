@@ -8,12 +8,12 @@ export default function HotkeyMonitor({ keys }) {
   });
   // update component every second
   const [time, setTime] = useState(Date.now());
-  useEffect(() => {
+  /* useEffect(() => {
     let interval = setInterval(() => {
       setTime(Date.now());
     }, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, []); */
 
   return (
     <p>

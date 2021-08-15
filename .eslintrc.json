@@ -33,11 +33,17 @@
     "@typescript-eslint/no-var-requires": 0,
     "@typescript-eslint/no-use-before-define": 0,
     "@typescript-eslint/no-unused-vars": 0,
-    "no-console": [
-      2,
-      {
-        "allow": ["warn", "error"]
-      }
-    ]
+    "no-console": 0,
+    "prefer-const": 0,
+    "no-extra-boolean-cast": 0,
+    "@typescript-eslint/no-extra-semi": 0,
+    "@typescript-eslint/no-empty-function": 0,
+    "@typescript-eslint/no-empty-interface": 0,
+    "@typescript-eslint/ban-types": 0,
+    "no-useless-escape": 0,
+    "no-var": 0,
+    "no-unexpected-multiline": 0,
+    "react/no-children-prop": 0,
+    "prefer-spread": 0
   }
 }

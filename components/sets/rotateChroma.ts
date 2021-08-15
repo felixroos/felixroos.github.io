@@ -6,4 +6,4 @@ export default function rotateChroma(n, chroma) {
   const ones = digits.reduce((indices, digit, index) => indices.concat(digit === '1' ? [index] : []), []);
   const rotation = ones[(n + ones.length) % ones.length];
   return Collection.rotate(rotation, digits).join('');
-};
+}

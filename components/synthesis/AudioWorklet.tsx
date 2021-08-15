@@ -1,4 +1,4 @@
-import { Button } from 'gatsby-theme-material-ui';
+import { Button } from '@material-ui/core';
 import React, { useEffect, useState } from 'react';
 import canUseDOM from '../canUseDOM';
 
@@ -27,9 +27,13 @@ export default function AudioWorklet({ src, name, output, params }) {
     setWorkletNode(null);
   }
   const button = !workletNode ? (
-    <Button color="primary" onClick={() => start()}>start</Button>
+    <Button color="primary" onClick={() => start()}>
+      start
+    </Button>
   ) : (
-    <Button color="primary" onClick={() => stop()}>stop</Button>
+    <Button color="primary" onClick={() => stop()}>
+      stop
+    </Button>
   );
 
   return button;

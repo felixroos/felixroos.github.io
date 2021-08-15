@@ -1,6 +1,8 @@
 import React from 'react';
 import * as treeify from 'treeify';
 
+// TODO: is still even used?
+
 export function AsciiTree({ node }) {
   return (
     <>

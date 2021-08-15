@@ -11,17 +11,11 @@ import Paper from '@material-ui/core/Paper';
 import TableSortLabel from '@material-ui/core/TableSortLabel';
 import JSONViewer from './JSONViewer';
 import Toolbar from '@material-ui/core/Toolbar';
-import {
-  Typography,
-  Tooltip,
-  IconButton,
-  Theme,
-  lighten
-} from '@material-ui/core';
+import { Typography, Tooltip, IconButton, Theme, lighten } from '@material-ui/core';
 
 const useStyles = makeStyles({
   table: {
-    minWidth: 400
+    minWidth: 400,
   },
   visuallyHidden: {
     border: 0,
@@ -32,20 +26,21 @@ const useStyles = makeStyles({
     padding: 0,
     position: 'absolute',
     top: 20,
-    width: 1
-  }
+    width: 1,
+  },
 });
 
 declare type Order = 'asc' | 'desc';
+declare type Obj = Record<string, unknown>;
 
 declare interface FieldConfig {
   property: string;
   label?: string;
   sort?: (a, b) => number;
   defaultOrder?: Order;
-  resolve?: (row?: Object, index?: number, rows?: Object[]) => any;
+  resolve?: (row?: Obj, index?: number, rows?: Obj[]) => any;
   desc?: boolean;
-  heading?: React.ReactNode;
+  heading?: React.ReactNode | string;
   display?: (value: any) => React.ReactNode;
   [key: string]: any;
 }
@@ -55,10 +50,10 @@ export default function DynamicTable({
   rows: _rows,
   debug = false,
   orderedBy = '',
-  heading = ''
+  heading = '',
 }: {
   cols: Array<string | FieldConfig>;
-  rows: Object[];
+  rows: Obj[];
   debug?: boolean;
   orderedBy?: string;
   heading?: React.ReactNode;
@@ -77,18 +72,16 @@ export default function DynamicTable({
       display: (value) => value,
       defaultOrder: 'asc',
       resolve: (row) => row[field.property],
-      ...field
+      ...field,
     }));
   let defaultOrder: Order = 'asc';
   if (orderedBy) {
-    defaultOrder =
-      cols.find(({ property }) => property === orderedBy)?.defaultOrder ||
-      'asc';
+    defaultOrder = cols.find(({ property }) => property === orderedBy)?.defaultOrder || 'asc';
   }
   const [order, setOrder] = useState<Order>(defaultOrder);
   const [orderBy, setOrderBy] = useState(orderedBy || '');
   function handleSort({ property, sort, resolve, defaultOrder }: FieldConfig) {
-    let sorted = [...rows.sort((a, b) => sort(resolve(a), resolve(b)))];
+    const sorted = [...rows.sort((a, b) => sort(resolve(a), resolve(b)))];
     let _order = order;
     if (orderBy === property) {
       _order = order === 'asc' ? 'desc' : 'asc';
@@ -106,29 +99,14 @@ export default function DynamicTable({
     <>
       {debug && <JSONViewer src={rows} collapsed={false} />}
       <TableContainer component={Paper}>
-        {heading && <EnhancedTableToolbar numSelected={0} heading={heading} />}
-        <Table
-          className={classes.table}
-          size="small"
-          aria-label="a dense table"
-        >
+        {/*heading && <EnhancedTableToolbar numSelected={0}  heading={heading} />*/}
+        <Table className={classes.table} size="small" aria-label="a dense table">
           <TableHead>
             <TableRow>
               {cols.map((field) => {
-                const {
-                  property,
-                  label,
-                  align,
-                  heading,
-                  sort,
-                  defaultOrder
-                } = field;
+                const { property, label, align, heading, sort, defaultOrder } = field;
                 return (
-                  <TableCell
-                    style={{ cursor: 'pointer' }}
-                    key={property}
-                    align={align}
-                  >
+                  <TableCell style={{ cursor: 'pointer' }} key={property} align={align}>
                     <TableSortLabel
                       active={orderBy === property}
                       direction={orderBy === property ? order : defaultOrder}
@@ -137,9 +115,7 @@ export default function DynamicTable({
                       {heading || label}
                       {orderBy === property ? (
                         <span className={classes.visuallyHidden}>
-                          {order === 'desc'
-                            ? 'sorted descending'
-                            : 'sorted ascending'}
+                          {order === 'desc' ? 'sorted descending' : 'sorted ascending'}
                         </span>
                       ) : null}
                     </TableSortLabel>
@@ -152,12 +128,7 @@ export default function DynamicTable({
             {rows.map((row, index) => (
               <TableRow key={index}>
                 {cols.map(({ property, align, display, resolve }) => (
-                  <TableCell
-                    key={property}
-                    component="th"
-                    scope="row"
-                    align={align}
-                  >
+                  <TableCell key={property} component="th" scope="row" align={align}>
                     {display(resolve(row, index, rows))}
                   </TableCell>
                 ))}
@@ -173,21 +144,21 @@ const useToolbarStyles = makeStyles((theme: Theme) =>
   createStyles({
     root: {
       paddingLeft: theme.spacing(2),
-      paddingRight: theme.spacing(1)
+      paddingRight: theme.spacing(1),
     },
     highlight:
       theme.palette.type === 'light'
         ? {
             color: theme.palette.secondary.main,
-            backgroundColor: lighten(theme.palette.secondary.light, 0.85)
+            backgroundColor: lighten(theme.palette.secondary.light, 0.85),
           }
         : {
             color: theme.palette.text.primary,
-            backgroundColor: theme.palette.secondary.dark
+            backgroundColor: theme.palette.secondary.dark,
           },
     title: {
-      flex: '1 1 100%'
-    }
+      flex: '1 1 100%',
+    },
   })
 );
 interface EnhancedTableToolbarProps {
@@ -201,25 +172,15 @@ const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
   return (
     <Toolbar
       className={clsx(classes.root, {
-        [classes.highlight]: numSelected > 0
+        [classes.highlight]: numSelected > 0,
       })}
     >
       {numSelected > 0 ? (
-        <Typography
-          className={classes.title}
-          color="inherit"
-          variant="subtitle1"
-          component="div"
-        >
+        <Typography className={classes.title} color="inherit" variant="subtitle1" component="div">
           {numSelected} selected
         </Typography>
       ) : (
-        <Typography
-          className={classes.title}
-          variant="h6"
-          id="tableTitle"
-          component="div"
-        >
+        <Typography className={classes.title} variant="h6" id="tableTitle" component="div">
           {heading}
         </Typography>
       )}

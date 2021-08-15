@@ -11,10 +11,11 @@ export default function RandomBleeps() {
     triggerAttackRelease(220 + Math.random() * 880, slice / 2, time);
   }
   function scheduleNext(_time) {
-    nextEvent.current = Tone.Transport.scheduleOnce((time) => {
+    console.log('TODO');
+    /* nextEvent.current = Tone.Transport.scheduleOnce((time) => {
       query(time);
       scheduleNext(_time + slice);
-    }, _time);
+    }, _time); */
   }
   function start() {
     Tone.start();

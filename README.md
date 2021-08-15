@@ -15,6 +15,8 @@
 - [ ] "The ScriptProcessorNode is deprecated. Use AudioWorkletNode instead"
 - [ ] "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page."
 - [ ] really keep system-ui ?
+- [ ] try Typography.js
+- [ ] look at twin.macro
 - [ ] maybe replace material ui with antd?
 - [ ] replace absolute links to felixroos.github.com/blog with relative links
 

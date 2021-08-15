@@ -18,6 +18,7 @@ export default function flatten(array, mutable?) {
   do {
     if (toString.call(node) === arrayTypeStr) {
       nodes.push.apply(nodes, node);
+      // nodes = [...nodes, node];
     } else {
       result.push(node);
     }

@@ -103,13 +103,13 @@ export default {
     },
     td: {
       padding: 2,
-      textAlign: 'left',
+      // textAlign: 'start',
       borderBottom: '1px solid black'
     },
     th: {
       padding: 2,
       fontSize: 1,
-      textAlign: 'left',
+      // textAlign: 'start', // TODO: wtf?
       borderBottom: '1px solid black'
     },
     'input[type=checkbox]': {
