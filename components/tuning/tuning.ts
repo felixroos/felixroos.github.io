@@ -1,7 +1,10 @@
+import { pipe, not } from 'ramda';
 import { Range, Note } from '@tonaljs/tonal'
 import { TinyColor } from '@ctrl/tinycolor';
 import { interpolateRainbow } from "d3-scale-chromatic"
 import Fraction from "fraction.js"
+import { primes } from '../common/prime';
+import { Permutation } from '../combinatorial-search/Permutation';
 // import * as Combinatorics from 'js-combinatorics';
 
 // takes a generator and position + number of pitches inside an equivalence
@@ -178,4 +181,41 @@ export function maxFractionSize(floats) {
     },
     [0, 0]
   )
+}
+
+export function multisets(factors, maxTenneyHeight) {
+  const getProduct = collected => Math.abs(collected.reduce((p, n) => p * n, 1));
+  const exceedsHeight = collected => !maxTenneyHeight || getProduct(collected) > maxTenneyHeight;
+  // const getNext = collected => factors.filter(pipe(collected.includes, not))
+  const getNext = collected => factors.filter(f => getProduct(collected.concat([f])) <= maxTenneyHeight);
+  const isNewSolution = (collected, solutions) =>
+    !solutions.find((solution) => Permutation.isEqual(collected, solution));
+  const combinations = Permutation.search(
+    (collected) => (exceedsHeight(collected) ? [] : getNext(collected)),
+    (collected, solutions) => collected.length && !exceedsHeight(collected) && isNewSolution(collected, solutions)
+  );
+  return combinations;
+}
+
+export function productSet(factors: number[], maxTenneyHeight: number, product = 1, solutions: number[] = []) {
+  if (product <= maxTenneyHeight && !solutions.includes(product)) {
+    solutions.push(product);
+  }
+  const candidates = product > maxTenneyHeight ? [] : factors.filter(f => product * f <= maxTenneyHeight);
+  if (!candidates.length) {
+    return solutions;
+  }
+  return candidates.reduce((_, candidate: number) => productSet(factors, maxTenneyHeight, product * candidate, solutions), []);
+}
+
+export function lattice(limit, maxTenneyHeight, reduce = false) {
+  const factors = [...primes(3, limit), ...primes(3, limit).map((p) => -p)];
+  const products =
+    multisets(factors, maxTenneyHeight).map((set) =>
+      set.reduce((p: number, n: number) => (n > 0 ? p * n : p / -n), 1)
+    )
+  if (reduce) {
+    return products.map(r => clamp(r, 1));
+  }
+  return products;
 }

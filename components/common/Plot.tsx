@@ -1,14 +1,16 @@
 // TODO:
 // add zoom https://observablehq.com/@d3/zoomable-scatterplot
-import React from "react"
-import { scalePoint, scaleLinear } from "d3-scale"
-import { axisBottom, axisLeft } from "d3-axis"
-import { select } from "d3-selection"
+import React from 'react';
+import { scalePoint, scaleLinear } from 'd3-scale';
+import { axisBottom, axisLeft } from 'd3-axis';
+import { select } from 'd3-selection';
 
 export function PlotPath({ f }) {}
 
-declare type Vec2 = [number, number]
-declare type Path2 = Vec2[]
+declare type Vec2 = [number, number];
+declare type Path2 = Vec2[];
+
+export const defaultPlotColors = ['lightsalmon', 'lightseagreen', 'indianred', 'darkmagenta', 'cornflowerblue', 'aqua'];
 
 export function Plot({
   strokeWidth,
@@ -27,51 +29,39 @@ export function Plot({
   hideXAxis,
   hideYAxis,
 }: any) {
-  margin = margin || { top: 20, right: 30, bottom: 30, left: 50 }
-  width = width || 500
-  height = height || 300
-  const innerHeight = height - margin.top - margin.bottom
-  const innerWidth = width - margin.left - margin.right
+  margin = margin || { top: 20, right: 30, bottom: 30, left: 50 };
+  width = width || 500;
+  height = height || 300;
+  const innerHeight = height - margin.top - margin.bottom;
+  const innerWidth = width - margin.left - margin.right;
 
-  strokeWidth = strokeWidth || 1
-  colors = colors || [
-    "lightsalmon",
-    "lightseagreen",
-    "indianred",
-    "darkmagenta",
-    "cornflowerblue",
-    "aqua",
-  ]
-  functions = functions || []
-  range = range || { x: [-4, 4], y: [-4, 4] }
+  strokeWidth = strokeWidth || 1;
+  colors = colors || defaultPlotColors;
+  functions = functions || [];
+  range = range || { x: [-4, 4], y: [-4, 4] };
 
   const x = scaleLinear()
       .domain(range.x)
       .range([margin.left, width - margin.right]),
     y = scaleLinear()
       .domain(range.y)
-      .range([height - margin.top, margin.bottom])
+      .range([height - margin.top, margin.bottom]);
 
   const plots = functions.map((f) => {
-    const lines: Path2[] = [[]]
+    const lines: Path2[] = [[]];
     for (let i: number = margin.left + 1e-6; i < width - margin.right; i += 1) {
       const X = x.invert(i),
-        Y = f(X)
-      if (typeof Y === "number") {
-        const j: number = y(Y)
+        Y = f(X);
+      if (typeof Y === 'number') {
+        const j: number = y(Y);
         // TODO find out if differentiable => add new line if not
-        if (
-          X >= range.x[0] &&
-          X <= range.x[1] &&
-          Y >= range.y[0] &&
-          Y <= range.y[1]
-        ) {
-          lines[0].unshift([i, j])
+        if (X >= range.x[0] && X <= range.x[1] && Y >= range.y[0] && Y <= range.y[1]) {
+          lines[0].unshift([i, j]);
         }
       }
     }
-    return lines
-  })
+    return lines;
+  });
 
   return (
     <svg width={width} height={height} onClick={(e) => onClick && onClick(e)}>
@@ -83,7 +73,7 @@ export function Plot({
               ref={(g) =>
                 select(g)
                   /* .attr("transform", `translate(0,${y(0)})`) */
-                  .attr("transform", `translate(0,${height - margin.top})`)
+                  .attr('transform', `translate(0,${height - margin.top})`)
                   .call(axisBottom(x).ticks(width / 50))
               }
             />
@@ -94,7 +84,7 @@ export function Plot({
               ref={(g) =>
                 select(g)
                   /* .attr("transform", `translate(${x(0)},0)`) */
-                  .attr("transform", `translate(${margin.left},0)`)
+                  .attr('transform', `translate(${margin.left},0)`)
                   .call(axisLeft(y).ticks(height / 50))
               }
             />
@@ -108,12 +98,12 @@ export function Plot({
               className="grid"
               ref={(g) =>
                 select(g)
-                  .attr("transform", `translate(0, ${y(range.y[1])})`)
+                  .attr('transform', `translate(0, ${y(range.y[1])})`)
                   .call(
                     axisBottom(x)
                       .ticks(grid.x)
                       .tickSize(innerHeight)
-                      .tickFormat(() => "")
+                      .tickFormat(() => '')
                   )
               }
             />
@@ -123,12 +113,12 @@ export function Plot({
               className="grid"
               ref={(g) =>
                 select(g)
-                  .attr("transform", `translate(${x(range.x[0])}, 0)`)
+                  .attr('transform', `translate(${x(range.x[0])}, 0)`)
                   .call(
                     axisLeft(y)
                       .ticks(grid.y)
                       .tickSize(-innerWidth)
-                      .tickFormat(() => "")
+                      .tickFormat(() => '')
                   )
               }
             />
@@ -141,9 +131,9 @@ export function Plot({
             <path
               onMouseEnter={() => onMouseEnter && onMouseEnter(i)}
               onMouseLeave={() => onMouseLeave && onMouseLeave(i)}
-              key={i + "-" + j}
-              d={"M" + line.join("L")}
-              stroke={colors[i % colors.length] || "black"}
+              key={i + '-' + j}
+              d={'M' + line.join('L')}
+              stroke={colors[i % colors.length] || 'black'}
               strokeWidth={strokeWidth}
               fill="none"
             />
@@ -153,7 +143,7 @@ export function Plot({
         {/* <g transform={`translate(0,${y(0)})`}></g> axisBottom(x) */}
       </g>
     </svg>
-  )
+  );
 }
 
 // https://stackoverflow.com/a/56029853/5470719

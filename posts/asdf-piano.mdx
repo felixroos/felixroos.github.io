@@ -1,0 +1,152 @@
+---
+title: Playing Voicings with ASDF Piano
+date: '2021-06-10'
+tags: ['web audio', 'voicings', 'draft']
+---
+
+import { State } from 'react-powerplug';
+import { useState } from 'react';
+import KeyMonitor from '../components/common/KeyMonitor';
+import HotkeyMonitor from '../components/common/HotkeyMonitor';
+
+A while ago, I made [asdf piano](https://k25w8.csb.app/#voicing-0), as a demo of the [tonaljs Voicing Package](https://github.com/tonaljs/tonal/issues/223).
+
+# Detecting Keypresses
+
+These are some notes on how to detect keypresses with react.
+
+## Simple Hook: useKeyHandler
+
+This is a simple key handler hook:
+
+```ts
+import { useEffect } from 'react';
+
+export default function useKeyHandler({ down, up, disabled }) {
+  // Add event listeners
+  useEffect(() => {
+    if (disabled) {
+      down = () => {};
+      up = () => {};
+    }
+    window.addEventListener('keydown', down);
+    window.addEventListener('keyup', up);
+    // Remove event listeners on cleanup
+    return () => {
+      window.removeEventListener('keydown', down);
+      window.removeEventListener('keyup', up);
+    };
+  }, [disabled]); // Empty array ensures that effect is only run on mount and unmount
+}
+```
+
+We can test the hook with this component:
+
+```js
+import React, { useState } from 'react';
+import useKeyHandler from './useKeyHandler';
+
+export default function KeyMonitor() {
+  const [latest, setLatest] = useState<any>();
+  useKeyHandler({
+    down: setLatest,
+    up: setLatest,
+  });
+  return (
+    <p>
+      <span style={{ padding: 10, border: '1px solid black', borderRadius: 5 }}>
+        {latest?.type} {latest?.key || '<press any key>'}
+      </span>
+    </p>
+  );
+}
+```
+
+<KeyMonitor />
+
+## Pressing Multiple keys: useHotKeys
+
+To track multiple keypresses, we can define a second hook:
+
+```js
+export default function useHotKeys({ keys, state, mute, down, up }: any) {
+  const hold = useRef<[string, any][]>([]);
+  const mutableState = useRef<any>(state);
+  const [held, setHeld] = useState([]);
+  // update ref on state change => needed to keep the callbacks free from state dependencies
+  // => adding dependencies will cause the event listeners to miss events while updating
+  useEffect(() => {
+    mutableState.current = state;
+  }, [state])
+  useKeyHandler(
+    {
+      disabled: mute,
+      down: (e) => {
+        const keyIndex = keys.indexOf(e.key);
+        if (keyIndex !== -1) {
+          e.preventDefault();
+        }
+        if (keyIndex !== -1 && !hold.current.find(([key]) => key === e.key)) {
+          const press: [string, any] = [e.key, mutableState.current];
+          hold.current = [...hold.current, press];
+          down?.(press, keyIndex, hold.current);
+          setHeld([...hold.current]);
+        }
+      },
+      up: (e) => {
+        const keyIndex = keys.indexOf(e.key);
+        if (keyIndex !== -1) {
+          e.preventDefault();
+        }
+        const pressed = hold.current.find(([key]) => key === e.key);
+        if (!!pressed) {
+          hold.current = hold.current.filter(([key]) => key !== e.key);
+          up?.(pressed, keyIndex, hold.current);
+          setHeld([...hold.current]);
+        }
+      },
+    },
+  )
+  return [held];
+}
+```
+
+We can pass a state that is then associated with each pressed key, representing the state when the keys was pressed:
+
+```js
+import React, { useEffect, useState } from 'react';
+import useHotKeys from './useHotkeys';
+
+export default function HotkeyMonitor({ keys }) {
+  const [held] = useHotKeys({
+    keys, // activeKeys
+    state: Date.now(), // state for each keypress
+  });
+  // update component every second
+  const [time, setTime] = useState(Date.now());
+  useEffect(() => {
+    let interval = setInterval(() => {
+      setTime(Date.now());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <p>
+      {held.map(([key, timePressed]) => (
+        <span key={key} style={{ padding: 10, border: '1px solid black', borderRadius: 5 }}>
+          {key} {Math.max(0, Math.round((time - timePressed) / 1000))}
+        </span>
+      ))}
+    </p>
+  );
+}
+```
+
+```js
+<HotkeyMonitor keys={['a', 's', 'd', 'f']} />
+```
+
+<HotkeyMonitor keys={['a', 's', 'd', 'f']} />
+<br />
+<KeyMonitor />

@@ -10,7 +10,6 @@ export function FrequencyPlot({
   height,
   width,
   colors,
-  onTrigger,
   onMouseEnter,
   onMouseLeave,
   strokeWidth,

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Player from './components/Player';
-/* import { piano } from '../../instruments/piano'; */
+import { piano } from '../../instruments/piano';
 import composePhrase from './composePhrase';
 import mapChordScales from '../graphs/mapChordScales';
 import composeChords from './composeChords';
@@ -29,7 +29,9 @@ export default function RhythmicalComposer({ chords }) {
   }, [chords]);
   return (
     <>
-      {events && <Player hidePianoRoll={true} instruments={{ piano: midi('IAC-Treiber Bus 1', 1) }} events={events} />}
+      {events && (
+        <Player hidePianoRoll={true} instruments={{ piano /* : midi('IAC-Treiber Bus 1', 1) */ }} events={events} />
+      )}
     </>
   );
 }

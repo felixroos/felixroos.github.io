@@ -1,0 +1,94 @@
+---
+title: Past Projects Retrospective
+date: '2020-08-28'
+tags: ['draft']
+---
+
+## color-tunes
+
+The [explorer](https://felixroos.github.io/color-tunes/#/explorer) is a browser through musical material like chords and scales.
+
+![color-tunes](./img/project-screenshots/color-tunes_explorer.png)
+
+Interesting parts:
+
+- circle of fifth connecting selected notes with lines
+- subsets: sets of notes that are contained in the current set (lighter color)
+- supersets: sets of notes where the current set is contained in (darker color)
+- equivalents: sets that contain the same notes (dashed)
+- generate sequences with the permutator
+
+The [player](https://felixroos.github.io/color-tunes/#/tunes) looks like this:
+
+![color-tunes](./img/project-screenshots/color-tunes_player.png)
+
+- browses through ireal jazz standards
+- color codes each chord by possible parent major scales
+- plays back chords using jazzband lib, with different styles
+- also uses an improviser that is able to play patterns over the chords
+
+## jazzband
+
+The [main demo](https://felixroos.github.io/jazzband/) contains a searchable ireal jazz standards set.
+
+![jazzband](./img/project-screenshots/jazzband_demo.png)
+
+- each tune can be played back in two different styles (swing or bossa)
+- the sheet can be edited using leetsheet snippet format
+- the ear training will turn all chords to question marks requiring the user to fill in the chords
+- chords and bass notes can also be triggered one after the other (arrow buttons), either as chord or arpeggio
+
+Another [demo](https://github.com/felixroos/jazzband/tree/develop/demo-patterns) of jazzband is a little experiment with patterns:
+
+![jazzband](./img/project-screenshots/jazzband_demo-patterns.png)
+
+- A pattern is just a set of numbers, representing degrees in a scale (1 indexed)
+- using the ">" sign, patterns can be nested into each other, allowing more complex structures
+
+[demo-tone](https://github.com/felixroos/jazzband/tree/develop/demo-tone) contains a player with a piano roll:
+
+![jazzband](./img/project-screenshots/jazzband_demo-tone.png)
+
+- contains 6 standards with melody
+- experimental attempts to harmonize a melody (using voicing range below melody)
+
+## music-brain
+
+[Analyzes](https://github.com/felixroos/music-brain) the ireal jazz standards set for metadata and chord data, similar to [Analyzing iReal Chord Changes](https://felixroos.github.io/blog/ireal-analytics/).
+
+![music-brain](./img/project-screenshots/music-brain.png)
+
+## music-trainer
+
+Trains sheet reading for trumpet, based on [this project](http://onehungrymind.com/notes-angular-midi/).
+
+The notes are generating with this (horrible looking) UI:
+
+![music-trainer](./img/project-screenshots/music-trainer_quiz-form.png)
+
+The trumpet valves are mapped to the keys J K and L, allowing the program to check if the current key combination fits to the current note:
+
+![music-trainer](./img/project-screenshots/music-trainer_quiz-score.png)
+
+## circle-beats
+
+[demo](https://circle-beats.stackblitz.io). Vizualizes polyrhythms and polymeters in a circle:
+
+![circle-beats](./img/project-screenshots/circlebeats.gif)
+
+<div style={{display:'none'}}>
+  
+## pro-practise
+
+![pro-practise](./img/project-screenshots/pro-practise-routine.png)
+![pro-practise](./img/project-screenshots/pro-practise-routines.png)
+![pro-practise](./img/project-screenshots/pro-practise-time.png)
+
+## jazz-trainer
+
+![jazz-trainer](./img/project-screenshots/jazz-trainer_progression251.png)
+![jazz-trainer](./img/project-screenshots/jazz-trainer_progressions.png)
+![jazz-trainer](./img/project-screenshots/jazz-trainer_song.png)
+![jazz-trainer](./img/project-screenshots/jazz-trainer_songs.png)
+
+</div>

@@ -8,12 +8,13 @@ function getClaviature({ options, onClick }) {
     scaleY = 1,
     palette = ['#39383D', '#F2F2EF'],
     strokeWidth = 1,
+    stroke = 'black',
     upperWidth = 14,
     upperHeight = 100,
     lowerHeight = 45,
     colorize = [],
-    // labels
-    // topLabels
+    labels,
+    topLabels,
   } = options || {};
   const blackPattern = [0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0];
   const offset = Note.midi(range[0]);
@@ -51,6 +52,7 @@ function getClaviature({ options, onClick }) {
   const colorizedMidi = colorize.map((c) => ({ ...c, keys: c.keys.map((key) => Note.midi(key)) }));
   const getColor = (midi) => colorizedMidi.find(({ keys }) => keys.includes(midi))?.color;
   const handleClick = (midi) => () => onClick?.(Note.fromMidi(midi), midi);
+  const isBlack = (midi) => blackPattern[midi % 12] === 1;
   // format similar to https://www.npmjs.com/package/svgson
   return {
     name: 'svg',
@@ -74,7 +76,7 @@ function getClaviature({ options, onClick }) {
           height: whiteHeight,
           width: whiteWidth(midi),
           fill: getColor(midi) ?? palette[1],
-          stroke: 'black',
+          stroke,
           strokeWidth: `${strokeWidth}px`,
           onClick: handleClick(midi),
         },
@@ -96,6 +98,36 @@ function getClaviature({ options, onClick }) {
           onClick: handleClick(midi),
         },
       })),
+      ...Object.entries(labels || {}).reduce((textElements, [key, value]) => {
+        const midi = Note.midi(key);
+        const black = isBlack(midi);
+        const y = topLabels ? topWidth * 0.7 : (black ? blackHeight : whiteHeight) - topWidth * 0.7;
+        const x = black || topLabels ? blackX(midi) + topWidth / 2 : whiteX(midi) + whiteWidth(midi) / 2;
+        return textElements.concat([
+          {
+            name: 'circle',
+            value,
+            attributes: {
+              cx: x,
+              cy: y,
+              r: topWidth / 2,
+              fill: palette[1],
+              stroke: palette[0],
+            },
+          },
+          {
+            name: 'text',
+            value,
+            attributes: {
+              x,
+              y: y + topWidth * 0.2,
+              textAnchor: 'middle',
+              fontFamily: 'Verdana',
+              fontSize: topWidth * 0.7,
+            },
+          },
+        ]);
+      }, []),
     ],
   };
 }
@@ -104,9 +136,14 @@ export default function Claviature({ options, onClick }: any) {
   const svg = getClaviature({ options, onClick });
   return (
     <svg {...svg.attributes}>
-      {svg.children.map((el, i) => (
-        <rect key={i} {...el.attributes} />
-      ))}
+      {svg.children.map((el, i) => {
+        const TagName = el.name;
+        return (
+          <TagName key={i} {...el.attributes}>
+            {el.value}
+          </TagName>
+        );
+      })}
     </svg>
   );
 }
@@ -115,8 +152,10 @@ export function ClaviatureOctave() {
   const topWidth = 15;
   const blackHeight = 100;
   const whiteHeight = 145;
-  const whiteWidth = (index) => (index > 2 ? 7 / 4 : 5 / 3) * topWidth;
-  const whiteX = (index) => Array.from({ length: index }, (_, i) => i).reduce((sum, w) => sum + whiteWidth(w), 0);
+  const [r1, r2] = [5 / 3, 7 / 4]; // 2 different ratios for white key bottoms
+  const whiteWidth = (index) => (index < 3 ? r1 : r2) * topWidth;
+  const whiteX = (index) => (Math.min(index, 3) * r1 + Math.max(index - 3, 0) * r2) * topWidth;
+  // const whiteX = (index) => Array.from({ length: index }, (_, i) => i).reduce((sum, w) => sum + whiteWidth(w), 0);
   return (
     <svg>
       {Array.from({ length: 7 }, (_, i) => i).map((index) => (

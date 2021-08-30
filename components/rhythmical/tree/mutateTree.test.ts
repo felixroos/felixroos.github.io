@@ -7,7 +7,7 @@ test('mutateTree', () => {
     }
     return node;
   });
-  for (let { node } of mutator) {
+  /* for (let { node } of mutator) {
     console.log(node);
-  }
+  } */
 })

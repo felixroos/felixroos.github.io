@@ -1,0 +1,28 @@
+---
+title: Speech Synthesis
+date: '2020-08-25'
+tags: ['draft']
+---
+
+Experiment
+
+```js
+const lang =
+  (language) =>
+  ({ lang }) =>
+    lang === 'de-DE';
+
+function speak(words, voice) {
+  const synth = window.speechSynthesis;
+  utterance = new SpeechSynthesisUtterance(words);
+  if (typeof voice === 'number') {
+    synth.getVoices()[voice % synth.getVoices().length];
+  } else if (typeof voice === 'object') {
+    utterance.voice = voice;
+  } else if (typeof voice === 'function') {
+    utterance.voice = voice(synth.getVoices());
+  }
+  speechSynthesis.speak(utterance);
+}
+// https://medium.com/javascript-in-plain-english/how-to-use-speech-recognition-and-speech-synthesis-in-javascript-9bcb213f6ddd
+```

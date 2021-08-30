@@ -32,6 +32,7 @@ export const getAllPosts = () => {
         slug: slug,
       };
     })
+    .filter(({ frontmatter }) => !frontmatter.tags?.includes('draft'))
     .sort((a, b) => compareDesc(parseISO(a.frontmatter.date), parseISO(b.frontmatter.date)));
 };
 

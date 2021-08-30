@@ -15,9 +15,9 @@ test('walk', () => {
   expect(walker.next().value).toEqual('D');
   expect(walker.next().value).toEqual(undefined);
 
-  for (let node of nestedWalker(tree)) {
+  /* for (let node of nestedWalker(tree)) {
     console.log(node);
-  }
+  } */
 
 })
 
@@ -35,8 +35,8 @@ test('walk rhythm', () => {
     ]
   }
 
-  for (let node of rhythmWalker(rhythm)) {
+  /* for (let node of rhythmWalker(rhythm)) {
     console.log(node);
-  }
+  } */
 })
 

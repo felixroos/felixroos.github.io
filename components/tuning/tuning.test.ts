@@ -1,4 +1,6 @@
-import { stack, clamp, nearestPitch, maxFractionSize, powers, limitN, equivalence, generate } from './tuning';
+import Fraction from 'fraction.js';
+import { primes } from '../common/prime';
+import { clamp, equivalence, generate, maxFractionSize, multisets, nearestPitch, powers, stack, lattice, productSet } from './tuning';
 
 test('generate', () => {
   expect(generate(3, 7, 12, 2)).toEqual([
@@ -44,6 +46,9 @@ test('limit', () => {
     1, 3 / 2, 9 / 8, 5 / 4, 15 / 8, 45 / 32
   ]) */
 })
+test('equivalence', () => {
+  expect(equivalence(1 / 3, 2)).toEqual(4 / 3)
+})
 
 test('fraction', () => {
   expect(stack(1)).toEqual([440])
@@ -73,4 +78,67 @@ test('maxFractionSize', () => {
   expect(maxFractionSize([4 / 3, 1, 2])).toEqual([4, 3]);
   expect(maxFractionSize([4 / 3, 5 / 9])).toEqual([5, 9]);
   expect(maxFractionSize([1, 2, 3, 4 / 3])).toEqual([4, 3]);
+});
+
+test('multisets', () => {
+  expect(primes(3, 5)).toEqual([3, 5]);
+  expect(multisets(primes(3, 5), 15)).toEqual([
+    [3],
+    [3, 3],
+    [3, 5],
+    [5]
+  ]);
+  expect(primes(3, 7)).toEqual([3, 5, 7]);
+  expect(multisets(primes(3, 7), 35)).toEqual([
+    [3],
+    [3, 3],
+    [3, 3, 3],
+    [3, 5],
+    [3, 7],
+    [5],
+    [5, 5],
+    [5, 7],
+    [7]
+  ]);
+});
+
+test('lattice', () => {
+  expect(lattice(5, 15).map((v: number) => new Fraction(v)).map(({ n, d }) => [n, d])).toEqual([
+    [3, 1],
+    [9, 1],
+    [15, 1],
+    [1, 1],
+    [3, 5],
+    [5, 1],
+    [5, 3],
+    [1, 3],
+    [1, 9],
+    [1, 15],
+    [1, 5]
+  ]);
+  expect(lattice(5, 15, true).map((v: number) => new Fraction(v)).map(({ n, d }) => [n, d])).toEqual([
+    [3, 2],
+    [9, 8],
+    [15, 8],
+    [1, 1],
+    [6, 5],
+    [5, 4],
+    [5, 3],
+    [4, 3],
+    [16, 9],
+    [16, 15],
+    [8, 5]
+  ]);
+})
+
+test('productSet', () => {
+  expect(productSet(primes(3, 5), 15)).toEqual([
+    1, 3, 9, 15, 5
+  ]);
+  expect(productSet(primes(3, 7), 35)).toEqual([
+    1, 3, 9, 27, 15, 21, 5, 25, 35, 7
+  ]);
+  expect(productSet([...primes(3, 5), ...primes(3, 5).map(p => 1 / p)], 15)).toEqual([
+    1, 3, 9, 15, 5
+  ]);
 })

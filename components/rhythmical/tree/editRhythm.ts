@@ -33,7 +33,7 @@ export function editRhythmState<T>(rhythm: RhythmNode<T>, state: RhythmState<T>,
   return editTree<[RhythmNode<T>, RhythmState<T>]>(
     // here we pass parent state down to children (events should be empty..)
     ([rhythm, state]) => {
-      console.log('getChildren', state);
+      // console.log('getChildren', state);
       return getRhythmChildren(rhythm)?.map((child) => [child, state]) // + n
     },
     // here we pass reduce children states up to parent (just events)

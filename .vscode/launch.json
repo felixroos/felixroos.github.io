@@ -1,0 +1,28 @@
+{
+  "configurations": [
+    {
+      "name": "Chrome Canary https://localhost:4200",
+      "type": "chrome",
+      "request": "launch",
+      "url": "https://localhost:4200",
+      "webRoot": "${workspaceRoot}",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+        "webpack:///*": "${workspaceRoot}/src/*"
+      }
+    },
+    {
+      "type": "node",
+      "name": "vscode-jest-tests",
+      "request": "launch",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "runtimeExecutable": "/Users/felix/.nvm/versions/node/default/bin/node",
+      "disableOptimisticBPs": true,
+      "jest.jestCommandLine": "\"PATH=$PATH:/Path/to/node/.nvm/versions/node/default/bin\"; npm run test --",
+      "program": "/Users/felix/.nvm/versions/node/v14.16.1/bin/jest",
+      "cwd": "${workspaceFolder}",
+      "args": ["--runInBand", "--watchAll=false"]
+    }
+  ]
+}

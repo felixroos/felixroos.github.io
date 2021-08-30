@@ -1,0 +1,283 @@
+---
+title: Functional Composition
+date: '2020-08-28'
+tags: ['draft']
+---
+
+If you have a music education background, the words functional and composition will have a different meaning than if you have a coding background:
+
+| word        | music                                                           | code                                                                             |
+| ----------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| functional  | functional harmony focuses on the relation of chords to a tonic | functional style is a way of coding that primarily uses functions for everything |
+| composition | writing new music                                               | wiring up functions in a particular way                                          |
+
+So i guess, if combining the two, we could compose the harmonic functions of a piece of music by composing functions in code...
+
+## function composition in code
+
+In functional programming, function composition works by using the output of one function as the input of another.
+
+Let's look at following two functions:
+
+```js
+const add = (a, b) => a + b;
+add(1, 2); // 3
+
+const mul = (a, b) => a * b;
+mul(2, 3); // 6
+```
+
+If we want to "compose" the two functions, we can use the result of one as the input of the other:
+
+```js
+add(1, mul(3, 2)); // equals 1 + (3 * 2) = 7
+// or
+mul(2, add(1, 3)); // equals 2 * (1 + 3) = 8
+```
+
+That's basically it, but writing it this way will get confusing very quickly.
+
+### curry
+
+To be able to compose functions in a non confusing, readable way, let's add some curry...
+A curried function supports "partial applciation", which means it will give us a function back if we only pass not all parameters.
+The returned function will accept the remaining parameters.
+We could define them like this:
+
+```js
+const add = (a) => (b) => a + b;
+add(1)(2); // 3
+const mul = (a) => (b) => a * b;
+mul(2)(2); // 4
+
+add(1, 2); // does not work
+mul(2, 2); // does not work
+```
+
+To be able to still use our functions in a traditional way (both params at once), we can use ramda to curry our functions properly:
+
+```js
+import R from 'ramda';
+
+const add = R.curry((a, b) => a + b);
+add(1)(2); // 3 => apply one param after the other
+add(1, 2); // 3 => apply both params at once
+const add1 = add(1); // apply one param and save the function under a special name
+add1(2); // 3
+
+const mul = R.curry((a, b) => a * b); // equivalent to a => b => a * b
+mul(2, 3); // 6 => apply both params at once
+mul(2)(3); // => apply one param after the other
+const mul2 = mul(2); // apply one param and save the function under a special name
+mul2(2); // 4
+```
+
+You might now question how this might be useful, as this just looks like a overly complicated way of adding and multiplying numbers.
+
+### compose
+
+Now having properly curried functions, we can finally use compose, which also comes with ramda:
+
+```js
+import R from 'ramda';
+const add = R.curry((a, b) => a + b);
+const mul = R.curry((a, b) => a * b);
+
+const f = R.compose(add(1), mul(2)); // x * 2 + 1
+f(3); // 3 * 2 + 1 = 7
+const g = R.compose(mul(2), add(1)); // (x + 1) * 2
+g(3); // (3 + 1) * 2 = 8
+```
+
+compose creates a new functions that applies the given functions from right to left.
+As an alternative, we can use pipe to apply functions from left to right, as this IMHO easier to read:
+
+```js
+import R from 'ramda';
+const add = R.curry((a, b) => a + b);
+const mul = R.curry((a, b) => a * b);
+
+const f = R.pipe(add(1), mul(2)); // (x + 1) * 2
+f(3); // (3 + 1) * 2 = 8
+const g = R.pipe(mul(2), add(1)); // x * 2 + 1
+g(3); // 3 * 2 + 1 = 7
+```
+
+Now this is much easier to read and will not get worse if we add more operations!
+
+## applying functional composition to music
+
+Having built up the theoretical basis, we can now compose some functions that compose functional music...
+
+### scale patterns
+
+Using an array of indices, we can generate patterns from a scale:
+
+```js
+// returns note of given scale
+const scale = (name) => Scale.get(name).notes;
+scale('C major').join(' '); // 'C D E F G A B'
+
+// returns pattern of indices inside array
+const pattern = curry((indices, array) => indices.map((i) => array[i % array.length]));
+pattern([0, 2, 4], scale('C major')).join(' '); // 'C E G'
+// more musician friendly: like pattern, but starting on index 1
+const degrees = curry((indices, array) =>
+  pattern(
+    indices.map((i) => i - 1),
+    array
+  )
+);
+degrees([1, 3, 5], scale('C major')).join(' '); // 'C E G'
+// or as a more readable version:
+const scaleDegrees = curry((pattern, name) => degrees(pattern, scale(name)));
+scaleDegrees([1, 3, 5], 'C major').join(' '); // 'C E G'
+```
+
+We can also do some nesting magic:
+
+```js
+// just add the parent index to each child (- 1 because not zero indexed!)
+const nestedDegrees = (indices) => map((i) => indices.map((d) => i + d - 1));
+
+const nest = (patterns) =>
+  pipe(...patterns.slice(1).map((pattern) => pipe(nestedDegrees(pattern), flatten)), degrees)(patterns[0]);
+
+nest([
+  [1, 4, 5],
+  [1, 3, 5],
+])(scale('C major'));
+// this is the same as:
+degrees([1, 3, 5, 4, 6, 8, 5, 7, 9], scale('C major'));
+```
+
+Now we can generate complex patterns with less typing!
+
+### Generating Etudes
+
+With nested patterns, it's easy to create scale etudes, for example, Clarke #2:
+
+import Player from '../components/rhythmical/components/Player.tsx';
+import { piano } from '../instruments/piano.ts';
+import { renderRhythm } from '../components/rhythmical/rhythmical.ts';
+import { nest, scale, clark } from '../components/rhythmical/functional.ts';
+import { Score } from '../components/score/Score.tsx';
+
+<Player instruments={{ piano }} events={renderRhythm(clark('C4', 'major'))} />
+
+```js
+export const clark = (...[tonic, _scale]) => ({
+  duration: 12,
+  sequential: [
+    {
+      duration: 7,
+      sequential: nest(
+        [
+          [1, 2, 3, 4, 5, 6, 7],
+          [1, 2, 3, 1],
+        ],
+        [...scale(`${tonic} ${_scale}`), ...scale(`${Note.transpose(tonic, '8P')} ${_scale}`)]
+      ),
+    },
+    Note.transpose(tonic, '8P'),
+  ],
+});
+// renderRhythm(clark('C4', 'major'))
+```
+
+This can be easily changed to another scale:
+
+<Player instruments={{ piano }} events={renderRhythm(clark('D4', 'harmonic minor'))} />
+
+```js
+<Player instruments={{ piano }} events={renderRhythm(clark('D4', 'harmonic minor'))} />
+```
+
+This is cool, but not perfect, as the rhythm object is now full of mystic js code...
+
+### pattern plugin
+
+Let's imagine this notation:
+
+```js
+{
+  duration: 12,
+  scale: 'C3 major',
+  sequential: [
+    {
+      duration: 7,
+      sequential: [1, 2, 3, 4, 5, 6, 7, { sequential: [1], duration: 2}],
+      nest: [1, 2, 3, [2, 1]]
+    },
+    {
+      sequential: [1]
+    }
+  ]
+}
+```
+
+This notation requires another tricky bit of implementation, which is mapping over nested objects.
+The nest plugin would do something like this:
+
+```js
+{
+  duration: 12,
+  scale: 'C3 major',
+  sequential: mapLeafs([
+    {
+      duration: 7,
+      sequential: mapLeafs(
+        [1, 2, 3, 4, 5, 6, 7, { sequential: [1], duration: 2 }],
+        (leaf) => mapLeafs(
+          [1, 2, 3, [2, 1]],
+          (child) => child + leaf - 1))
+    }
+  ], (leaf) => scale('C3 major')[leaf - 1])
+}
+```
+
+The result would be this:
+
+```js
+[
+  [1, 2, 3, [2, 1]],
+  [2, 3, 4, [3, 2]],
+  [3, 4, 5, [4, 3]],
+  [4, 5, 6, [5, 4]],
+  [5, 6, 7, [6, 5]],
+  [6, 7, 8, [7, 6]],
+  [7, 8, 9, [8, 7]],
+  {
+    sequential: [[1, 2, 3, [2, 1]]],
+    duration: 2,
+  },
+];
+```
+
+yields:
+
+```js
+[1, 2, 3, 4, 5, 6, 7, { sequential: [1], duration: 2 }];
+```
+
+with chords:
+
+```js
+{
+  duration: 12,
+  scale: 'C3 major',
+  sequential: [
+    {
+      duration: 7,
+      sequential: [1, 2, 3, 4, 5, 6, 7],
+      nest: [{ parallel: [1, 3, 5, 7] }]
+    },
+    {
+      sequential: [1]
+    }
+  ]
+}
+```
+
+This is just a proposal.. I will come back to this when rhythmical is ready (currently rewriting the core logic... ).
+

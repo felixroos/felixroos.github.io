@@ -1,0 +1,51 @@
+---
+title: iReal Pro Reverse Engineering
+date: '2020-08-05'
+tags: ['draft']
+---
+
+In an [interview with Massimo Biolcati](https://topmusic.co/cptp097-meet-the-musician-behind-my-favourite-app-ireal-pro/), the developer of ireal, he talks a little bit about the inner workings of the app.
+
+## Main Takeaways
+
+Here are the two relevant infos from the interview:
+
+### About Styles
+
+Interviewer: How on earth does this work without going into too much tech detail? How are these backing tracks all work in the different keys, the different speeds? It blows my mind
+
+Massimo:
+That was a lot of work. Let's say there are separate tracks, drums, piano and bass. Let's say, for example, the piano track. What I do first, I read the chord chart. Well, I say "I", I mean the app reads the chord charts and separates it in measures. Then within the measure, you might have one or more chords. A chord can have a length four beats, or three beats, or two beats, or one beat with different length of chords. I've created rhythmical pattern for the piano of this different length, one, two, three and four beats.
+
+Then you have the voicing. Given the chord symbol, I have a huge database of different voicings. I match rhythm with a voicing. The rhythm can just be simple hits like that, or arpeggios, or like in the case of the Latin, you have a specific montuno patterns. You combine those two things. Then you just attach them one to the other so you have the whole piano part like that.
+
+It assembles each time a different track. If you listen to the jazz style, the way jazz music is played is very organic. It never sounds the same. The drummer plays varying pattern. The piano players comping, it's always changing. I try to add that sense of human organic playing in my style. If you press play the second time, it's going to sound different. Each repeat is going to sound a little different and so those are also little details that I wanted to ... We're sensitive to repetition. Once you start hearing the same thing over and over, it can become annoying if you're expecting not to be the same, right? For a jazz tune, you don't want it to sound exactly the same. Otherwise, it sounds like an arrangement. With enough variation, you cannot perceive a pattern so it sounds improvised.
+
+I:
+I had no idea that every time ... If you play a chord chart and then stop it at any point and then restart it without changing anything, it will sound slightly different.
+Slightly different. More in the jazz styles. The pop styles, the patterns are more rigid, right?
+
+Massimo:
+Slightly different. More in the jazz styles. The pop styles, the patterns are more rigid, right?
+
+### About Instruments
+
+Interviewer:
+Did you actually record instruments in? Is that a drummer on an app, some other software or is it live? How did that work?
+
+Massimo:
+No, I go into Logic and I drop in ... I have a specific SoundFont that I've created that is compact. When I made the app, it was on iPhone 1. We had basically no memory available so I had to make everything very compact and very small. I made a custom SoundFont with piano sound and then some drum sounds, and bass, a certain number of sounds. I drop that sound bank into Logic and then I manually assemble a drum group like cymbal hits, and bass drums, and snare hits. Then I cut it out in four bar phrases, three bar phrases, just something and all of that. Then they get assembled.
+
+## Transcribing Styles
+
+To really reverse engineer the styles, I could
+
+1. assemble a chord sheet that contains all possible number of beats
+2. record a few forms of a particular style
+3. for each chord symbol, transcribe only the rhythm part
+4. sort rhythm fragments by number of beats
+5. remove duplicates
+
+- If enough forms have been transcribed (2), all possible rhythms must have occured sooner or later (as they are randomized).
+- The fragments can then be used to fill up any chord chart + voiced accordingly.
+- the transcription has to be done for piano, bass and drums seperately

@@ -1,0 +1,9 @@
+{
+  "jest.jestCommandLine": "npm test --",
+  "files.associations": {
+    "*.tidal": "haskell",
+    "*.html": "html",
+    "*.njk": "nunjucks",
+    "stdexcept": "cpp"
+  }
+}

@@ -1,6 +1,9 @@
 export class Permutation {
   static isEqual(collectionA, collectionB) {
-    return collectionA.sort().join("-") === collectionB.sort().join("-")
+    return [...collectionA].sort().join("-") === [...collectionB].sort().join("-")
+  }
+  static isIdentical(collectionA, collectionB) {
+    return collectionA.join("-") === collectionB.join("-")
   }
   static search<T>(
     finder: (path: T[], solutions: T[][]) => T[],

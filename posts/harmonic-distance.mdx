@@ -1,0 +1,353 @@
+---
+title: Harmonic Distance
+date: '2021-08-18'
+tags: ['tuning']
+---
+
+import { Plot, defaultPlotColors } from '../components/common/Plot.tsx';
+import { multisets, equivalence, clamp, lattice } from '../components/tuning/tuning';
+import { primes } from '../components/common/prime';
+import { Color } from '../components/common/Color.tsx';
+import Player from '../components/rhythmical/components/Player.tsx';
+import Lattice, {
+  dimensionUnitsTonnetz,
+  dimensionUnitsWilson,
+  dimensionUnitsGrady,
+} from '../components/tuning/Lattice.tsx';
+import Lattice3d, { AnimatedLattice } from '../components/tuning/Lattice3d.tsx';
+import KatexSteps from '../components/common/KatexSteps.tsx';
+import { renderRhythmObject } from '../components/rhythmical/rhythmical.ts';
+import { inheritProperty } from '../components/rhythmical/features/inherit.ts';
+import drums from '../instruments/tidal';
+import { primefactors, ratioPrimePowers, ratioPrimeVector } from '../components/common/prime';
+import Fraction from 'fraction.js';
+import SVG, { cubeLines, projection, rotateX, rotateY, rotateZ, project3d } from '../components/3d/SVG';
+import * as math from 'mathjs';
+import { State } from 'react-powerplug';
+import Slider from '@material-ui/core/Slider';
+import AnimationFrame from '../components/common/AnimationFrame.tsx';
+
+<AnimatedLattice
+  ratios={[3 * 1, 5 * 1, 7 * 1, 3 * 5, 3 * 7, 5 * 7]}
+  offset={[-0.5, -0.5, -0.5]}
+  maxDistance={21}
+  flipY={true}
+/>
+
+In my post about [Pure Intervals](./intervals), I used two ways to bring order to the infinite amount of ratios of natural
+numbers: The harmonic series and the Lambdoma. Later, I investigated the [3-limit](./3limit-just-intonation) and [5-limit](./5limit-just-intonation)
+tuning systems, which are another way to organize the landscape of Just Intonation.
+
+Another powerful way to vizualize any collection of ratios is using a so called lattice.
+
+## Lattices
+
+A lattice organizes ratios by prime factorization. Before understanding how that works, let's have a look:
+
+### 3 Limit Lattice
+
+The lattice of a 3 limit pentatonic scale looks like this:
+
+<Lattice
+  ratios={[1, 3 / 2, 4 / 3, 9 / 8, 27 / 16]}
+  minPrime={2}
+  circleRadius={16}
+  width={500}
+  flipX={false}
+  flipY={true}
+/>
+
+Here, we only use fractions between 1 and 2. Of course, we could also draw out of that range:
+
+<Lattice
+  ratios={[1 / 2, 1, 2, 9 / 16, 9 / 8, 9 / 4, 2 / 3, 4 / 3, 3, 3 / 2, 3 / 4, 27 / 8, 27 / 16]}
+  minPrime={2}
+  circleRadius={16}
+  width={500}
+  flipX={false}
+  flipY={true}
+/>
+
+_To hear how the fractions sound, click on the colored circles_
+
+If we agree on the fact that octaves can be seen as the same pitch class (octave equivalence), we can ignore the dimension of the octave completely:
+
+<Lattice ratios={[1, 9 / 8, 4 / 3, 3 / 2, 27 / 16]} minPrime={3} circleRadius={12} width={500} flipX={true} />
+
+This leaves us just 1 dimension, where the 3 is the x axis. This "trick" saves us 1 dimension for the upcoming higher limit systems.
+
+### 5 limit lattice
+
+In a 5 limit system, we can keep the 3 as the x axis, and add the 5 on the y axis:
+
+<State initial={{ limit: 15 }}>
+  {({ state, setState }) => (
+    <>
+      <Slider min={5} max={125} step={3} value={state.limit} onChange={(e, v) => setState({ limit: v })} />
+      <Lattice ratios={lattice(5, state.limit, true)} width={800} flipY={true} circleRadius={12} />
+    </>
+  )}
+</State>
+
+The above fractions represent a 5 limit chromatic scale.
+
+In many cases, the lattice will be drawn like that:
+
+<State initial={{ limit: 15 }}>
+  {({ state, setState }) => (
+    <>
+      <Slider min={5} max={125} step={3} value={state.limit} onChange={(e, v) => setState({ limit: v })} />
+      <Lattice
+        ratios={lattice(5, state.limit, true)}
+        width={800}
+        flipY={true}
+        dimensionUnits={dimensionUnitsTonnetz}
+        circleRadius={12}
+      />
+    </>
+  )}
+</State>
+
+Sheering the y axis to the right results in triangles, where those that point upwards are major and those that point downwards are minor.
+
+### 7 limit lattice
+
+In a 7 limit system, we need one more dimension. To draw it in 3d, we can just use a 45 degree angle:
+
+<State initial={{ limit: 20 }}>
+  {({ state, setState }) => (
+    <>
+      <Slider min={5} max={125} step={3} value={state.limit} onChange={(e, v) => setState({ limit: v })} />
+      <Lattice ratios={lattice(7, state.limit, true)} width={800} flipY={true} />
+    </>
+  )}
+</State>
+
+With more and more fractions, it gets difficult to overview the lattice.
+As we now have 3 dimensions, we could draw it in 3d space:
+
+<State initial={{ limit: 20 }}>
+  {({ state, setState }) => (
+    <>
+      <Slider min={5} max={100} step={3} value={state.limit} onChange={(e, v) => setState({ limit: v })} />
+      <AnimatedLattice
+        ratios={lattice(7, state.limit, true)}
+        scale={90}
+        width={800}
+        maxDistance={14}
+        rotator={(angle) => [-12, -angle, 0]}
+      />
+    </>
+  )}
+</State>
+
+### 11 limit lattice
+
+If we add just another dimension with 11 limit, we run out of brain power.. vizualizing 4 dimensions in 2d is kind of impossible.
+But we can just use another angle for this new dimension that won't get too much in our way:
+
+<State initial={{ limit: 11 }}>
+  {({ state, setState }) => (
+    <>
+      <Slider min={11} max={110} step={3} value={state.limit} onChange={(e, v) => setState({ limit: v })} />
+      <Lattice
+        ratios={lattice(11, state.limit, true)}
+        width={800}
+        flipY={true}
+        maxPrime={11}
+        dimensionUnits={dimensionUnitsWilson}
+      />
+    </>
+  )}
+</State>
+
+### 13 limit lattice
+
+To go full on crazy, we can add a 5th dimension:
+
+<State initial={{ limit: 11 }}>
+  {({ state, setState }) => (
+    <>
+      <Slider min={13} max={110} step={3} value={state.limit} onChange={(e, v) => setState({ limit: v })} />
+      <Lattice
+        ratios={lattice(13, state.limit, true)}
+        width={800}
+        flipY={true}
+        maxPrime={13}
+        dimensionUnits={dimensionUnitsGrady}
+      />
+    </>
+  )}
+</State>
+
+## Calculating Prime Vectors
+
+Let's talk about the details on how to calculate the vector of any ratio.
+For example, a 3 limit tuning system consists of ratios generated by
+
+$$
+r = 2^x * 3^y
+$$
+
+To calculate the coordinates of any ratio inside 3 limit, we need to factorize the ratio into its prime components.
+We can then use the the exponents as a vector:
+
+export const primeEquation = (r, limit) => {
+  const f = new Fraction(r);
+  return [
+    `\\frac{${f.n}}{${f.d}}`,
+    `\\frac{${primefactors(f.n).join('*') || '1'}}{${primefactors(f.d).join('*') || '1'}}`,
+    ratioPrimePowers(f.n, f.d)
+      .map(([f, p]) => `${f}^{${p}}`)
+      .join('*') || '1',
+    `\\begin{pmatrix}
+        ${ratioPrimeVector(f.n, f.d, 2, limit).join('\\\\')}
+     \\end{pmatrix}`,
+  ];
+};
+
+<KatexSteps steps={primeEquation(1 / 1, 3)} />
+<br />
+<KatexSteps steps={primeEquation(3 / 2)} />
+<br />
+<KatexSteps steps={primeEquation(4 / 3)} />
+<br />
+<KatexSteps steps={primeEquation(9 / 8)} />
+<br />
+<KatexSteps steps={primeEquation(27 / 16)} />
+<br />
+
+The resulting vectors can then be used to draw the ratio to the correct coordinates.
+
+The same calculation can be used with more dimensions by just adding the more prime factors.
+
+## Other Systems
+
+### 1 3 5 7 Hexany
+
+<Lattice ratios={[3, 5, 7, 3 * 5, 3 * 7, 5 * 7, 3 * 5]} width={300} flipY={true} />
+
+<AnimatedLattice
+  ratios={[3 * 1, 5 * 1, 7 * 1, 3 * 5, 3 * 7, 5 * 7]}
+  offset={[-0.5, -0.5, -0.5]}
+  maxDistance={21}
+  flipY={true}
+  rotator={(angle) => [-12, -angle, 0]}
+/>
+
+In fact, in my post about [5 Limit Just Intonation](./5limit-just-intonation#tuning-circle), the table is structured like a lattice.
+
+## Your Brain is a Pattern Recognition Device
+
+When sensing the world, our brain constantly tries to recognize patterns to simplify the perceptual chaos.
+If a stimulus is easier to comprehend than another, we could argue that it is more pleasing to our brain.
+
+In the context of music, we can say that an interval that is less chaotic will be more consonant, for example:
+
+<Plot
+  functions={[(x) => Math.sin(3 * x), (x) => Math.sin(2 * x)]}
+  range={{ x: [0, 5 * Math.PI], y: [-1, 1] }}
+  width={800}
+  height={200}
+/>
+
+The above plot shows two sine waves with a 3/2 ratio.
+As given by the ratio, 2 cycles of the green curve have the same length as 3 cycles of the orange curve.
+
+The ratio can also be represented as a 2 against 3 rhythm:
+
+<Player
+  instruments={{ drums }}
+  center={0}
+  events={renderRhythmObject(
+    {
+      duration: 2 / 2,
+      parallel: [
+        { sequential: ['hh', 'hh', 'hh'], color: defaultPlotColors[0] },
+        { sequential: ['bd', 'bd'], color: defaultPlotColors[1] },
+      ],
+    },
+    [inheritProperty('instrument'), inheritProperty('color')]
+  )}
+/>
+
+You will most likely hear the combination of both patterns as another pattern that is 2 beats long.
+
+Let's try the next ratio from the harmonic series, which is 4/3:
+
+<Plot
+  functions={[(x) => Math.sin(4 * x), (x) => Math.sin(3 * x)]}
+  range={{ x: [0, 5 * Math.PI], y: [-1, 1] }}
+  width={800}
+  height={200}
+/>
+
+Obviously, this is like a 3 against 4 rhythm:
+
+<Player
+  instruments={{ drums }}
+  center={0}
+  events={renderRhythmObject(
+    {
+      duration: 3 / 2,
+      parallel: [
+        { sequential: ['hh', 'hh', 'hh', 'hh'], color: defaultPlotColors[0] },
+        { sequential: ['bd', 'bd', 'bd'], color: defaultPlotColors[1] },
+      ],
+    },
+    [inheritProperty('instrument'), inheritProperty('color')]
+  )}
+/>
+
+Now, the patterns repeats after 3 beats, because the hi hat is not "finished" after 2 beats.
+
+As a third example, let's use a ratio that does not consist of neighboring numbers, like 5/3:
+
+<Plot
+  functions={[(x) => Math.sin(5 * x), (x) => Math.sin(3 * x)]}
+  range={{ x: [0, 5 * Math.PI], y: [-1, 1] }}
+  width={800}
+  height={200}
+/>
+
+<Player
+  instruments={{ drums }}
+  center={0}
+  events={renderRhythmObject(
+    {
+      duration: 4 / 2,
+      parallel: [
+        { sequential: ['hh', 'hh', 'hh', 'hh', 'hh'], color: defaultPlotColors[0] },
+        { sequential: ['bd', 'bd', 'bd'], color: defaultPlotColors[1] },
+      ],
+    },
+    [inheritProperty('instrument'), inheritProperty('color')]
+  )}
+/>
+
+Like the last example, this one repeats after 3 beats.
+
+## A Unit for Consonance
+
+As stated earlier:
+
+> "In the context of music, we can say that an interval that is less chaotic will be more consonant"
+
+If we take the above examples, I would rank them like this:
+
+1. 3/2 - least complex
+2. 4/3
+3. 5/3 - most complex
+
+So, let me shamelessly define the complexity c for a ratio a/b as:
+
+$$
+c = a * b
+$$
+
+... which only works for fractions in their most reduced form.
+
+## x
+
+In all of those systems, the amount of intervals one can create is still endless.
+It would be neat to have a way of comparing the consonance of two ratios, to be able to limit the number of choices.

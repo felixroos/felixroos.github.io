@@ -1,0 +1,109 @@
+---
+title: Rhythmical Grooves
+date: '2020-07-10'
+tags: ['draft']
+---
+
+import Player, { synth } from '../components/rhythmical/components/Player.tsx';
+import { renderRhythmObject } from '../components/rhythmical/rhythmical.ts';
+import { inheritProperty } from '../components/rhythmical/features/inherit.ts';
+import { Scale } from '@tonaljs/tonal';
+import { State } from 'react-powerplug';
+import NoteSelect from '../components/music/NoteSelect.tsx';
+import Grid from '@material-ui/core/Grid';
+import { piano } from '../instruments/piano.ts';
+import drums from '../instruments/tidal';
+
+Let's try to find a way to define grooves that can be used for all kinds of musical material.
+
+## Dynamic Events
+
+There is one important playback feature that I have not implemented yet: changing events while playback:
+
+```ts
+useEffect(() => {
+  if (!part) {
+    return;
+  }
+  part.removeAll();
+  events.forEach((e) => part.add(e.time, e));
+}, [events]);
+```
+
+The above react hook will replace the current events of a part when the events change. This enables us to edit a loop while it plays:
+
+<State initial={{ scale: 'major', root: 'F' }}>
+  {({ state, setState }) => (
+    <>
+      <NoteSelect
+        value={state.root}
+        onChange={(v) => setState({ root: v })}
+        notes={['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']}
+      />
+      <select value={state.scale} onChange={(e) => setState({ scale: e.target.value })}>
+        {Scale.names()
+          .filter((_scale) => Scale.get(`C ${_scale}`).notes.length === 7)
+          .map((_scale, index) => (
+            <option key={index}>{_scale}</option>
+          ))}
+      </select>
+      <Player
+        instruments={{ piano, drums }}
+        fold={false}
+        events={renderRhythmObject(
+          {
+            duration: 4,
+            parallel: [
+              {
+                octave: 4,
+                sequential: [
+                  3,
+                  [
+                    [5, 6],
+                    [4, 5],
+                  ],
+                ],
+              },
+              {
+                octave: 3,
+                sequential: [
+                  { parallel: [3, 5] },
+                  {
+                    parallel: [
+                      [5, 4],
+                      [7, 6],
+                    ],
+                  },
+                ],
+              },
+              { octave: 2, sequential: [1, 2, 3, 5] },
+              {
+                instrument: 'drums',
+                parallel: [
+                  ['bd', 'sn', 'bd', 'sn'],
+                  ['hh', 'hh', 'hh', 'hh', 'hh', 'hh', 'hh', 'hh'],
+                ],
+              },
+            ],
+          },
+          [inheritProperty('instrument'), inheritProperty('octave')]
+        ).map((e) => ({
+          ...e,
+          value:
+            typeof e.value === 'number'
+              ? Scale.get(`${state.root}${e.octave || 3} ${state.scale}`).notes[e.value - 1]
+              : e.value,
+        }))}
+      />
+      {/* <Grid container>
+        {Note.names().map((note) => (
+          <Grid key={note} item style={{ width: '12.5%' }}>
+            {note}
+          </Grid>
+        ))}
+      </Grid> */}
+    </>
+  )}
+</State>
+
+If you change the key or scale from the dropdown above, the playback will directly adapt almost instantly. Sometimes, events may be dropped. I suppose this happens when all events have been removed, but the new ones haven't been added yet.

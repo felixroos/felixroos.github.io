@@ -1,0 +1,150 @@
+---
+title: Math Corner
+date: '2021-08-21'
+tags: ['draft']
+---
+
+import { pipe } from 'ramda';
+import { project3d, rotate3d } from '../components/3d/SVG.tsx';
+
+<AnimationFrame autostart={true}>
+  {({ toggle, time, isRunning, start }) => {
+    const angle = time.fromStart / 50;
+    return (
+      <SVG viewBox="-200 -200 400 400" width="300">
+        {cubeLines
+          .map((endPoints) => endPoints.map(pipe(rotate3d([angle, angle, 0]), project3d)))
+          .map(([[x1, y1], [x2, y2]], i) => (
+            <line key={i} {...{ x1, y1, x2, y2 }} stroke="steelblue" strokeWidth="4" />
+          ))}
+      </SVG>
+    );
+  }}
+</AnimationFrame>
+
+<State initial={{ rotateX: 45, rotateY: 45, rotateZ: 0 }}>
+  {({ state, setState }) => (
+    <>
+      <SVG viewBox="-200 -200 400 400" width="300">
+        {cubeLines
+          .map((endPoints) => endPoints.map(pipe(rotate3d([state.rotateX, state.rotateY, state.rotateZ]), project3d)))
+          .map(([[x1, y1], [x2, y2]], i) => (
+            <line key={i} {...{ x1, y1, x2, y2 }} stroke="black" />
+          ))}
+      </SVG>
+      <Slider min={0} max={360} step={5} value={state.rotateX} onChange={(e, v) => setState({ rotateX: v })} />
+      <Slider min={0} max={360} step={5} value={state.rotateY} onChange={(e, v) => setState({ rotateY: v })} />
+      <Slider min={0} max={360} step={5} value={state.rotateZ} onChange={(e, v) => setState({ rotateZ: v })} />
+    </>
+  )}
+</State>
+
+### Prime Factorization
+
+First, we need a function that factorizes a number into its prime components:
+
+$$
+primefactors(9) = 3*3 = [3,3]
+$$
+
+in JS:
+
+```ts
+export function primefactors(n) {
+  const factors = [];
+  let divisor = 2;
+  while (n >= 2) {
+    if (n % divisor == 0) {
+      factors.push(divisor);
+      n = n / divisor;
+    } else {
+      divisor++;
+    }
+  }
+  return factors;
+}
+
+primefactors(9); // [3, 3]
+```
+
+### Prime Powers
+
+To get the prime exponents, we need to count the prime factors:
+
+$$
+primepowers(18) = 2 * 3 * 3 = 2^{1} * 3^{2}
+$$
+
+```js
+export function primepowers(n) {
+  const factors = primefactors(n);
+  const powers = [];
+  let latest;
+  for (let factor of factors) {
+    if (!latest || latest !== factor) {
+      powers.push([factor, 1]);
+    } else {
+      powers[powers.length - 1][1] += 1;
+    }
+    latest = factor;
+  }
+  return powers;
+}
+primepowers(18); // [[2,1], [3,2]]
+```
+
+### Prime Vector
+
+To get the actual prime vector, we need a uniformed vector, where each position stands for a definite prime factor:
+
+$$
+primevector(126) = 2 * 3 * 3 * 7 = 2^1 * 3^2 * 5^0 * 7^1 = \begin{pmatrix} 1 \\ 2 \\ 0 \\ 1 \end{pmatrix}
+$$
+
+```js
+export function primelimit(n) {
+  return max(primefactors(n));
+}
+
+export function primevector(n) {
+  const limit = primelimit(n);
+  const dimensions = primes(2, limit);
+  const powers = primepowers(n);
+  return dimensions.map((d) => powers.find(([f]) => f === d)?.[1] || 0);
+}
+
+primelimit(66); // 11
+primelimit(15); // 5
+primelimit(12); // 3
+primelimit(16); // 2
+
+primevector(126); // [1, 2, 0, 1]
+primevector(15); // [0, 1, 1]
+```
+
+### Prime Vectors of Fractions
+
+When dealing with fractions, we need to consider the prime powers of the numerator + the negative prime powers of the denominator:
+
+```js
+export function fractionPrimeVector(n, d) {
+  return addVectors(
+    primevector(n),
+    primevector(d).map((v) => -v)
+  );
+}
+export function addVectors(a, b) {
+  if (a.length < b.length) {
+    [a, b] = [b, a];
+  }
+  return a.map((va, i) => va + (b[i] || 0));
+}
+
+fractionPrimeVector(3, 2); // [-1, 1]
+fractionPrimeVector(16, 9); // [4, -2]
+fractionPrimeVector(126, 49); // [1, 2, 0, -1]
+
+addVectors([3, 4], [-1, 5]); // [2, 9]
+addVectors([3, 4, 1], [-1, 5]); // [2, 9, 1]
+addVectors([-1, 5], [3, 4, 1]); // [2, 9, 1]
+```
