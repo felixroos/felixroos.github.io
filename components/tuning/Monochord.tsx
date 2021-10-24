@@ -112,8 +112,8 @@ export default function Monochord({
             strokeWidth={1}
             onClick={() => play()}
             onHover={() => play()}
-            top={(invert ? lb : lt) || 1}
-            bottom={(invert ? lt : lb) || 1}
+            top={(invert ? +lb : +lt) || 1}
+            bottom={(invert ? +lt : +lb) || 1}
             invert={!invert}
             base={base}
           />
@@ -137,8 +137,8 @@ export default function Monochord({
           cy={radius - 1}
           radius={radius}
           strokeWidth={1}
-          top={(invert ? rb : rt) || 1}
-          bottom={(invert ? rt : rb) || 1}
+          top={(invert ? +rb : +rt) || 1}
+          bottom={(invert ? +rt : +rb) || 1}
           invert={!invert}
           base={base}
         />

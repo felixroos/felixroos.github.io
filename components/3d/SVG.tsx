@@ -1,3 +1,4 @@
+import React from 'react';
 import * as math from 'mathjs';
 import { curry } from 'ramda';
 
@@ -100,15 +101,15 @@ export const rotate3d = curry((rotate, point) => {
     .done();
 });
 
-export const offset3d = curry((offset: number[], point: number[]) => point.map((v, i) => v + offset[i]));
-export const scale3d = curry((scale: number, point: number[]) => point.map((v) => v * scale));
+export const offset3d = curry((offset: number[], point: number[]): number[] => point.map((v, i) => v + offset[i]));
+export const scale3d = curry((scale: number, point: number[]): number[] => point.map((v) => v * scale));
 
-export const project3d = (point) => {
+export const project3d = (point: number[]): number[][] => {
   const projection = [
     [1, 0, 0],
     [0, 1, 0],
   ];
-  return math.multiply(
+  return math.multiply<number[][]>(
     projection,
     point.map((v) => Math.round(v * 1000) / 1000)
   );

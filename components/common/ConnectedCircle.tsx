@@ -63,7 +63,7 @@ export default function ConnectedCircle({
   const radius = r || 100;
   const maxDistance = max(nodes.map((n) => n.distance).concat([radius]));
   const maxRadius = max(nodes.map((n) => n.radius).concat([nodeRadius]));
-  margin = margin || 0;
+  margin = margin || 10;
   size = size || maxDistance * 2 + maxRadius * 2 + margin * 2;
   function nodePosition(id: NodeIdentifier, r?: number, offset = 0): [number, number] {
     const node = nodes.find(({ id: _id }) => _id === id);
@@ -88,11 +88,11 @@ export default function ConnectedCircle({
   return (
     <svg width={size} height={size}>
       <circle
-        cx={maxDistance + nodeRadius}
-        cy={maxDistance + nodeRadius}
+        cx={maxDistance + nodeRadius + margin}
+        cy={maxDistance + nodeRadius + margin}
         r={radius}
-        stroke="gray"
-        strokeWidth={3}
+        stroke="black"
+        strokeWidth={2}
         fill="none"
       />
       {links &&
@@ -103,7 +103,7 @@ export default function ConnectedCircle({
               onClick={() => onClick && onClick({ link })}
               {...hover({ link })}
               key={i}
-              stroke={stroke || 'gray'}
+              stroke={stroke || 'black'}
               strokeWidth={strokeWidth || 4}
               fill="none"
               d={line()(nodePoints([source, target]))}
@@ -119,7 +119,7 @@ export default function ConnectedCircle({
               onClick={() => onClick && onClick({ set: _set })}
               {...hover({ set: _set })}
               key={i}
-              stroke={stroke || 'gray'}
+              stroke={stroke || 'black'}
               strokeWidth={4}
               fill="none"
               d={line()(nodePoints(set, undefined, offset))}
@@ -140,7 +140,7 @@ export default function ConnectedCircle({
           <React.Fragment key={i}>
             <path
               strokeWidth={2}
-              stroke={'gray'}
+              stroke={'black'}
               d={line()([
                 [tx, ty],
                 [x, y],
@@ -151,6 +151,8 @@ export default function ConnectedCircle({
               cx={x}
               cy={y}
               fill={fill}
+              stroke="black"
+              strokeWidth={2}
               style={style || {}}
               onClick={() => onClick && onClick({ node })}
               {...hover({ node })}

@@ -1,6 +1,20 @@
 import Fraction from 'fraction.js';
 import { primes } from '../common/prime';
-import { clamp, equivalence, generate, maxFractionSize, multisets, nearestPitch, powers, stack, lattice, productSet } from './tuning';
+import {
+  clamp,
+  equivalence,
+  generate,
+  maxFractionSize,
+  multisets,
+  nearestPitch,
+  powers,
+  stack,
+  lattice,
+  productSet,
+  tenneyHeight,
+  ratioInterval,
+  ratioSemitones,
+} from './tuning';
 
 test('generate', () => {
   expect(generate(3, 7, 12, 2)).toEqual([
@@ -16,17 +30,20 @@ test('generate', () => {
     { position: 9, ratio: 27 / 16, power: 3 },
     { position: 10, ratio: 16 / 9, power: -2 },
     { position: 11, ratio: 243 / 128, power: 5 },
-  ])
-})
+  ]);
+});
 
 test('limit', () => {
-  expect(powers([[3, -1, 3]])).toEqual([
-    [1 / 3, 1, 3, 9, 27]
-  ])
-  expect(powers([[3, 0, 2], [5, 0, 1]])).toEqual([
+  expect(powers([[3, -1, 3]])).toEqual([[1 / 3, 1, 3, 9, 27]]);
+  expect(
+    powers([
+      [3, 0, 2],
+      [5, 0, 1],
+    ])
+  ).toEqual([
     [1, 3, 9],
-    [1, 5]
-  ])
+    [1, 5],
+  ]);
   // currently does not seem to work with jest config
   /* expect(Combinatorics.cartesianProduct(
     [1, 3, 9],
@@ -37,25 +54,25 @@ test('limit', () => {
   /* expect(limitN([[3, 0, 2], [5, 0, 1]])).toEqual([
     1, 3, 9, 5, 15, 45
   ]) */
-  expect(equivalence(3, 2)).toEqual(3 / 2)
-  expect(equivalence(1 / 3, 2)).toEqual(4 / 3)
+  expect(equivalence(3, 2)).toEqual(3 / 2);
+  expect(equivalence(1 / 3, 2)).toEqual(4 / 3);
   /* expect(limitN([[3, 0, 2], [5, 0, 1]])).toEqual([
     1, 3, 9, 5, 15, 45
   ])
   expect(limitN([[3, 0, 2], [5, 0, 1]], 2)).toEqual([
     1, 3 / 2, 9 / 8, 5 / 4, 15 / 8, 45 / 32
   ]) */
-})
+});
 test('equivalence', () => {
-  expect(equivalence(1 / 3, 2)).toEqual(4 / 3)
-})
+  expect(equivalence(1 / 3, 2)).toEqual(4 / 3);
+});
 
 test('fraction', () => {
-  expect(stack(1)).toEqual([440])
-  expect(stack(2)).toEqual([440, 660])
-  expect(stack(3)).toEqual([440, 660, 990])
-  expect(stack(4)).toEqual([440, 660, 990, 1485])
-  expect(stack(5)).toEqual([440, 660, 990, 1485, 2227.5])
+  expect(stack(1)).toEqual([440]);
+  expect(stack(2)).toEqual([440, 660]);
+  expect(stack(3)).toEqual([440, 660, 990]);
+  expect(stack(4)).toEqual([440, 660, 990, 1485]);
+  expect(stack(5)).toEqual([440, 660, 990, 1485, 2227.5]);
 });
 test('clamp', () => {
   expect(clamp(1, 1)).toEqual(1);
@@ -68,12 +85,12 @@ test('clamp', () => {
   expect(clamp(1485)).toEqual(742.5);
   expect(clamp(2227.5)).toEqual(556.875);
   expect(clamp(4 / 3, 1)).toEqual(4 / 3);
-})
+});
 test('nearestPitch', () => {
-  expect(nearestPitch(440)).toBe("A4");
-  expect(nearestPitch(450)).toBe("A4");
-  expect(nearestPitch(460)).toBe("Bb4");
-})
+  expect(nearestPitch(440)).toBe('A4');
+  expect(nearestPitch(450)).toBe('A4');
+  expect(nearestPitch(460)).toBe('Bb4');
+});
 test('maxFractionSize', () => {
   expect(maxFractionSize([4 / 3, 1, 2])).toEqual([4, 3]);
   expect(maxFractionSize([4 / 3, 5 / 9])).toEqual([5, 9]);
@@ -82,28 +99,17 @@ test('maxFractionSize', () => {
 
 test('multisets', () => {
   expect(primes(3, 5)).toEqual([3, 5]);
-  expect(multisets(primes(3, 5), 15)).toEqual([
-    [3],
-    [3, 3],
-    [3, 5],
-    [5]
-  ]);
+  expect(multisets(primes(3, 5), 15)).toEqual([[3], [3, 3], [3, 5], [5]]);
   expect(primes(3, 7)).toEqual([3, 5, 7]);
-  expect(multisets(primes(3, 7), 35)).toEqual([
-    [3],
-    [3, 3],
-    [3, 3, 3],
-    [3, 5],
-    [3, 7],
-    [5],
-    [5, 5],
-    [5, 7],
-    [7]
-  ]);
+  expect(multisets(primes(3, 7), 35)).toEqual([[3], [3, 3], [3, 3, 3], [3, 5], [3, 7], [5], [5, 5], [5, 7], [7]]);
 });
 
 test('lattice', () => {
-  expect(lattice(5, 15).map((v: number) => new Fraction(v)).map(({ n, d }) => [n, d])).toEqual([
+  expect(
+    lattice(5, 15)
+      .map((v: number) => new Fraction(v))
+      .map(({ n, d }) => [n, d])
+  ).toEqual([
     [3, 1],
     [9, 1],
     [15, 1],
@@ -114,9 +120,13 @@ test('lattice', () => {
     [1, 3],
     [1, 9],
     [1, 15],
-    [1, 5]
+    [1, 5],
   ]);
-  expect(lattice(5, 15, true).map((v: number) => new Fraction(v)).map(({ n, d }) => [n, d])).toEqual([
+  expect(
+    lattice(5, 15, true)
+      .map((v: number) => new Fraction(v))
+      .map(({ n, d }) => [n, d])
+  ).toEqual([
     [3, 2],
     [9, 8],
     [15, 8],
@@ -127,18 +137,34 @@ test('lattice', () => {
     [4, 3],
     [16, 9],
     [16, 15],
-    [8, 5]
+    [8, 5],
   ]);
-})
+});
 
 test('productSet', () => {
-  expect(productSet(primes(3, 5), 15)).toEqual([
-    1, 3, 9, 15, 5
-  ]);
-  expect(productSet(primes(3, 7), 35)).toEqual([
-    1, 3, 9, 27, 15, 21, 5, 25, 35, 7
-  ]);
-  expect(productSet([...primes(3, 5), ...primes(3, 5).map(p => 1 / p)], 15)).toEqual([
-    1, 3, 9, 15, 5
-  ]);
-})
+  expect(productSet(primes(3, 5), 15)).toEqual([1, 3, 9, 15, 5]);
+  expect(productSet(primes(3, 7), 35)).toEqual([1, 3, 9, 27, 15, 21, 5, 25, 35, 7]);
+});
+
+test('tenneyHeight', () => {
+  // https://en.xen.wiki/w/Tenney_height
+  const r = (n) => Math.round(n * 100) / 100;
+  expect(tenneyHeight(1, 1)).toBe(0);
+  expect(tenneyHeight(2, 1)).toBe(1);
+  expect(r(tenneyHeight(3, 2))).toBe(2.58);
+  expect(r(tenneyHeight(5, 4))).toBe(4.32);
+  expect(r(tenneyHeight(7, 4))).toBe(4.81);
+});
+
+test('ratioSemitones', () => {
+  expect(ratioSemitones(3 / 2)).toEqual(7);
+});
+
+test('ratioInterval', () => {
+  expect(ratioInterval(3 / 2)).toEqual('5P');
+  expect(ratioInterval(4 / 3)).toEqual('4P');
+  expect(ratioInterval(5 / 4)).toEqual('3M');
+  expect(ratioInterval(7 / 4)).toEqual('7m');
+  expect(ratioInterval(11 / 8)).toEqual('4A');
+  expect(ratioInterval(13 / 8)).toEqual('6m');
+});

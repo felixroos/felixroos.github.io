@@ -1,0 +1,118 @@
+---
+title: Your Brain is a Pattern Recognition Device
+date: '2021-08-18'
+tags: ['tuning', 'draft']
+---
+
+When sensing the world, our brain constantly tries to recognize patterns to simplify the perceptual chaos.
+If a stimulus is easier to comprehend than another, we could argue that it is more pleasing to our brain.
+
+In the context of music, we can say that an interval that is less chaotic will be more consonant, for example:
+
+<Plot
+  functions={[(x) => Math.sin(3 * x), (x) => Math.sin(2 * x)]}
+  range={{ x: [0, 5 * Math.PI], y: [-1, 1] }}
+  width={800}
+  height={200}
+/>
+
+The above plot shows two sine waves with a 3/2 ratio.
+As given by the ratio, 2 cycles of the green curve have the same length as 3 cycles of the orange curve.
+
+The ratio can also be represented as a 2 against 3 rhythm:
+
+<Player
+  instruments={{ drums }}
+  center={0}
+  events={renderRhythmObject(
+    {
+      duration: 2 / 2,
+      parallel: [
+        { sequential: ['hh', 'hh', 'hh'], color: defaultPlotColors[0] },
+        { sequential: ['bd', 'bd'], color: defaultPlotColors[1] },
+      ],
+    },
+    [inheritProperty('instrument'), inheritProperty('color')]
+  )}
+/>
+
+You will most likely hear the combination of both patterns as another pattern that is 2 beats long.
+
+Let's try the next ratio from the harmonic series, which is 4/3:
+
+<Plot
+  functions={[(x) => Math.sin(4 * x), (x) => Math.sin(3 * x)]}
+  range={{ x: [0, 5 * Math.PI], y: [-1, 1] }}
+  width={800}
+  height={200}
+/>
+
+Obviously, this is like a 3 against 4 rhythm:
+
+<Player
+  instruments={{ drums }}
+  center={0}
+  events={renderRhythmObject(
+    {
+      duration: 3 / 2,
+      parallel: [
+        { sequential: ['hh', 'hh', 'hh', 'hh'], color: defaultPlotColors[0] },
+        { sequential: ['bd', 'bd', 'bd'], color: defaultPlotColors[1] },
+      ],
+    },
+    [inheritProperty('instrument'), inheritProperty('color')]
+  )}
+/>
+
+Now, the patterns repeats after 3 beats, because the hi hat is not "finished" after 2 beats.
+
+As a third example, let's use a ratio that does not consist of neighboring numbers, like 5/3:
+
+<Plot
+  functions={[(x) => Math.sin(5 * x), (x) => Math.sin(3 * x)]}
+  range={{ x: [0, 5 * Math.PI], y: [-1, 1] }}
+  width={800}
+  height={200}
+/>
+
+<Player
+  instruments={{ drums }}
+  center={0}
+  events={renderRhythmObject(
+    {
+      duration: 4 / 2,
+      parallel: [
+        { sequential: ['hh', 'hh', 'hh', 'hh', 'hh'], color: defaultPlotColors[0] },
+        { sequential: ['bd', 'bd', 'bd'], color: defaultPlotColors[1] },
+      ],
+    },
+    [inheritProperty('instrument'), inheritProperty('color')]
+  )}
+/>
+
+Like the last example, this one repeats after 3 beats.
+
+## A Unit for Consonance
+
+As stated earlier:
+
+> "In the context of music, we can say that an interval that is less chaotic will be more consonant"
+
+If we take the above examples, I would rank them like this:
+
+1. 3/2 - least complex
+2. 4/3
+3. 5/3 - most complex
+
+So, let me shamelessly define the complexity c for a ratio a/b as:
+
+$$
+c = a * b
+$$
+
+... which only works for fractions in their most reduced form.
+
+## x
+
+In all of those systems, the amount of intervals one can create is still endless.
+It would be neat to have a way of comparing the consonance of two ratios, to be able to limit the number of choices.

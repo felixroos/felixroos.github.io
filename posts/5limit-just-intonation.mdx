@@ -62,9 +62,9 @@ Note that the ratios are frequency ratios instead of length ratios.
 
 Like in the last post, we are multiplying powers of harmonic partials, in this case 5 and 2, which is the same powering thirds:
 
-$$
+$$$
 5^{n} * 2^{-2n} = (\frac{5}{4})^{n}
-$$
+$$$
 
 I prefer the combination of powers of natural numbers, as this expresses more clearly what we are doing here: combining harmonic partials.
 
@@ -73,9 +73,9 @@ I prefer the combination of powers of natural numbers, as this expresses more cl
 We can clearly see and hear a pattern: There are 3 distinct pitches, which repeat in a detuned way.
 On strings 4 and 7, we arrive at a pitches that are really close to octaves of the fundamental frequency.
 
-$$
+$$$
 \frac{1}{1} \approx \frac{125}{64} * 2^{-1} \approx \frac{15625}{4096} * 2^{-2}
-$$
+$$$
 
 This makes sense if we compare that to standard western tuning, where 3 major thirds fit inside one octave.
 
@@ -83,9 +83,9 @@ This makes sense if we compare that to standard western tuning, where 3 major th
 
 This little "error" between 3 stacked thirds and 1 octave is called [Diesis](https://en.wikipedia.org/wiki/Diesis):
 
-$$
+$$$
 \frac{125}{64} : 2 = \frac{125}{128}
-$$
+$$$
 
 This is similar to the pythagorean comma, which is the little "error" between 12 stacked fifths and 7 octaves (see last post).
 
@@ -94,9 +94,9 @@ This is similar to the pythagorean comma, which is the little "error" between 12
 Now that we have a little knowledge of thirds, we can look at 5 limit tuning, which combines pure fifths and thirds (powers of 3 and powers of 5) to generate ratios.
 This means that for each number of fifths, we can add any number of thirds. As a formula, this means:
 
-$$
+$$$
 R_{5} = 2^{a} * 3^{b} * 5^{c}
-$$
+$$$
 
 Like in the last post, we will use octave reduction to automatically set the exponent of 2 to keep the end result between 1 and 2.
 Having that out of the way, we have free control over the two exponents b and c.
