@@ -1,9 +1,10 @@
 // TODO:
 // add zoom https://observablehq.com/@d3/zoomable-scatterplot
 import React from 'react';
-import { scalePoint, scaleLinear } from 'd3-scale';
+import { scaleLinear, scaleLog } from 'd3-scale';
 import { axisBottom, axisLeft } from 'd3-axis';
 import { select } from 'd3-selection';
+import { cs } from 'date-fns/locale';
 
 export function PlotPath({ f }) {}
 
@@ -19,6 +20,8 @@ export function Plot({
   height,
   range,
   colors,
+  logX,
+  logY,
   grid,
   onHover,
   onMouseEnter,
@@ -40,12 +43,11 @@ export function Plot({
   functions = functions || [];
   range = range || { x: [-4, 4], y: [-4, 4] };
 
-  const x = scaleLinear()
-      .domain(range.x)
-      .range([margin.left, width - margin.right]),
-    y = scaleLinear()
-      .domain(range.y)
-      .range([height - margin.top, margin.bottom]);
+  const xScale = logX ? scaleLog().base(logX || 10) : scaleLinear();
+  const yScale = logY ? scaleLog().base(logY || 10) : scaleLinear();
+
+  const x = xScale.domain(range.x).range([margin.left, width - margin.right]),
+    y = yScale.domain(range.y).range([height - margin.top, margin.bottom]);
 
   const plots = functions.map((f) => {
     const lines: Path2[] = [[]];

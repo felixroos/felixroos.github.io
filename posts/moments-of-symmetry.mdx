@@ -1,0 +1,111 @@
+---
+title: Moments of Symmetry
+date: '2021-12-10'
+tags: ['music theory', 'tuning']
+description: MOS basics
+---
+
+import SpiralMOS from '../components/tuning/SpiralMOS';
+import { State } from 'react-powerplug';
+import Slider from '@material-ui/core/Slider';
+import AnimationFrame from '../components/common/AnimationFrame.tsx';
+import IntervalMatrix from '../components/tuning/IntervalMatrix.tsx';
+import { mos } from '../components/tuning/tuning.ts';
+
+## Generators
+
+```ts
+expect(generate(3, 7, 12, 2)).toEqual([
+  { position: 0, ratio: 1, power: 0 },
+  { position: 1, ratio: 256 / 243, power: -5 },
+  { position: 2, ratio: 9 / 8, power: 2 },
+  { position: 3, ratio: 32 / 27, power: -3 },
+  { position: 4, ratio: 81 / 64, power: 4 },
+  { position: 5, ratio: 4 / 3, power: -1 },
+  { position: 6, ratio: 729 / 512, power: 6 },
+  { position: 7, ratio: 3 / 2, power: 1 },
+  { position: 8, ratio: 128 / 81, power: -4 },
+  { position: 9, ratio: 27 / 16, power: 3 },
+  { position: 10, ratio: 16 / 9, power: -2 },
+  { position: 11, ratio: 243 / 128, power: 5 },
+]);
+```
+
+### 4/3 logarithmic
+
+This graphic is similar to the way Erv Wilson did it:
+
+<SpiralMOS generator={4 / 3} steps={12} logarithmic={true} zoom={0.12} labelEnds={true} min={0} />{' '}
+
+### 4/3 non-logarithmic
+
+When using a non logarithmic spiral, the graphic is easier to decipher.
+
+<SpiralMOS generator={4 / 3} steps={12} logarithmic={false} zoom={0.11} />{' '}
+
+<SpiralMOS generator={4 / 3} steps={12} logarithmic={false} zoom={0.11} labelEnds={true} min={0} />{' '}
+
+### dynamic
+
+<State
+  initial={{
+    generator: 3 / 2,
+    steps: 7,
+    zoom: 0.09,
+  }}
+>
+  {({ state, setState }) => (
+    <>
+      <SpiralMOS
+        generator={state.generator}
+        steps={state.steps}
+        logarithmic={false}
+        zoom={state.zoom}
+        labelEnds={true}
+        showMatrix={true}
+        showSettings={true}
+        min={1}
+      />
+    </>
+  )}
+</State>
+
+export function clampedSin(x, min, max, phase = 0) {
+  return ((Math.sin(x + phase) + 1) / 2) * (max - min) + min;
+}
+
+### Animated Generator
+
+<AnimationFrame autostart={true}>
+  {({ toggle, time, isRunning, start }) => (
+    <>
+      <SpiralMOS
+        generator={clampedSin(time.fromStart / 5000, 4 / 3, 3 / 2)}
+        steps={12}
+        logarithmic={false}
+        zoom={0.09}
+      />
+      <br />
+    </>
+  )}
+</AnimationFrame>
+
+### Animated Steps
+
+<AnimationFrame autostart={true}>
+  {({ toggle, time, isRunning, start }) => (
+    <>
+      <SpiralMOS
+        generator={4 / 3}
+        steps={Math.round(clampedSin(time.fromStart / 5000, 1, 12, -Math.PI / 2))}
+        logarithmic={false}
+        zoom={0.09}
+      />
+      <br />
+    </>
+  )}
+</AnimationFrame>
+
+### 12edo spiral
+
+<SpiralMOS generator={Math.pow(2, 5 / 12)} steps={13} />

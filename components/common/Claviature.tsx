@@ -139,7 +139,7 @@ export default function Claviature({ options, onClick }: any) {
       {svg.children.map((el, i) => {
         const TagName = el.name;
         return (
-          <TagName key={i} {...el.attributes}>
+          <TagName key={`${el.name}-${i}`} {...el.attributes}>
             {el.value}
           </TagName>
         );

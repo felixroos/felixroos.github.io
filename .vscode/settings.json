@@ -3,8 +3,7 @@
   "files.associations": {
     "*.tidal": "haskell",
     "*.html": "html",
-    "*.njk": "nunjucks",
-    "stdexcept": "cpp"
+    "*.njk": "nunjucks"
   },
   "mdx-preview.preview.useVscodeMarkdownStyles": true,
 }

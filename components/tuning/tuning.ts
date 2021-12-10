@@ -4,6 +4,7 @@ import { interpolateRainbow } from 'd3-scale-chromatic';
 import Fraction from 'fraction.js';
 import { Permutation } from '../combinatorial-search/Permutation';
 import { primefactors, primes } from '../common/prime';
+
 // import * as Combinatorics from 'js-combinatorics';
 
 // takes a generator and position + number of pitches inside an equivalence
@@ -25,6 +26,10 @@ export function generate(generator, pos, n, equivalence = 2) {
     });
   }
   return ratios.sort((a, b) => a.ratio - b.ratio).map((r, i) => ({ ...r, position: i }));
+}
+
+export function mos(generator, steps) {
+  return Array.from({ length: steps }, (_, i) => Math.pow(generator, i));
 }
 
 export function partials([min, max], base = 440) {
