@@ -86,7 +86,7 @@ export default function ConnectedCircle({
   });
 
   return (
-    <svg width={size} height={size}>
+    <svg width={size} height={size} className="inline-block">
       <circle
         cx={maxDistance + nodeRadius + margin}
         cy={maxDistance + nodeRadius + margin}
