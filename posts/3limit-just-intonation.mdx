@@ -27,23 +27,23 @@ This post focuses on the most simple interval: fifths.
 
 In the last post, we were stacking octave reduced fifths on top of each other:
 
-<div>
+<div className="flex mb-2">
   <Monochord value={1} invert={true} base={220} />
   <InlineMath>{`\\frac{3}{2}^{0}*2^0`}</InlineMath>
 </div>
-<div>
+<div className="flex mb-2">
   <Monochord value={8 / 9} invert={true} base={220} />
   <InlineMath>{`\\frac{3}{2}^{2}*2^{-1}`}</InlineMath>
 </div>
-<div>
+<div className="flex mb-2">
   <Monochord value={64 / 81} invert={true} base={220} />
   <InlineMath>{`\\frac{3}{2}^{4}*2^{-2}`}</InlineMath>
 </div>
-<div>
+<div className="flex mb-2">
   <Monochord value={2 / 3} invert={true} base={220} />
   <InlineMath>{`\\frac{3}{2}^{1}*2^0`}</InlineMath>
 </div>
-<div>
+<div className="flex mb-2">
   <Monochord value={16 / 27} invert={true} base={220} />
   <InlineMath>{`\\frac{3}{2}^{3} * 2^{-1}`}</InlineMath>
 </div>
@@ -65,23 +65,23 @@ $$\frac{3}{2}^{a} * 2^{b} = 3^{a} * 2^{b-a}$$
 
 To reflect that in our example, we can apply the right side of the equation above:
 
-<div>
+<div className="flex mb-2">
   <Monochord value={1} invert={true} base={220} />
   <InlineMath>{`3^0*2^{0}`}</InlineMath>
 </div>
-<div>
+<div className="flex mb-2">
   <Monochord value={8 / 9} invert={true} base={220} />
   <InlineMath>{`3^2*2^{-3}`}</InlineMath>
 </div>
-<div>
+<div className="flex mb-2">
   <Monochord value={64 / 81} invert={true} base={220} />
   <InlineMath>{`3^4*2^{-6}`}</InlineMath>
 </div>
-<div>
+<div className="flex mb-2">
   <Monochord value={2 / 3} invert={true} base={220} />
   <InlineMath>{`3^1*2^{-1}`}</InlineMath>
 </div>
-<div>
+<div className="flex mb-2">
   <Monochord value={16 / 27} invert={true} base={220} />
   <InlineMath>{`3^3 * 2^{-4}`}</InlineMath>
 </div>

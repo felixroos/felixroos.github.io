@@ -25,7 +25,7 @@ If we decode the special chars and add some formatting, it looks like this:
 ```md
 irealb://
 Eleanor Rigby=The Beatles (Lennon, McCartney)==Rock Pop=E-==
-1r34LbKcu7XC|Qy4CXyQ lcKQyX-ESA*{}  lcKQyX-EZL lcKLZE-X4Ti*{  QyXE-LZE-E C|QyXCZL)D/(W  -EZL lcKQyX- ]XyQ C|QyQyXE/7XyQ|6-E|QyX7-E|QyXE-|QyXE/C|QyX6-EXyQ|C-EB*[-EQ[}yQ}{*adoC la .S.D<|yQX-EZL lcKQyXCC> x  X-EQ|XyQZ
+1r34LbKcu7XC|Qy4CXyQ lcKQyX-ESA*{} lcKQyX-EZL lcKLZE-X4Ti*{ QyXE-LZE-E C|QyXCZL)D/(W -EZL lcKQyX- ]XyQ C|QyQyXE/7XyQ|6-E|QyX7-E|QyXE-|QyXE/C|QyX6-EXyQ|C-EB*[-EQ[}yQ}{*adoC la .S.D<|yQX-EZL lcKQyXCC> x X-EQ|XyQZ
 =Pop-Rock=130=1===
 ```
 
@@ -72,8 +72,9 @@ Let's format the JSON to a readable text version (left) and compare it to how ir
 
 import ReactDiffViewer from 'react-diff-viewer';
 
-<ReactDiffViewer
-  oldValue={`
+<div className="not-prose">
+  <ReactDiffViewer
+    oldValue={`
 // intro
 C | C | E- | E-
 C | C | E- | E-
@@ -116,7 +117,7 @@ C | C | E- | E-
 // Coda
 E-
 `}
-  newValue={`
+    newValue={`
 // intro
 C | C | E- | E-
 C | C | E- | E-
@@ -147,10 +148,11 @@ E-7 | E-6 | C/E | E-
 // Coda
 E-
 `}
-  splitView={true}
-  extraLinesSurroundingDiff={100}
-  useDarkTheme={true}
-/>
+    splitView={true}
+    extraLinesSurroundingDiff={100}
+    useDarkTheme={true}
+  />
+</div>
 <br />
 
 Problems:
@@ -166,13 +168,15 @@ As the measures are not really usable for playback, and also visual rendering is
 
 The good news is that the lib turns the scrambled chord changes (left) into a parseable string (right):
 
-<ReactDiffViewer
-  oldValue={`1r34LbKcu7XC|Qy4CXyQ lcKQyX-ESA*{}  lcKQyX-EZL lcKLZE-X4Ti*{  QyXE-LZE-E C|QyXCZL)D/(W  -EZL lcKQyX- ]XyQ C|QyQyXE/7XyQ|6-E|QyX7-E|QyXE-|QyXE/C|QyX6-EXyQ|C-EB*[-EQ[}yQ}{*adoC la .S.D<|yQX-EZL lcKQyXCC> x  X-EQ|XyQZ `}
-  newValue={`{*iT44CXyQKcl LZE-XyQKcl }{*ASE-XyQKcl LZE-XyQ|CXyQ|C E-LZE-XyQKcl LZE- (W/D)LZCXyQ|C E- ]XyQXyQ [*BE-7XyQ|E-6XyQ|C/EXyQ|E-XyQ|E-7XyQ|E-6XyQ|C/EXyQ|QE-XyQ}{*CCXyQKcl LZE-XyQ|<D.S. al Coda> x }[QE-XyQZ `}
-  splitView={true}
-  extraLinesSurroundingDiff={100}
-  useDarkTheme={true}
-/>
+<div className="not-prose">
+  <ReactDiffViewer
+    oldValue={`1r34LbKcu7XC|Qy4CXyQ lcKQyX-ESA*{}  lcKQyX-EZL lcKLZE-X4Ti*{  QyXE-LZE-E C|QyXCZL)D/(W  -EZL lcKQyX- ]XyQ C|QyQyXE/7XyQ|6-E|QyX7-E|QyXE-|QyXE/C|QyX6-EXyQ|C-EB*[-EQ[}yQ}{*adoC la .S.D<|yQX-EZL lcKQyXCC> x  X-EQ|XyQZ `}
+    newValue={`{*iT44CXyQKcl LZE-XyQKcl }{*ASE-XyQKcl LZE-XyQ|CXyQ|C E-LZE-XyQKcl LZE- (W/D)LZCXyQ|C E- ]XyQXyQ [*BE-7XyQ|E-6XyQ|C/EXyQ|E-XyQ|E-7XyQ|E-6XyQ|C/EXyQ|QE-XyQ}{*CCXyQKcl LZE-XyQ|<D.S. al Coda> x }[QE-XyQZ `}
+    splitView={true}
+    extraLinesSurroundingDiff={100}
+    useDarkTheme={true}
+  />
+</div>
 <br />
 
 In the comments of [the unscramble script](https://github.com/pianosnake/ireal-reader/blob/master/unscramble.js), it states, that "strings are broken up in 50 character segments. each segment undergoes character substitution addressed by obfusc50()".
@@ -254,7 +258,7 @@ C // chord
 XyQ // 3 empty cells
 | // barline
 C // chord
-  // empty cell
+// empty cell
 E- // chord
 LZ // barline
 E- // chord
@@ -268,7 +272,7 @@ C // chord
 XyQ // 3 empty cells
 | // barline
 C // chord
-  // empty cell
+// empty cell
 E- // chord
 ] // double bar right
 XyQXyQ // 7 empty cells

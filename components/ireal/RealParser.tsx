@@ -79,7 +79,7 @@ export function RealRenderer({ url }) {
   const playlist = iRealReader(decodeURI(url));
   const song = playlist.songs[0];
   const sheet = getSheet(song);
-  return <JSONViewer src={sheet} />;
+  return <JSONViewer src={sheet} collapsed={1} />;
 }
 
 export function SheetSnippet({ url, expand, options }) {
