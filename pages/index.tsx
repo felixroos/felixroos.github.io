@@ -25,7 +25,7 @@ export const Index = ({ posts }: IndexProps): JSX.Element => {
           .map((post) => (
             <Link as={`/${post.slug}`} href={`/[slug]`} key={post.slug}>
               {/*border border-gray-300 shadow-md rounded-md  */}
-              <article className="cursor-pointer  py-6   hover:bg-slate-100  border-t-4 border-dotted border-slate-900">
+              <article className="cursor-pointer py-6 hover:bg-slate-100 border-t-4 border-dotted border-slate-900">
                 <div className="sm:flex space-y-2 sm:space-y-0 sm:space-x-2 sm:items-start sm:justify-between">
                   <div className="sm:flex sm:space-x-4">
                     <div>

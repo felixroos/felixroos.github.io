@@ -41,7 +41,7 @@ export default function AstarChordScaleFinder({ chords, scales, showJson }) {
   const [previous, setPrevious] = useState<any>();
 
   return (
-    <>
+    <div className="not-prose">
       <GeneratorStepper
         init={() => generateAstar(start, end, scaleTargets(graph))}
         onChange={(current, previous) => {
@@ -99,6 +99,6 @@ export default function AstarChordScaleFinder({ chords, scales, showJson }) {
           </CardContent>
         </Card>
       )}
-    </>
+    </div>
   );
 }
