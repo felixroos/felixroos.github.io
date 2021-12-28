@@ -19,17 +19,18 @@ export const Index = ({ posts }: IndexProps): JSX.Element => {
       <p className="mb-8 pt-2 font-serif">
         Welcome to my blog! This is where I write about music and coding stuff that I find interesting.
       </p>
-      <div className="space-y-4">
+      <section>
         {posts
           .filter((post) => !post.frontmatter.draft)
           .map((post) => (
             <Link as={`/${post.slug}`} href={`/[slug]`} key={post.slug}>
-              <article className="cursor-pointer  border border-gray-300 p-2 bg-slate-50  hover:bg-slate-100 shadow-md rounded-md ">
+              {/*border border-gray-300 shadow-md rounded-md  */}
+              <article className="cursor-pointer  py-6   hover:bg-slate-100  border-t-4 border-dotted border-slate-900">
                 <div className="sm:flex space-y-2 sm:space-y-0 sm:space-x-2 sm:items-start sm:justify-between">
                   <div className="sm:flex sm:space-x-4">
                     <div>
-                      <h1 className="block sm:hidden font-sans font-black text-2xl">
-                        <a>{post.frontmatter.title}</a>
+                      <h1 className="block sm:hidden font-sans font-black text-2xl text-slate-900">
+                        {post.frontmatter.title}
                       </h1>
                       <p className="block sm:hidden italic text-gray-500 mb-2">
                         {format(parseISO(post.frontmatter.date), 'MMMM yyyy')}
@@ -68,7 +69,7 @@ export const Index = ({ posts }: IndexProps): JSX.Element => {
               </article>
             </Link>
           ))}
-      </div>
+      </section>
     </Layout>
   );
 };

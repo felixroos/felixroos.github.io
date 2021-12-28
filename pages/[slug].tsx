@@ -38,9 +38,9 @@ const Post = ({ code, frontmatter }) => {
   // https://github.com/kentcdodds/mdx-bundler#globals
   const Component = React.useMemo(() => getMDXComponent(code) as any, [code]);
   return (
-    <Layout>
-      <article className="sm:p-2 sm:border-2 sm:rounded-md bg-white prose font-serif max-w-none prose-headings:font-sans prose-headings:font-black">
-        <div className="border-b-4 border-dotted pb-2 border-blue-900">
+    <Layout>{/* sm:p-2 sm:border-2 sm:rounded-md */}
+      <article className="bg-white prose font-serif max-w-none prose-headings:font-sans prose-headings:font-black prose-headings:text-slate-900">
+        <div className="border-b-4 border-dotted pb-2 border-slate-900">
           <div className="md:flex justify-between">
             <h1 className="mb-4 ">{frontmatter.title}</h1>
             <div className="flex space-x-2 items-start pb-4 md:pb-0">
