@@ -42,30 +42,33 @@ export default function ChordDisplay() {
 
   return (
     <>
-      <select
-        value={note.replace(/[0-9]/, '')}
-        onChange={(e) => {
-          setNote(e.target.value + '3');
-          setActive(getChordNotes(e.target.value + '3', chord));
-        }}
-      >
-        {allNotes.map((note, index) => (
-          <option key={index}>{note}</option>
-        ))}
-      </select>
-      <select
-        value={chord}
-        onChange={(e) => {
-          setChord(e.target.value);
-          setActive(getChordNotes(note, e.target.value));
-        }}
-      >
-        {ChordType.names().map((_chord, index) => (
-          <option key={index}>{_chord}</option>
-        ))}
-      </select>
-      <button {...onDrag()}>play</button>
-      <br />
+      <div className="flex space-x-1 items-center">
+        <select
+          value={note.replace(/[0-9]/, '')}
+          onChange={(e) => {
+            setNote(e.target.value + '3');
+            setActive(getChordNotes(e.target.value + '3', chord));
+          }}
+        >
+          {allNotes.map((note, index) => (
+            <option key={index}>{note}</option>
+          ))}
+        </select>
+        <select
+          value={chord}
+          onChange={(e) => {
+            setChord(e.target.value);
+            setActive(getChordNotes(note, e.target.value));
+          }}
+        >
+          {ChordType.names().map((_chord, index) => (
+            <option key={index}>{_chord}</option>
+          ))}
+        </select>
+        <button className="p-1 h-10 border border-gray-800" {...onDrag()}>
+          play
+        </button>
+      </div>
       <Keyboard
         onAttack={(key) => {
           setNote(key.notes[0]);
@@ -76,8 +79,8 @@ export default function ChordDisplay() {
         }}
         options={{
           range: ['B2', 'C5'],
-          scaleX: 2,
-          scaleY: 2,
+          scaleX: 1.8,
+          scaleY: 1.8,
           colorize: [
             {
               color: 'yellow',

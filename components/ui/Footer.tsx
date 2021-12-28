@@ -1,18 +1,12 @@
-import { Box, Text, Themed } from 'theme-ui';
-
 const Footer = (props) => (
-  <Box
-    sx={{
-      p: 4,
-      color: '#666',
-      textAlign: 'center',
-      fontSize: 1,
-    }}
-  >
-    <Text sx={{ mx: 3, display: 'inline-block' }}>
-      Created by <Themed.a href="https://github.com/felixroos">Felix Roos</Themed.a>
-    </Text>
-  </Box>
+  <div className="py-4 font-serif bg-slate-400 flex justify-center items-center">
+    <p className="leading-none">
+      <a className="underline" href="https://github.com/felixroos">
+        Felix Roos
+      </a>{' '}
+      {new Date().getFullYear()}
+    </p>
+  </div>
 );
 
 export default Footer;

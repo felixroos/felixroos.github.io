@@ -3,6 +3,7 @@ title: Moments of Symmetry
 date: '2021-12-10'
 tags: ['music theory', 'tuning']
 description: MOS basics
+draft: true
 ---
 
 import SpiralMOS from '../components/tuning/SpiralMOS';
@@ -12,30 +13,78 @@ import AnimationFrame from '../components/common/AnimationFrame.tsx';
 import IntervalMatrix from '../components/tuning/IntervalMatrix.tsx';
 import { mos } from '../components/tuning/tuning.ts';
 
-## Generators
+> "I know it's a drag, babys, to be brought down by pseudo-erudite [...] rantings on mantissi of logs base 2 and all that Jazz --- when all we really want to do is make way out sounds. But there is a little dirty work to be done before we can all get stoned on harmonics, so here we go --- like a herd of turtles, ugh!" - [Erv Wilson](http://www.anaphoria.com/harm-subharm.pdf)
+
+The above quote is a nice reminder to the fellow scholars of tuning theory that all we want is to _make way out sounds_ and _get stoned on harmonics_.
+The good news is, that most of the dirty work is already done by people like Erv Wilson, who paved the way for microtonal music.
+
+In this post, I want to take a look at one of the most important contributions of Erv Wilson: Moments of Symmetry.
+
+# Linear Tuning Systems
+
+Moments of Symmetry (from now on called MOS) is a subset of linear tuning systems with certain properties.
+A linear tuning system is a system that is generated from a single interval.
+For example, [3 Limit Just Intonation](./3-limit-just-intonation.md) creates linear tuning systems, because it uses only the number 3 (fifth):
+
+$$
+intervals = [3^0, 3^1, ..., 3^n]
+$$
+
+Here, we generate intervals by powers of 3. In a linear tuning system we do the same, but we can use any generator:
+
+$$
+intervals = [g^0, g^1, ..., g^n]
+$$
+
+In code, this can be done with:
 
 ```ts
-expect(generate(3, 7, 12, 2)).toEqual([
-  { position: 0, ratio: 1, power: 0 },
-  { position: 1, ratio: 256 / 243, power: -5 },
-  { position: 2, ratio: 9 / 8, power: 2 },
-  { position: 3, ratio: 32 / 27, power: -3 },
-  { position: 4, ratio: 81 / 64, power: 4 },
-  { position: 5, ratio: 4 / 3, power: -1 },
-  { position: 6, ratio: 729 / 512, power: 6 },
-  { position: 7, ratio: 3 / 2, power: 1 },
-  { position: 8, ratio: 128 / 81, power: -4 },
-  { position: 9, ratio: 27 / 16, power: 3 },
-  { position: 10, ratio: 16 / 9, power: -2 },
-  { position: 11, ratio: 243 / 128, power: 5 },
-]);
+function linearTuning(g, n) {
+  return Array.from({ length: n }, (_, i) => Math.pow(g, i));
+}
 ```
+
+## Octave reduction
+
+To get a usable tuning system, the numbers are octave reduced, as already described in [3 Limit Just Intonation](./3limit-just-intonation#automatic-octave-reduction).
+In short we can octavate any number between 1 and 2 with this function:
+
+$$
+octaveReduce(r) = \lceil\log_2 ({r^{-1}})\rceil
+$$
+
+... or with code:
+
+```ts
+function octaveReduce(ratio) {
+  const exp = Math.ceil(Math.log(1 / r) / Math.log(2));
+  return Math.pow(2, exp) * ratio;
+}
+```
+
+## Linear Tuning Spiral
+
+We can visualize the linear tuning system in a spiral, where each rotation represents one octave:
+
+<SpiralMOS
+  generator={3 / 2}
+  steps={7}
+  zoom={0.1}
+  logarithmic={false}
+  labelEnds={false}
+  showMatrix={true}
+  showSettings={true}
+  minSteps={1}
+  maxSteps={53}
+  showZoomSlider={false}
+  min={1}
+/>
 
 ### 4/3 logarithmic
 
 This graphic is similar to the way Erv Wilson did it:
 
-<SpiralMOS generator={4 / 3} steps={12} logarithmic={true} zoom={0.12} labelEnds={true} min={0} />{' '}
+<SpiralMOS generator={4 / 3} steps={12} logarithmic={true} zoom={0.12} labelEnds={true} min={1} />{' '}
 
 ### 4/3 non-logarithmic
 
@@ -47,28 +96,16 @@ When using a non logarithmic spiral, the graphic is easier to decipher.
 
 ### dynamic
 
-<State
-  initial={{
-    generator: 3 / 2,
-    steps: 7,
-    zoom: 0.09,
-  }}
->
-  {({ state, setState }) => (
-    <>
-      <SpiralMOS
-        generator={state.generator}
-        steps={state.steps}
-        logarithmic={false}
-        zoom={state.zoom}
-        labelEnds={true}
-        showMatrix={true}
-        showSettings={true}
-        min={1}
-      />
-    </>
-  )}
-</State>
+<SpiralMOS
+  generator={3 / 2}
+  steps={7}
+  zoom={0.09}
+  logarithmic={false}
+  labelEnds={true}
+  showMatrix={true}
+  showSettings={true}
+  min={1}
+/>
 
 export function clampedSin(x, min, max, phase = 0) {
   return ((Math.sin(x + phase) + 1) / 2) * (max - min) + min;
@@ -76,7 +113,7 @@ export function clampedSin(x, min, max, phase = 0) {
 
 ### Animated Generator
 
-<AnimationFrame autostart={true}>
+<AnimationFrame autostart={false}>
   {({ toggle, time, isRunning, start }) => (
     <>
       <SpiralMOS
@@ -92,7 +129,7 @@ export function clampedSin(x, min, max, phase = 0) {
 
 ### Animated Steps
 
-<AnimationFrame autostart={true}>
+<AnimationFrame autostart={false}>
   {({ toggle, time, isRunning, start }) => (
     <>
       <SpiralMOS
@@ -108,4 +145,4 @@ export function clampedSin(x, min, max, phase = 0) {
 
 ### 12edo spiral
 
-<SpiralMOS generator={Math.pow(2, 5 / 12)} steps={13} />
+<SpiralMOS generator={Math.pow(2, 5 / 12)} steps={13} showMatrix={true} showSettings={true} />

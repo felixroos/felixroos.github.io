@@ -1,14 +1,13 @@
 import React from 'react';
-import { Box, Heading, Link, Themed } from 'theme-ui';
 
 const Header = (props) => (
-  <Box as="header" sx={{ pt: 4 }}>
-    <Heading sx={{ fontSize: 4, pb: 4, px: [3, 4], fontWeight: 'heading' }} as="h1">
-      <Link href={'/'} color="text">
-        ♾️ loophole letters
-      </Link>
-    </Heading>
-  </Box>
+  <header className="sticky top-0 bg-blue-900 font-semibold p-2 text-white flex justify-center">
+    <div className="max-w-3xl w-full text-right p-2">
+      <h1 className="text-3xl">
+        <a href={'/'}>∞ loophole letters</a> {/* ♾️ */}
+      </h1>
+    </div>
+  </header>
 );
 
 export default Header;

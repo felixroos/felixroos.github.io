@@ -19,15 +19,18 @@ function IntervalMatrix(props) {
   }, [colorizeByProp]);
   const { maxTenneyHeight, rows, intervalCounts, sortedByInterval } = useMemo(() => {
     const reduced = ratios.map((r) => equivalence(r)).sort((a, b) => a - b);
-    let rows = reduced.map((a) => reduced.map((b) => b / a).map((r) => equivalence(r)));
+    let rows = reduced.map(
+      (a) => reduced.map((b) => b / a).map((r) => equivalence(r))
+      // .map((r) => round(r, 8))
+    );
     const tenneyHeights = rows.flat().map((ratio) => {
       const f = new Fraction(ratio);
       return tenneyHeight(f.n, f.d);
     });
-    const sortedByInterval = rows.map((row, i) => Circle(row).rotate(i).items/* .slice(1) */);
+    const sortedByInterval = rows.map((row, i) => Circle(row).rotate(i).items /* .slice(1) */);
     // const cols = sortedByInterval.map((_, i) => sortedByInterval[i][i]);
     const intervalCounts = transpose(sortedByInterval)
-      .map((col) => col.map((cell) => round(cell, 8)))
+      // .map((col) => col.map((cell) => round(cell, 8)))
       .map((col) => col.filter((cell, i, cells) => cells.indexOf(cell) === i).length);
     return {
       maxTenneyHeight: max(tenneyHeights),
@@ -114,7 +117,7 @@ function IntervalMatrix(props) {
             <tr>
               <td></td>
               {rows[0].map((_, i) => (
-                <th key={i}>{intervalCounts[i]}</th>
+                <th key={i}>{intervalCounts[i]}GP</th>
               ))}
             </tr>
           )}

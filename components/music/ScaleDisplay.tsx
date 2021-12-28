@@ -21,7 +21,7 @@ export default function ScaleDisplay() {
     () => isBrowser && new PolySynth({ maxPolyphony: 32, voice: Synth, volume: -12 }).toDestination(),
     []
   );
-  const range = ['B2', 'C6'];
+  const range = ['B2', 'A5'];
   const [note, setNote] = useState('C');
   const [scale, setScale] = useState('major');
   const [polyphony, setPolyphony] = useState(1);
@@ -103,8 +103,8 @@ export default function ScaleDisplay() {
         }}
         options={{
           range,
-          scaleX: 1.3,
-          scaleY: 1.3,
+          scaleX: 1.2,
+          scaleY: 1.2,
           /* visibleKeys: notes, */
           colorize: [
             {

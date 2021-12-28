@@ -1,5 +1,4 @@
-import { useTheme } from 'next-themes';
-import React from 'react';
+import React, { useState } from 'react';
 
 /**
  * Based off of gatsby-theme-novela
@@ -8,10 +7,10 @@ import React from 'react';
 
 const ThemeSwitch = (): JSX.Element => {
   const [mounted, setMounted] = React.useState(false);
-  const { theme, setTheme } = useTheme();
 
   // After mounting, we have access to the theme
   React.useEffect(() => setMounted(true), []);
+  const [theme, setTheme] = useState('light'); // TODO:
 
   if (!mounted) {
     return null;
@@ -79,9 +78,8 @@ const ThemeSwitch = (): JSX.Element => {
           position: absolute;
           top: 50%;
           left: 50%;
-          box-shadow: 0 -23px 0 ${color}, 0 23px 0 ${color}, 23px 0 0 ${color},
-            -23px 0 0 ${color}, 15px 15px 0 ${color}, -15px 15px 0 ${color},
-            15px -15px 0 ${color}, -15px -15px 0 ${color};
+          box-shadow: 0 -23px 0 ${color}, 0 23px 0 ${color}, 23px 0 0 ${color}, -23px 0 0 ${color}, 15px 15px 0 ${color},
+            -15px 15px 0 ${color}, 15px -15px 0 ${color}, -15px -15px 0 ${color};
           transform: scale(${isDark ? 1 : 0});
           transition: all 0.35s ease;
         }
