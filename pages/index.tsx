@@ -36,10 +36,8 @@ export const Index = ({ posts }: IndexProps): JSX.Element => {
                         {format(parseISO(post.frontmatter.date), 'MMMM yyyy')}
                       </p>
                       <div
-                        className="w-full h-[120px] sm:w-[120px] sm:h-[120px] rounded-md sm:rounded-full"
+                        className="w-full h-[120px] sm:w-[120px] sm:h-[120px] rounded-md sm:rounded-xl border border-slate-400 overflow-hidden shadow-md"
                         style={{
-                          border: '1px solid gray',
-                          overflow: 'hidden',
                           ...(post.frontmatter.image
                             ? {
                                 backgroundImage: `url(${post.frontmatter.image})`,
