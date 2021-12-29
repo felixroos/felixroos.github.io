@@ -13,7 +13,7 @@ export default function NestedGrid(props: any) {
     return <div style={{ ...(innerBorders ? boxStyle : {}), whiteSpace: 'nowrap', overflow: 'auto' }}>{cells}</div>;
   }
   return (
-    <div style={{ ...(outerBorders ? boxStyle : {}), ...gridStyle(rows || cells.map(() => 1)) }}>
+    <div style={{ ...(outerBorders ? boxStyle : {}), ...gridStyle(rows || cells.map(() => 1)) }} className="not-prose">
       {cells?.map((content, i) => (
         <NestedGrid key={i} {...props} cells={content} rows={undefined} />
       ))}

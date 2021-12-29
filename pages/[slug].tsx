@@ -7,14 +7,8 @@ import Layout from '../components/Layout';
 import { format, parseISO } from 'date-fns';
 import Link from 'next/link';
 import Tag from '../components/Tag';
-// import 'prismjs/themes/prism-coy.css';
-// import 'prismjs/themes/prism-dark.css';
-// import 'prismjs/themes/prism-funky.css';
-// import 'prismjs/themes/prism-okaidia.css';
-import 'prismjs/themes/prism-solarizedlight.css';
-// import 'prismjs/themes/prism-tomorrow.css';
-// import 'prismjs/themes/prism-twilight.css';
-// import 'prismjs/themes/prism.css';
+import { useTheme } from 'next-themes';
+import { Prism, TomorrowNight } from '../lib/prism';
 
 const CustomLink = ({ as, href, ...otherProps }) => {
   if (href.startsWith('http')) {
@@ -37,9 +31,20 @@ const Post = ({ code, frontmatter }) => {
   };
   // https://github.com/kentcdodds/mdx-bundler#globals
   const Component = React.useMemo(() => getMDXComponent(code) as any, [code]);
+  const { theme } = useTheme();
   return (
-    <Layout>{/* sm:p-2 sm:border-2 sm:rounded-md */}
-      <article className="bg-white prose font-serif max-w-none prose-headings:font-sans prose-headings:font-black prose-headings:text-slate-900">
+    <Layout>
+      {theme === 'light' && <Prism />}
+      {theme === 'dark' && <TomorrowNight />}
+      {/* sm:p-2 sm:border-2 sm:rounded-md */}
+      <article
+        className="prose font-serif max-w-none 
+      prose-headings:font-sans prose-headings:font-black prose-headings:text-slate-900 
+      dark:prose-headings:text-gray-200 
+      dark:text-gray-400 dark:prose-strong:text-gray-400 dark:prose-code:text-slate-400
+      dark:prose-a:text-gray-300 prose-a:text-slate-900
+      prose-blockquote:text-slate-800 dark:prose-blockquote:text-slate-400"
+      >
         <div className="border-b-4 border-dotted pb-2 border-slate-900 mb-4">
           <div className="md:flex justify-between">
             <h1 className="mb-4 ">{frontmatter.title}</h1>

@@ -1,0 +1,53 @@
+---
+title: Rhythmical AST
+date: '2021-12-29'
+tags: ['code', 'rhythmical']
+description: blabla
+draft: true
+---
+
+AST
+
+## Features
+
+- traverse items aka Tree.forEach
+- modify items aka Tree.map
+- remove items aka Tree.filter
+- reduce items aka Tree.reduce
+- keep pure state while reducing??
+- skip?
+
+### Example Features
+
+- `['x*3','y']` => `['x','x','x','y']` (reduce)
+- `['a',['b','c']]` => `['a:0,1','b:1,0.5','c:1.5,0.5']` (flatten / reduce)
+- `['C','F']` => `[p(['C3','E3','G3']), p(['F3','A3','C4'])]` (map & skip?)
+
+## Ideas
+
+- transform rhythmical object to unified AST for easier traversal
+- try to wrap traveral + mutation inside immer for immutable tree transforms
+- write better rhythmical typings
+- think about NLR / LRN
+- try if unist has the required tools to implement rhythmical
+- try to write regular Array.map that does tree mutation
+
+## Tree.map
+
+```js
+['a', ['b', 'c']].map(nested(console.log));
+// a
+// b
+// c
+
+function nested(fn, getChildren) {
+  return (node) => {
+    node = fn(node, true); // mutate before
+    const children = getChildren(node);
+    if (children?.length) {
+      return children.map(nested(fn, getChildren));
+    }
+    return fn(node, false); // mutate after
+  };
+}
+```

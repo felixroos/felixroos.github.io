@@ -28,6 +28,8 @@ Even if we just want a backing track player, playing melodies is required for ba
 So far, we were generating voicings from chord symbols. The problem: melodies will eventually use notes that are not a chord note.
 Therefore, we need a way to find scales that fit to chord changes.
 
+Note: This post is not optimized for dark mode.
+
 ## Problem: Chord Scale Ambiguity
 
 The main problem when searching for chord scales: most of the time, there are serveral scales that could be played over a single chord.
@@ -39,9 +41,9 @@ Here is a video where Barry Harris talks about chords vs keys:
   height="315"
   src="https://www.youtube.com/embed/3V2eNh8qWVo"
   title="YouTube video player"
-  frameborder="0"
+  frameBorder="0"
   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-  allowfullscreen
+  allowFullScreen
 ></iframe>
 
 import NestedGrid from '../components/graphs/NestedGrid';

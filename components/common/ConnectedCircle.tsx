@@ -2,6 +2,7 @@ import { line } from 'd3-shape';
 import React from 'react';
 import { max } from 'd3-array';
 import { useHover } from 'react-use-gesture';
+import { useTheme } from 'next-themes';
 
 //export declare type NodeIdentifier = "string" | number
 export declare type NodeIdentifier = any;
@@ -91,7 +92,7 @@ export default function ConnectedCircle({
         cx={maxDistance + nodeRadius + margin}
         cy={maxDistance + nodeRadius + margin}
         r={radius}
-        stroke="black"
+        stroke="gray"
         strokeWidth={2}
         fill="none"
       />
@@ -103,7 +104,7 @@ export default function ConnectedCircle({
               onClick={() => onClick && onClick({ link })}
               {...hover({ link })}
               key={i}
-              stroke={stroke || 'black'}
+              stroke={stroke || 'gray'}
               strokeWidth={strokeWidth || 4}
               fill="none"
               d={line()(nodePoints([source, target]))}
@@ -119,7 +120,7 @@ export default function ConnectedCircle({
               onClick={() => onClick && onClick({ set: _set })}
               {...hover({ set: _set })}
               key={i}
-              stroke={stroke || 'black'}
+              stroke={stroke || 'gray'}
               strokeWidth={4}
               fill="none"
               d={line()(nodePoints(set, undefined, offset))}
@@ -140,7 +141,7 @@ export default function ConnectedCircle({
           <React.Fragment key={i}>
             <path
               strokeWidth={2}
-              stroke={'black'}
+              stroke={'gray'}
               d={line()([
                 [tx, ty],
                 [x, y],
@@ -151,7 +152,7 @@ export default function ConnectedCircle({
               cx={x}
               cy={y}
               fill={fill}
-              stroke="black"
+              stroke="gray"
               strokeWidth={2}
               style={style || {}}
               onClick={() => onClick && onClick({ node })}

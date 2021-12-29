@@ -24,7 +24,7 @@ export const Index = ({ posts }: IndexProps): JSX.Element => {
           .filter((post) => !post.frontmatter.draft)
           .map((post) => (
             <Link as={`/${post.slug}`} href={`/[slug]`} key={post.slug}>
-              <a className="block cursor-pointer py-6 hover:bg-slate-100 border-t-4 border-dotted border-slate-900">
+              <a className="block cursor-pointer py-6 hover:bg-slate-100 dark:hover:bg-slate-800 border-t-4 border-dotted border-slate-900 dark:border-slate-400">
                 <div className="sm:flex space-y-2 sm:space-y-0 sm:space-x-2 sm:items-start sm:justify-between">
                   <div className="sm:flex sm:space-x-4">
                     <div>
@@ -52,7 +52,7 @@ export const Index = ({ posts }: IndexProps): JSX.Element => {
                       <p className="hidden sm:block italic text-gray-500 ">
                         {format(parseISO(post.frontmatter.date), 'MMMM yyyy')}
                       </p>
-                      <p className="font-serif mt-2">{post.frontmatter.description}</p>
+                      <p className="font-serif mt-2 dark:text-gray-400">{post.frontmatter.description}</p>
                     </div>
                   </div>
                   <div className="flex space-x-1 items-start whitespace-nowrap">

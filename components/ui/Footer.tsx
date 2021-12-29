@@ -1,5 +1,5 @@
 const Footer = (props) => (
-  <div className="py-4 font-serif bg-slate-400 flex justify-center items-center">
+  <div className="py-4 font-serif bg-slate-900 dark:bg-slate-800 text-white flex justify-center items-center">
     <p className="leading-none">
       <a className="underline" href="https://github.com/felixroos">
         Felix Roos

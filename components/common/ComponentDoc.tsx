@@ -12,7 +12,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles((  ) => ({
   root: {
     /* width: '100%',
     maxWidth: 360, */

@@ -8,8 +8,10 @@ import { Slider } from '../common/Slider';
 import { FrequencyPlot } from '../tuning/FrequencyPlot';
 import { max } from 'd3-array';
 import * as Tone from 'tone';
+import { useTheme } from 'next-themes';
 
 export default function Partials({ width, height, base, generator }) {
+  const { theme } = useTheme();
   base = base || 220;
   width = width || 600;
   height = height || 400;
@@ -93,7 +95,7 @@ export default function Partials({ width, height, base, generator }) {
                 height={length}
                 fill={!notes.length || notes.includes(base * p) ? frequencyColor(base * p) : 'gray'}
               />
-              <text textAnchor="middle" x={x + bar / 2} y={height - 4}>
+              <text textAnchor="middle" x={x + bar / 2} y={height - 4} fill="black">
                 {p}
               </text>
             </React.Fragment>

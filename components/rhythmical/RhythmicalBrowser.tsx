@@ -31,7 +31,7 @@ export default function RhythmicalBrowser() {
     console.log('select song', song);
     const _sheet = getSheet(song);
     const _chords = _sheet.map(({ body }: any) => body.map(toTonalChord));
-    console.log('chords', _chords);
+    // console.log('chords', _chords);
     setSong(song);
     setSheet(_sheet);
     setChords(_chords);

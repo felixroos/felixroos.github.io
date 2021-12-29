@@ -106,7 +106,7 @@ export function RealSongs({ url, onChange }) {
     return list;
   }
   return (
-    <>
+    <div className="not-prose">
       <TextField
         label="URL"
         type="url"
@@ -118,7 +118,7 @@ export function RealSongs({ url, onChange }) {
           setPlaylist(p);
         }}
       />
-    </>
+    </div>
   );
 }
 
@@ -129,8 +129,9 @@ export function getPlaylist(url) {
 export function RealPlaylist({ url, onChange }) {
   const [playlist, setPlaylist] = useState<any>(getPlaylist(url));
   const [songIndex, setSongIndex] = useState(0);
+  // TODO: fix text field for dark mode: dont use material ui
   return (
-    <>
+    <div className="not-prose">
       <TextField
         label="URL"
         type="url"
@@ -148,6 +149,7 @@ export function RealPlaylist({ url, onChange }) {
       {playlist?.songs?.length && (
         <>
           <TextField
+            className="not-prose"
             variant="filled"
             select
             label={`${playlist?.songs?.length} Songs`}
@@ -168,7 +170,7 @@ export function RealPlaylist({ url, onChange }) {
           <pre className="language-md">{Snippet.from(getSheet(playlist.songs[songIndex]))}</pre>
         </>
       )}
-    </>
+    </div>
   );
 }
 
@@ -189,7 +191,7 @@ export function RealRanking(props) {
   const properties = ['composer', 'style', 'key'];
   const filteredSongs = songs.filter(({ [property]: prop }) => selected.includes(prop));
   return (
-    <>
+    <div className="not-prose">
       <h3>top {property} ranking</h3>
       <RealSongs url={props.url} onChange={(list) => handleChange(list.songs)} />
       <TextField
@@ -226,7 +228,7 @@ export function RealRanking(props) {
         }}
       />
       {!!selected.length && <DynamicTable orderedBy="title" cols={songFields} rows={filteredSongs} />}
-    </>
+    </div>
   );
 }
 
@@ -238,7 +240,7 @@ export function RealChords(props) {
   const [selected, setSelected] = useState([]);
   useEffect(() => {
     const _chords = parseChords(songs, relative);
-    console.log('chords', _chords);
+    // console.log('chords', _chords);
     setChords(_chords.slice(0, 45));
   }, [songs, relative]);
   let [start, end] = [Infinity, 0];
@@ -287,7 +289,7 @@ export function RealChords(props) {
         </label>
       </div>
       {filteredSongs.length} matching Songs
-      <div style={{ overflow: 'auto', clear: 'both', maxHeight: '310px' }}>
+      <div style={{ overflow: 'auto', clear: 'both', maxHeight: '310px' }} className="not-prose">
         <DynamicTable
           orderedBy="regularity"
           cols={[regularityField(start, end), ...songFields]}
@@ -353,7 +355,7 @@ export function RealTransitions(props) {
         </label>
       </div>
       {filteredSongs.length} matching Songs
-      <div style={{ overflow: 'auto', maxHeight: '310px' }}>
+      <div style={{ overflow: 'auto', maxHeight: '310px' }} className="not-prose">
         <DynamicTable
           orderedBy="regularity"
           cols={[regularityField(start, end), ...songFields]}

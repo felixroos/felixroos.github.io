@@ -111,11 +111,14 @@ export default function chromaColor(chroma) {
 export const circleOfFifths = Array.from({ length: 12 }, (_, i) => Note.get(Note.fromMidi(60 + ((i * 7) % 12))).pc);
 export const scaleColor = (scale) => chromaColor(scaleChroma(scale));
 export const familyScales = (family) => (
-  <ul style={{ margin: 0 }}>
+  <ul style={{ margin: 0 }} className="p-0">
     {circleOfFifths.map((tonic) => (
       <li style={{ marginBottom: 2, listStyle: 'none', display: 'flex' }} key={tonic}>
         {Scale.modeNames(`${tonic} ${family}`).map(([root, scale], i) => (
-          <span style={{ backgroundColor: scaleColor(`${root} ${scale}`), marginRight: 2, padding: 2 }} key={i}>
+          <span
+            style={{ backgroundColor: scaleColor(`${root} ${scale}`), marginRight: 2, padding: 2, color: 'black' }}
+            key={i}
+          >
             {root} {scale}
           </span>
         ))}
