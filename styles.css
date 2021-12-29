@@ -1,11 +1,6 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Merriweather&display=swap');
-#gatsby-focus-wrapper>div>header>div, #gatsby-focus-wrapper>div>header+div>div {
-  max-width: 672px;
-}
 
 svg.dagre-d3-react .nodes {
   fill: darkgray;
@@ -36,8 +31,18 @@ svg.dagre-d3-react path {
   left: 0;
   right: 0;
   bottom: 0;
-  background: #8F201C;
-  background: repeating-linear-gradient(-45deg, #EEEADE, #EEEADE 20px, #8F201C 20px, #8F201C 40px, #EEEADE 40px, #EEEADE 60px, #384D6A 60px, #384D6A 80px);
+  background: #8f201c;
+  background: repeating-linear-gradient(
+    -45deg,
+    #eeeade,
+    #eeeade 20px,
+    #8f201c 20px,
+    #8f201c 40px,
+    #eeeade 40px,
+    #eeeade 60px,
+    #384d6a 60px,
+    #384d6a 80px
+  );
 }
 
 .CodeMirror {

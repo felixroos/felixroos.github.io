@@ -8,7 +8,7 @@
 // import 'prismjs/themes/prism.css';
 
 export const Prism = () => (
-  <style jsx>{`
+  <style global jsx>{`
     /**
 * prism.js default theme for JavaScript, CSS and HTML
 * Based on dabblet (http://dabblet.com)
@@ -443,7 +443,7 @@ export const Okaida = () => (
 );
 
 export const TomorrowNight = () => (
-  <style jsx>{`
+  <style global jsx>{`
     /**
 * prism.js tomorrow night eighties for JavaScript, CoffeeScript, CSS and HTML
 * Based on https://github.com/chriskempson/tomorrow-theme
