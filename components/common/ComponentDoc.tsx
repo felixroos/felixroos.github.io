@@ -1,16 +1,11 @@
-import React, { Fragment, useState } from 'react';
-import JSONViewer from './JSONViewer';
-import NestedGrid from '../graphs/NestedGrid';
-import ArrowRightIcon from '@material-ui/icons/ArrowRight';
-import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
+import Collapse from '@material-ui/core/Collapse';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
-import Collapse from '@material-ui/core/Collapse';
 import { makeStyles } from '@material-ui/core/styles';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
+import React, { Fragment, useState } from 'react';
 
 const useStyles = makeStyles((  ) => ({
   root: {
@@ -20,7 +15,7 @@ const useStyles = makeStyles((  ) => ({
     backgroundColor: '#ddd',
   },
   nested: {
-    paddingLeft: theme.spacing(6),
+    // paddingLeft: theme.spacing(6),
     backgroundColor: '#efefef',
   },
 }));
