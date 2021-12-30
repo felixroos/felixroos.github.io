@@ -5,6 +5,7 @@ import Link from 'next/link';
 import React from 'react';
 import Layout from '../components/Layout';
 import Tag from '../components/Tag';
+import imgLoader from '../lib/imgLoader';
 // import { getAllPosts } from '../lib/api';
 // import { PostType } from '../types/post';
 import { getAllPosts } from '../lib/mdx';
@@ -41,6 +42,7 @@ export const Index = ({ posts }: IndexProps): JSX.Element => {
                           alt={post.frontmatter.title}
                           layout="fill"
                           objectFit="cover"
+                          loader={imgLoader}
                         />
                       </div>
                     </div>

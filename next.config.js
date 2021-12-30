@@ -3,4 +3,7 @@ module.exports = {
   experimental: {
     scrollRestoration: true,
   },
+  images: {
+    loader: 'custom',
+  },
 };
