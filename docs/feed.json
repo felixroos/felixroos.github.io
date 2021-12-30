@@ -5,7 +5,7 @@
     "description": "Coding, Music and Electronics",
     "items": [
         {
-            "id": "diy-modular-synth",
+            "id": "https://felixroos.github.io/diy-modular-synth",
             "url": "https://felixroos.github.io/diy-modular-synth",
             "title": "DIY Modular Synth",
             "summary": "Let's build a modular synth!",
@@ -17,7 +17,7 @@
             }
         },
         {
-            "id": "harmonic-lattices",
+            "id": "https://felixroos.github.io/harmonic-lattices",
             "url": "https://felixroos.github.io/harmonic-lattices",
             "title": "Harmonic Lattices",
             "summary": "A powerful way to vizualize the \"harmonic space\" of any collection of ratios is using a so called lattice.",
@@ -29,7 +29,7 @@
             }
         },
         {
-            "id": "polyphonic-cv",
+            "id": "https://felixroos.github.io/polyphonic-cv",
             "url": "https://felixroos.github.io/polyphonic-cv",
             "title": "Polyphonic MIDI to CV",
             "summary": "After looking at the basics of analog synthesis in the last post let's now look at how to approach polyphony.",
@@ -41,7 +41,7 @@
             }
         },
         {
-            "id": "analog-synthesis",
+            "id": "https://felixroos.github.io/analog-synthesis",
             "url": "https://felixroos.github.io/analog-synthesis",
             "title": "A Macro View on Analog Synthesis",
             "summary": "Lately, I've been learning about analog synthesis",
@@ -53,7 +53,7 @@
             }
         },
         {
-            "id": "rhythmical-trees",
+            "id": "https://felixroos.github.io/rhythmical-trees",
             "url": "https://felixroos.github.io/rhythmical-trees",
             "title": "Rhythmical Trees",
             "summary": "After the posts about Rhythmical Arrays and Rhythmical Objects, I want to investigate the actual data structure that is at play: trees.",
@@ -65,7 +65,7 @@
             }
         },
         {
-            "id": "chord-scales",
+            "id": "https://felixroos.github.io/chord-scales",
             "url": "https://felixroos.github.io/chord-scales",
             "title": "Chord Scales",
             "summary": "Let's find the best chord scales with a common path finding algorithm.",
@@ -77,7 +77,7 @@
             }
         },
         {
-            "id": "diy-midi-keyboard",
+            "id": "https://felixroos.github.io/diy-midi-keyboard",
             "url": "https://felixroos.github.io/diy-midi-keyboard",
             "title": "DIY MIDI Keyboard Scanner",
             "summary": "How to make two MIDI keyboards out of one..",
@@ -89,7 +89,7 @@
             }
         },
         {
-            "id": "pitch-class-sets",
+            "id": "https://felixroos.github.io/pitch-class-sets",
             "url": "https://felixroos.github.io/pitch-class-sets",
             "title": "Pitch Class Sets",
             "summary": "Let's explore the world of pitch class sets.",
@@ -101,7 +101,7 @@
             }
         },
         {
-            "id": "coloring-scales",
+            "id": "https://felixroos.github.io/coloring-scales",
             "url": "https://felixroos.github.io/coloring-scales",
             "title": "Coloring Musical Scales",
             "summary": "After we found a basic way of coloring pitches, let's now look at a way to color scales.",
@@ -113,7 +113,7 @@
             }
         },
         {
-            "id": "webmidi",
+            "id": "https://felixroos.github.io/webmidi",
             "url": "https://felixroos.github.io/webmidi",
             "title": "Using MIDI with JavaScript",
             "summary": "With the Web MIDI API, we can send and receive MIDI events from javascript",
@@ -125,7 +125,7 @@
             }
         },
         {
-            "id": "web-audio-recorder",
+            "id": "https://felixroos.github.io/web-audio-recorder",
             "url": "https://felixroos.github.io/web-audio-recorder",
             "title": "Recording Audio on the Web",
             "summary": "I made a few experiments on Audio Recording, using the Web Audio API.",
@@ -137,7 +137,7 @@
             }
         },
         {
-            "id": "chipsynth-sfc",
+            "id": "https://felixroos.github.io/chipsynth-sfc",
             "url": "https://felixroos.github.io/chipsynth-sfc",
             "title": "Recreating SNES Music with Chipsynth SFC",
             "summary": "Recently, Chipsynth SFC was released, which brings a really accurate emulation of the SNES soundchip to VST or standalone format. Let's play around with it.",
@@ -149,7 +149,7 @@
             }
         },
         {
-            "id": "voicing-permutation",
+            "id": "https://felixroos.github.io/voicing-permutation",
             "url": "https://felixroos.github.io/voicing-permutation",
             "title": "Voicing Permutation",
             "summary": "Let's try to generate any possible voicing by permutation.",
@@ -161,7 +161,7 @@
             }
         },
         {
-            "id": "rhythmical-reducers",
+            "id": "https://felixroos.github.io/rhythmical-reducers",
             "url": "https://felixroos.github.io/rhythmical-reducers",
             "title": "Rhythmical Mutations",
             "summary": "In this post, I want to develop the idea of mutation to allow more flexibility.",
@@ -173,7 +173,7 @@
             }
         },
         {
-            "id": "rhythmical-chords",
+            "id": "https://felixroos.github.io/rhythmical-chords",
             "url": "https://felixroos.github.io/rhythmical-chords",
             "title": "Rhythmical Chords",
             "summary": "To bring rhythmical one step closer to being a hackable backing track player, I want to implement one of the most important things: chord symbols",
@@ -185,7 +185,7 @@
             }
         },
         {
-            "id": "rhythmical-ties",
+            "id": "https://felixroos.github.io/rhythmical-ties",
             "url": "https://felixroos.github.io/rhythmical-ties",
             "title": "Rhythmical Ties",
             "summary": "In modern music, ties across barlines are a common way of adding interest to a melody. Let's add tie support to rhythmical",
@@ -197,7 +197,7 @@
             }
         },
         {
-            "id": "sampler-instruments",
+            "id": "https://felixroos.github.io/sampler-instruments",
             "url": "https://felixroos.github.io/sampler-instruments",
             "title": "Using Sampled Instruments with Tone.js",
             "summary": "To get away from cheap synth sounds, let's implement instruments that use samples, with the help of Tone.js.",
@@ -209,7 +209,7 @@
             }
         },
         {
-            "id": "ireal-analytics",
+            "id": "https://felixroos.github.io/ireal-analytics",
             "url": "https://felixroos.github.io/ireal-analytics",
             "title": "Analyzing iReal Chord Changes",
             "summary": "Now that we have a huge dataset of chord changes, we can do some data mining on it.",
@@ -221,7 +221,7 @@
             }
         },
         {
-            "id": "ireal-changes",
+            "id": "https://felixroos.github.io/ireal-changes",
             "url": "https://felixroos.github.io/ireal-changes",
             "title": "Parsing iReal Chord Changes",
             "summary": "Let's get access to a huge collection of chord changes.",
@@ -233,7 +233,7 @@
             }
         },
         {
-            "id": "midimoog",
+            "id": "https://felixroos.github.io/midimoog",
             "url": "https://felixroos.github.io/midimoog",
             "title": "Building a Minimoog MIDI Controller",
             "summary": "Last week, a friend a I built a MIDI Controller for the Arturia Mini V3 VST.",
@@ -245,7 +245,7 @@
             }
         },
         {
-            "id": "svg-piano-roll",
+            "id": "https://felixroos.github.io/svg-piano-roll",
             "url": "https://felixroos.github.io/svg-piano-roll",
             "title": "SVG Piano Roll Component",
             "summary": "After playback was implemented in the last post, we can now feed our eyes with some colored bars.",
@@ -257,7 +257,7 @@
             }
         },
         {
-            "id": "rhythmical-playback",
+            "id": "https://felixroos.github.io/rhythmical-playback",
             "url": "https://felixroos.github.io/rhythmical-playback",
             "title": "Tone.js Playback",
             "summary": "Before implementing more rhythmical features, it would be good to hear some results. This is where the Player comes in.",
@@ -269,7 +269,7 @@
             }
         },
         {
-            "id": "rhythmical-objects",
+            "id": "https://felixroos.github.io/rhythmical-objects",
             "url": "https://felixroos.github.io/rhythmical-objects",
             "title": "Rhythmical Objects",
             "summary": "Today, I want to write about why and how the powerful rhythmical object format is implemented.",
@@ -281,7 +281,7 @@
             }
         },
         {
-            "id": "rhythmical-arrays",
+            "id": "https://felixroos.github.io/rhythmical-arrays",
             "url": "https://felixroos.github.io/rhythmical-arrays",
             "title": "Rhythmical Arrays",
             "summary": "In this post, I want to describe how and why rhythmical is implemented.",
@@ -293,7 +293,7 @@
             }
         },
         {
-            "id": "rhythmical-staff",
+            "id": "https://felixroos.github.io/rhythmical-staff",
             "url": "https://felixroos.github.io/rhythmical-staff",
             "title": "Rhythmical Staff Notation",
             "summary": "In this post, I want to find out how I can render rhythmical format as staff notation.",
@@ -305,7 +305,7 @@
             }
         },
         {
-            "id": "trumpet-harmonics",
+            "id": "https://felixroos.github.io/trumpet-harmonics",
             "url": "https://felixroos.github.io/trumpet-harmonics",
             "title": "Trumpet Harmonics",
             "summary": "The harmonic spiral from last post can also be used to vizualize the harmonics of instruments that work with overblowing, like a trumpet.",
@@ -317,7 +317,7 @@
             }
         },
         {
-            "id": "harmonic-spirals",
+            "id": "https://felixroos.github.io/harmonic-spirals",
             "url": "https://felixroos.github.io/harmonic-spirals",
             "title": "Harmonic Spirals",
             "summary": "Let's create some harmonic spirals by winding the number line.",
@@ -329,7 +329,7 @@
             }
         },
         {
-            "id": "monochord",
+            "id": "https://felixroos.github.io/monochord",
             "url": "https://felixroos.github.io/monochord",
             "title": "DIY Monochord",
             "summary": "After fiddling around with digital monochords and cheap web audio sounds, I decided to give my build a physical monochord from scrap wood.",
@@ -341,7 +341,7 @@
             }
         },
         {
-            "id": "5limit-just-intonation",
+            "id": "https://felixroos.github.io/5limit-just-intonation",
             "url": "https://felixroos.github.io/5limit-just-intonation",
             "title": "5 Limit Just Intonation",
             "summary": "As this is the third post of a series of a series about Just Intonation, let's talk about thirds.",
@@ -353,7 +353,7 @@
             }
         },
         {
-            "id": "3limit-just-intonation",
+            "id": "https://felixroos.github.io/3limit-just-intonation",
             "url": "https://felixroos.github.io/3limit-just-intonation",
             "title": "3 Limit Just Intonation",
             "summary": "After building a foundation of understanding pure intervals in the last post, we will now look at different ways of building tuning systems with them.",
@@ -365,7 +365,7 @@
             }
         },
         {
-            "id": "intervals",
+            "id": "https://felixroos.github.io/intervals",
             "url": "https://felixroos.github.io/intervals",
             "title": "Pure Intervals",
             "summary": "This article is the first of a series about Just Intonation.",
@@ -377,7 +377,7 @@
             }
         },
         {
-            "id": "harmonics",
+            "id": "https://felixroos.github.io/harmonics",
             "url": "https://felixroos.github.io/harmonics",
             "title": "The Harmonic Series & Additive Synthesis",
             "summary": "Let's understand the harmonic series by looking at monochords.",
@@ -389,7 +389,7 @@
             }
         },
         {
-            "id": "animation",
+            "id": "https://felixroos.github.io/animation",
             "url": "https://felixroos.github.io/animation",
             "title": "Animating React Components",
             "summary": "Let's make a react component that can be used to animate anything.",
@@ -401,7 +401,7 @@
             }
         },
         {
-            "id": "plotting-functions",
+            "id": "https://felixroos.github.io/plotting-functions",
             "url": "https://felixroos.github.io/plotting-functions",
             "title": "Plotting Functions with React and d3.js",
             "summary": "As the basis of many upcoming visualizations.",
@@ -413,7 +413,7 @@
             }
         },
         {
-            "id": "coloring-pitches",
+            "id": "https://felixroos.github.io/coloring-pitches",
             "url": "https://felixroos.github.io/coloring-pitches",
             "title": "Coloring Pitches",
             "summary": "Let's play with colors. Vizualization loves color. To map musical notes to color, we can do various things.",
@@ -425,7 +425,7 @@
             }
         },
         {
-            "id": "combinatorial-search",
+            "id": "https://felixroos.github.io/combinatorial-search",
             "url": "https://felixroos.github.io/combinatorial-search",
             "title": "Combinatorial Search",
             "summary": "Let's look at a concept that be used in a future post to find all possible piano voicings for a given chord.",
@@ -437,7 +437,7 @@
             }
         },
         {
-            "id": "chords",
+            "id": "https://felixroos.github.io/chords",
             "url": "https://felixroos.github.io/chords",
             "title": "Chords and Scales",
             "summary": "Let's use the SVG Piano to display chords.",
@@ -449,7 +449,7 @@
             }
         },
         {
-            "id": "svg-piano",
+            "id": "https://felixroos.github.io/svg-piano",
             "url": "https://felixroos.github.io/svg-piano",
             "title": "SVG Piano",
             "summary": "Let's talk about virtual keyboards: They are good to visualize chords as a static image and melodies as an animation.",
@@ -461,7 +461,7 @@
             }
         },
         {
-            "id": "hello",
+            "id": "https://felixroos.github.io/hello",
             "url": "https://felixroos.github.io/hello",
             "title": "Hello, let me enter",
             "summary": "I will write about music and coding here.",
