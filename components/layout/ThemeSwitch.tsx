@@ -16,12 +16,13 @@ const ThemeSwitch = (): JSX.Element => {
   const maskColor = isDark ? '#000' : '#fff';
   return (
     <button
-      className="theme-button px-4"
+      className="theme-button px-4 text-2xl"
       type="button"
+      title="Toggle Dark Mode"
       aria-label="Toggle Dark Mode"
       onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
     >
-      {theme === 'dark' ? '🌞' : '🌙'}
+      {theme === 'dark' ? '🌙' : '🌞'}
     </button>
   );
 };

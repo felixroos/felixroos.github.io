@@ -5,6 +5,16 @@ class MyDocument extends Document {
     return (
       <Html lang="en">
         <Head>
+          <meta charSet="utf-8" />
+          <meta httpEquiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+          <meta
+            name="viewport"
+            content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+          />
+          <meta name="HandheldFriendly" content="true" />
+          <meta name="apple-mobile-web-app-capable" content="yes" />
+          <meta name="apple-touch-fullscreen" content="yes" />
+          <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
           <link rel="alternate" type="application/rss+xml" title="RSS Feed for felixroos.github.io" href="/rss.xml" />
           <link
             rel="alternate"

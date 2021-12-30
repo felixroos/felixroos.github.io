@@ -9,6 +9,7 @@ import Link from 'next/link';
 import Tag from '../components/Tag';
 import { useTheme } from 'next-themes';
 import { Prism, TomorrowNight } from '../lib/prism';
+import { NextSeo } from 'next-seo';
 
 const CustomLink = ({ as, href, ...otherProps }) => {
   if (href.startsWith('http')) {
@@ -34,6 +35,7 @@ const Post = ({ code, frontmatter }) => {
   const { theme } = useTheme();
   return (
     <Layout>
+      <NextSeo title={frontmatter.title} description={frontmatter.description} />
       {theme === 'light' && <Prism />}
       {theme === 'dark' && <TomorrowNight />}
       {/* sm:p-2 sm:border-2 sm:rounded-md */}

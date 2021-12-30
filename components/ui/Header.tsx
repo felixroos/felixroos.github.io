@@ -6,7 +6,7 @@ const Header = (props) => (
     <div className="max-w-3xl w-full p-2 flex justify-between items-center">
       <h1 className="text-3xl">
         <a href={'/'} className="flex items-bottom">
-          <img src="./logo_cropped.png" className="h-8 mr-3" />
+          <img src="./logo_cropped.png" className="h-8 w-8 mr-3" alt="Logo" />
           loophole letters
         </a>{' '}
         {/* ♾️ */}
