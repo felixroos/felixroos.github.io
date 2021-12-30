@@ -5,7 +5,7 @@ import { MetaProps } from '../types/layout';
 
 export const WEBSITE_HOST_URL = 'https://felixroos.github.io';
 
-const Head = ({ customMeta }: { customMeta?: MetaProps }): JSX.Element => {
+const Head = ({ customMeta, loadKatex }: { customMeta?: MetaProps; loadKatex?: boolean }): JSX.Element => {
   const router = useRouter();
   const meta: MetaProps = {
     title: 'Loophole Letters',
@@ -19,19 +19,18 @@ const Head = ({ customMeta }: { customMeta?: MetaProps }): JSX.Element => {
     <NextHead>
       <title>{meta.title}</title>
       <meta content={meta.description} name="description" />
-      <meta property="og:url" content={`${WEBSITE_HOST_URL}${router.asPath}`} />
       <link rel="canonical" href={`${WEBSITE_HOST_URL}${router.asPath}`} />
-      <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
-        integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
-        crossOrigin="anonymous"
-      />
-      <meta property="og:type" content={meta.type} />
-      <meta property="og:site_name" content="Loophole Letters" />
-      <meta property="og:description" content={meta.description} />
-      <meta property="og:title" content={meta.title} />
-      <meta property="og:image" content={meta.image} />
+      {/* loadKatex flag is set in *.mdx files when katex (InlineMath or BlockMath) is used. 
+      importing 'katex/dist/katex.css' does not work because:
+      "No loader is configured for ".woff2" / ".ttf" files" */}
+      {loadKatex && (
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
+          integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
+          crossOrigin="anonymous"
+        />
+      )}
       {meta.date && <meta property="article:published_time" content={meta.date} />}
     </NextHead>
   );

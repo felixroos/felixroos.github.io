@@ -34,7 +34,7 @@ const Post = ({ code, frontmatter }) => {
   const Component = React.useMemo(() => getMDXComponent(code) as any, [code]);
   const { theme } = useTheme();
   return (
-    <Layout>
+    <Layout loadKatex={frontmatter.loadKatex}>
       <NextSeo title={frontmatter.title} description={frontmatter.description} />
       {theme === 'light' && <Prism />}
       {theme === 'dark' && <TomorrowNight />}

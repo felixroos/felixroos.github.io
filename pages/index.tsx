@@ -1,5 +1,6 @@
 import { format, parseISO } from 'date-fns';
 import { GetStaticProps } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import React from 'react';
 import Layout from '../components/Layout';
@@ -34,18 +35,14 @@ export const Index = ({ posts }: IndexProps): JSX.Element => {
                       <p className="block sm:hidden italic text-gray-500 dark:text-gray-400 mb-2">
                         {format(parseISO(post.frontmatter.date), 'MMMM yyyy')}
                       </p>
-                      <div
-                        className="w-full h-[120px] sm:w-[120px] sm:h-[120px] rounded-md sm:rounded-xl border border-slate-400 overflow-hidden shadow-md"
-                        style={{
-                          ...(post.frontmatter.image
-                            ? {
-                                backgroundImage: `url(${post.frontmatter.image})`,
-                                backgroundSize: 'cover',
-                                backgroundPosition: 'center',
-                              }
-                            : { backgroundColor: 'gray' }),
-                        }}
-                      ></div>
+                      <div className="w-full relative h-[120px] sm:w-[120px] sm:h-[120px] rounded-md sm:rounded-xl border border-slate-400 overflow-hidden shadow-md">
+                        <Image
+                          src={post.frontmatter.image.slice(1)}
+                          alt={post.frontmatter.title}
+                          layout="fill"
+                          objectFit="cover"
+                        />
+                      </div>
                     </div>
                     <div>
                       <h1 className="hidden sm:block font-sans font-black text-2xl dark:text-gray-200">
