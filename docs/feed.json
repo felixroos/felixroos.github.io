@@ -3,6 +3,7 @@
     "title": "Loophole Letters Blog",
     "home_page_url": "https://felixroos.github.io/",
     "description": "Coding, Music and Electronics",
+    "icon": "https://felixroos.github.io/logo.png",
     "items": [
         {
             "id": "https://felixroos.github.io/diy-modular-synth",

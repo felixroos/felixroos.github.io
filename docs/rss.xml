@@ -4,10 +4,15 @@
         <title>Loophole Letters Blog</title>
         <link>https://felixroos.github.io/</link>
         <description>Coding, Music and Electronics</description>
-        <lastBuildDate>Thu, 30 Dec 2021 13:29:42 GMT</lastBuildDate>
+        <lastBuildDate>Thu, 30 Dec 2021 14:21:24 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
         <language>en</language>
+        <image>
+            <title>Loophole Letters Blog</title>
+            <url>https://felixroos.github.io/logo.png</url>
+            <link>https://felixroos.github.io/</link>
+        </image>
         <copyright>©Felix Roos</copyright>
         <category>Technology</category>
         <item>
