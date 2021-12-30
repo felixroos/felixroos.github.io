@@ -25,7 +25,7 @@ const posts = getAllPosts().filter((post) => !post.frontmatter.draft);
 posts.forEach((post) =>
   feed.addItem({
     title: post.frontmatter.title,
-    id: post.slug,
+    id: siteUrl + post.slug,
     link: siteUrl + post.slug,
     description: post.frontmatter.description,
     date: new Date(post.frontmatter.date),
