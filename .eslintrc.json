@@ -1,3 +1,49 @@
 {
-  "extends": ["eslint:recommended", "next"]
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended",
+    "plugin:@typescript-eslint/recommended"
+    // Uncomment the following lines to enable eslint-config-prettier
+    // Is not enabled right now to avoid issues with the Next.js repo
+    // "prettier",
+  ],
+  "env": {
+    "es6": true,
+    "browser": true,
+    "jest": true,
+    "node": true
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  },
+  "rules": {
+    "react/react-in-jsx-scope": 0,
+    "react/display-name": 0,
+    "react/prop-types": 0,
+    "@typescript-eslint/explicit-function-return-type": 0,
+    "@typescript-eslint/explicit-member-accessibility": 0,
+    "@typescript-eslint/explicit-module-boundary-types": 0,
+    "@typescript-eslint/indent": 0,
+    "@typescript-eslint/member-delimiter-style": 0,
+    "@typescript-eslint/no-explicit-any": 0,
+    "@typescript-eslint/no-var-requires": 0,
+    "@typescript-eslint/no-use-before-define": 0,
+    "@typescript-eslint/no-unused-vars": 0,
+    "no-console": 0,
+    "prefer-const": 0,
+    "no-extra-boolean-cast": 0,
+    "@typescript-eslint/no-extra-semi": 0,
+    "@typescript-eslint/no-empty-function": 0,
+    "@typescript-eslint/no-empty-interface": 0,
+    "@typescript-eslint/ban-types": 0,
+    "no-useless-escape": 0,
+    "no-var": 0,
+    "no-unexpected-multiline": 0,
+    "react/no-children-prop": 0,
+    "prefer-spread": 0
+  }
 }
