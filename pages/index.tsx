@@ -51,7 +51,7 @@ export const Index = ({ posts }: IndexProps): JSX.Element => {
                       <h1 className="hidden sm:block font-sans font-black text-2xl dark:text-gray-200">
                         {post.frontmatter.title}
                       </h1>
-                      <p className="hidden sm:block italic text-gray-500 ">
+                      <p className="hidden sm:block italic text-gray-500 dark:text-gray-400">
                         {format(parseISO(post.frontmatter.date), 'MMMM yyyy')}
                       </p>
                       <p className="font-serif mt-2 dark:text-gray-400">{post.frontmatter.description}</p>
