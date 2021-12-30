@@ -18,6 +18,7 @@ const feed = new Feed({
   link: 'https://felixroos.github.io/',
   language: 'en',
   copyright: '©Felix Roos',
+  image: siteUrl + 'logo.png',
 });
 
 const posts = getAllPosts().filter((post) => !post.frontmatter.draft);
