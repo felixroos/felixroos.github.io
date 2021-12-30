@@ -7,10 +7,7 @@ class MyDocument extends Document {
         <Head>
           <meta charSet="utf-8" />
           <meta httpEquiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-          <meta
-            name="viewport"
-            content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-          />
+          <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0" />
           <meta name="HandheldFriendly" content="true" />
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <meta name="apple-touch-fullscreen" content="yes" />
