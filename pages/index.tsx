@@ -25,7 +25,7 @@ export const Index = ({ posts }: IndexProps): JSX.Element => {
         {posts
           .filter((post) => !post.frontmatter.draft)
           .map((post) => (
-            <Link href={`/${post.slug}`} key={post.slug}>
+            <Link href={`/${post.slug}`} key={post.slug} prefetch={false}>
               <a className="block cursor-pointer py-6 hover:bg-slate-100 dark:hover:bg-slate-800 border-t-4 border-dotted border-slate-900 dark:border-slate-400">
                 <div className="sm:flex space-y-2 sm:space-y-0 sm:space-x-2 sm:items-start sm:justify-between">
                   <div className="sm:flex sm:space-x-4">
