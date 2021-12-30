@@ -4,7 +4,7 @@
         <title>Loophole Letters Blog</title>
         <link>https://felixroos.github.io/</link>
         <description>Coding, Music and Electronics</description>
-        <lastBuildDate>Thu, 30 Dec 2021 15:36:06 GMT</lastBuildDate>
+        <lastBuildDate>Thu, 30 Dec 2021 20:13:49 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
         <language>en</language>
@@ -355,7 +355,7 @@
             <pubDate>Thu, 26 Mar 2020 00:00:00 GMT</pubDate>
             <description><![CDATA[Let's talk about virtual keyboards: They are good to visualize chords as a static image and melodies as an animation.]]></description>
             <author>flix91@gmail.com (Felix Roos)</author>
-            <enclosure url="https://felixroos.github.io/https://stuartmemo.com/qwerty-hancock/qwerty-hancock.png" length="0" type="image/png"/>
+            <enclosure url="https://felixroos.github.io/img/qwerty-hancock.png" length="0" type="image/png"/>
         </item>
         <item>
             <title><![CDATA[Hello, let me enter]]></title>
