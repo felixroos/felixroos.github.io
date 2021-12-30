@@ -16,7 +16,7 @@ type IndexProps = {
 export const Index = ({ posts }: IndexProps): JSX.Element => {
   return (
     <Layout>
-      <p className="mb-8 pt-2 font-serif">
+      <p className="mb-8 pt-2 font-serif dark:text-gray-400">
         Welcome to my blog! This is where I write about music and coding stuff that I find interesting.
       </p>
       <section>
@@ -28,7 +28,7 @@ export const Index = ({ posts }: IndexProps): JSX.Element => {
                 <div className="sm:flex space-y-2 sm:space-y-0 sm:space-x-2 sm:items-start sm:justify-between">
                   <div className="sm:flex sm:space-x-4">
                     <div>
-                      <h1 className="block sm:hidden font-sans font-black text-2xl text-slate-900">
+                      <h1 className="block sm:hidden font-sans font-black text-2xl text-slate-900 dark:text-gray-200">
                         {post.frontmatter.title}
                       </h1>
                       <p className="block sm:hidden italic text-gray-500 mb-2">
@@ -48,7 +48,9 @@ export const Index = ({ posts }: IndexProps): JSX.Element => {
                       ></div>
                     </div>
                     <div>
-                      <h1 className="hidden sm:block font-sans font-black text-2xl">{post.frontmatter.title}</h1>
+                      <h1 className="hidden sm:block font-sans font-black text-2xl dark:text-gray-200">
+                        {post.frontmatter.title}
+                      </h1>
                       <p className="hidden sm:block italic text-gray-500 ">
                         {format(parseISO(post.frontmatter.date), 'MMMM yyyy')}
                       </p>
