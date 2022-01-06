@@ -96,7 +96,7 @@ An oscillator that can be controlled with voltage is called a VCO (= Voltage Con
 
 Let's start with a simple circuit:
 
-![vco-simple](./img/analog-synthesis/vco-simple.png)
+![vco-simple](./img/analog-synthesis/vco-simple.png?752x546)
 
 | color                     | meaning              |
 | ------------------------- | -------------------- |
@@ -109,7 +109,7 @@ Let's start with a simple circuit:
 
 We will use this color coding throughout the post. This is the (much more messy) circuit in real life:
 
-![vco-simple-real](./img/analog-synthesis/vco-simple-real.png)
+![vco-simple-real](./img/analog-synthesis/vco-simple-real.png?752x566)
 
 #### Parts
 
@@ -140,11 +140,11 @@ The output of the pots is used as CV to change certain parameters of the VCO:
 The circuit above is slightly boring, as controlling pitch with a potentiometer is not very useful when we want to play melodies.
 To fix that, let's remove all pots and add a keyboard that supports CV, like the Arturia Keystep:
 
-![vco-keystep real](./img/analog-synthesis/vco-keystep-sketch.png)
+![vco-keystep real](./img/analog-synthesis/vco-keystep-sketch.png?752x555)
 
 In reality:
 
-![vco-keystep real](./img/analog-synthesis/vco-keystep-real.png)
+![vco-keystep real](./img/analog-synthesis/vco-keystep-real.png?752x516)
 
 - The keystep has a pitch cv output, that I connected to the 1V/Oct input of the VCO, using a 3,5mm jack (which is also grounded)
 - I also replaced the cheap 8ohm speaker with a Bluetooth Speaker that has an AUX input.
@@ -157,7 +157,7 @@ Now we are finally ready to rave (loud):
 
 If we look at the waveform, we can see the crisp sawwave:
 
-![sawrave](./img/analog-synthesis/sawrave.png)
+![sawrave](./img/analog-synthesis/sawrave.png?752x133)
 
 Here, we can clearly see the sawwave changing frequencies.
 Also, we can make out slight wobbles in the amplitude, which is that dirty analog imperfection we want.
@@ -166,11 +166,11 @@ Also, we can make out slight wobbles in the amplitude, which is that dirty analo
 
 If you listen to the sound above, the sawwave is really harsh, which might be tamed with a [filter](https://syntaxis.com.pl/en/micromodules/109-uvcf-2044-lp4-a.html):
 
-![vco-filtered](./img/analog-synthesis/vco-filtered-sketch.png)
+![vco-filtered](./img/analog-synthesis/vco-filtered-sketch.png?752x474)
 
 In reality (with slightly exaggerated cutoff pot):
 
-![vco-filtered real](./img/analog-synthesis/vco-filtered-real.png)
+![vco-filtered real](./img/analog-synthesis/vco-filtered-real.png?752x340)
 
 #### Explanation
 
@@ -192,11 +192,11 @@ In the beginning of the waveform, we can see the sawwave emerging from a more si
 So far, I had to use my hand to manually turn the cutoff knob.
 Using an LFO (= Low Frequency Oscillator), we can automate periodic CV changes:
 
-![vco filter + lfo sketch](./img/analog-synthesis/vco-filter-lfo-sketch.png)
+![vco filter + lfo sketch](./img/analog-synthesis/vco-filter-lfo-sketch.png?752x425)
 
 In the messy real life:
 
-![vco filter + lfo](./img/analog-synthesis/vco-filter-lfo.png)
+![vco filter + lfo](./img/analog-synthesis/vco-filter-lfo.png?752x585)
 
 #### Explanation
 
@@ -211,7 +211,7 @@ In the messy real life:
 
 In the waveform, the periodic cutoff changes look like this:
 
-![vco-sawrave filter + lfo](./img/analog-synthesis/sawrave-filter-lfo.png)
+![vco-sawrave filter + lfo](./img/analog-synthesis/sawrave-filter-lfo.png?752x139)
 
 ### The Attenuator
 
@@ -219,17 +219,17 @@ So far, the LFO has a pretty big impact on our filter.
 It would be nice if we could somehow control the amount of impact.. This is where the attenuator comes in.
 Unlike the other modules, an attenuator is just a potentiometer with special wiring:
 
-![attenuator sketch](./img/analog-synthesis/attenuator.png)
+![attenuator sketch](./img/analog-synthesis/attenuator.png?752x1008)
 
 Instead of wiring 5V to the right pin, we use any signal that should be attenuated.
 In our case, we can use the LFO triangle output.
 Using the pot, we can then scale it down to minimize its impact:
 
-![vco-sawrave filter + lfo + attenuator sketch](./img/analog-synthesis/vco-filter-lfo-attenuator-sketch.png)
+![vco-sawrave filter + lfo + attenuator sketch](./img/analog-synthesis/vco-filter-lfo-attenuator-sketch.png?752x458)
 
 The rats nest in real life:
 
-![vco-sawrave filter + lfo + attenuator real](./img/analog-synthesis/vco-filter-lfo-attenuator-real.png)
+![vco-sawrave filter + lfo + attenuator real](./img/analog-synthesis/vco-filter-lfo-attenuator-real.png?752x526)
 
 Note that I also added an attenuator for pitch. You can view the attenuator like a modulation depth control for any parameter.
 
@@ -239,7 +239,7 @@ Note that I also added an attenuator for pitch. You can view the attenuator like
 
 In the waveform, we can see the wobbles getting slightly more intense to the right:
 
-![vco-sawrave filter + lfo + attenuator](./img/analog-synthesis/sawrave-filter-lfo-attenuator.png)
+![vco-sawrave filter + lfo + attenuator](./img/analog-synthesis/sawrave-filter-lfo-attenuator.png?752x156)
 
 #### Time for a Melody
 
@@ -260,9 +260,9 @@ By convention, the gate signal will be low (0V) when no key is pressed and high 
 
 Back to the circuit: To keep it simple, let's remove the lfo and the attenuators, and add the VCA + Gate:
 
-![vco, filter + vca sketch](./img/analog-synthesis/vco-filter-vca.png)
+![vco, filter + vca sketch](./img/analog-synthesis/vco-filter-vca.png?752x276)
 
-![vco, filter + vca real](./img/analog-synthesis/vco-filter-vca-real.png)
+![vco, filter + vca real](./img/analog-synthesis/vco-filter-vca-real.png?752x259)
 
 Now we can release the key and the sound will stop.
 
@@ -281,9 +281,9 @@ This is where the ADSR envelope comes in. ADSR stands for:
 
 ![ADSR](https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/ADSR_parameter.svg/2880px-ADSR_parameter.svg.png)
 
-![ADSR sketch](./img/analog-synthesis/vco-filter-vca-envelope.png)
+![ADSR sketch](./img/analog-synthesis/vco-filter-vca-envelope.png?752x415)
 
-![ADSR real](./img/analog-synthesis/vco-filter-vca-adsr-real.png)
+![ADSR real](./img/analog-synthesis/vco-filter-vca-adsr-real.png?752x595)
 
 Now we can control the ADSR curve with the 4 pots on the bottom!
 As we will see soon, we can also use attenuators to modulate parameters with an envelope.
@@ -292,7 +292,7 @@ As we will see soon, we can also use attenuators to modulate parameters with an 
 
 In the waveform, we can see the slow decay:
 
-![ADSR real](./img/analog-synthesis/sawrave-vco-filter-vca-adsr.png)
+![ADSR real](./img/analog-synthesis/sawrave-vco-filter-vca-adsr.png?752x145)
 
 ### Putting it all together
 
@@ -300,11 +300,11 @@ After we examined the most important building blocks of a classic analog synthes
 
 This sketch from the [micromodular how to site](http://micromodular.pl/howto) shows how we can arrange all the parts to a fully functional monosynth:
 
-![full synth](./img/analog-synthesis/bb_simplest_synthesizer.png)
+![full synth](./img/analog-synthesis/bb_simplest_synthesizer.png?752x212)
 
 Of course, I also built this thing:
 
-![full synth real](./img/analog-synthesis/whole-synth.png)
+![full synth real](./img/analog-synthesis/whole-synth.png?752x512)
 
 #### Controls
 
