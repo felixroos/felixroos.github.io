@@ -14,7 +14,7 @@ set up synth circuits. As patching with electronic cables is a quite fiddly, I w
 A modular synthesizer is sound and music making device that consists of individual modules that can be connected to each other.
 The one I've built looks like this:
 
-![finished_cropped](/img/diy-modular-synth/finished_cropped.png?w=750&h=260)
+![finished_cropped](/img/diy-modular-synth/finished_cropped.png?750x260)
 
 If you look closely, you can see that there are 11 individual modules.
 The holes are jack sockets that can be used to connect modules via cables.
@@ -47,7 +47,7 @@ To hold the modules in place, metal rails are used. For one row of modules, you 
 I used [those rails](https://schneidersladen.de/en/sb-rail-19-with-lip) + [threaded strips](https://schneidersladen.de/en/threaded-strip-with-m3-threads-84hp)
 To get the 3U distance exactly right, you can use any two [panels](https://syntaxis.com.pl/en/panel/130-panel-8-16.html).
 
-![empty case](/img/diy-modular-synth/empty-case.png?w=750&h=263)
+![empty case](/img/diy-modular-synth/empty-case.png?750x263)
 
 It's not pretty but it works. In the future I might build a better looking case.
 
@@ -57,13 +57,13 @@ The modules are powered with a dual power supply running at -12V / +12V.
 I did not want to build a power supply myself, so I bought [this one](https://www.thomann.de/intl/behringer_cp1a.htm).
 It uses so called flying bus cables to connect the modules to. From the back, the synth looks like this:
 
-![behind](./img/diy-modular-synth/behind.png?w=752&h=540)
+![behind](./img/diy-modular-synth/behind.png?752x540)
 
 The modules are connected via IDC ribbon cables, with either 10 to 16 or 16 to 16 pins, depending on the module.
 You can either [build them yourself](http://www.tips.modularparts.net/diy-eurorack-ribbon-power-cables/) or [buy them](https://www.thonk.co.uk/shop/eurorack-power-cables/).
 This is the pin standard:
 
-![power pins](https://division-6.com/media/Eurorack-Power-Pinouts-400x400.png)
+<img alt="power pins" src="https://division-6.com/media/Eurorack-Power-Pinouts-400x400.png" width="400" height="400" />
 
 As most modules use unshrouded 2x5 or 2x8 [male header pins](https://www.mouser.fr/ProductDetail/FCI-Amphenol/861400102YO9323LF?qs=sGAEpiMZZMtneIuP4Zx3qUVQnGat%252B4Ma),
 you have to make sure to plug them with the red stripe on the side of -12V.
@@ -77,7 +77,7 @@ I bought [these](https://www.thonk.co.uk/shop/befaco-eurorack-patch-cables/), as
 
 This is a module from the side:
 
-![module side](./img/diy-modular-synth/module_side.png)
+![module side](./img/diy-modular-synth/module_side.png?752x372)
 
 In the picture above, we see the common parts of any module.
 
@@ -92,7 +92,7 @@ Panels are the faceplate of a module, they
 The 2 most commonly used materials are aluminum and FR4 (PCB material).
 In my case I used aluminum, as Syntaxis sells them already labeled.
 
-![panel](./img/diy-modular-synth/panel.png)
+![panel](./img/diy-modular-synth/panel.png?752x268)
 
 ### Controls
 
@@ -115,19 +115,27 @@ After a failed attempt with copper stripboards, I was happy to see Syntaxis sell
 
 <div style={{ display: 'grid', gridTemplateColumns: '12fr 10fr 10fr' }}>
   <div>
-    <img src="./img/diy-modular-synth/europcb-10-a.png" style={{ width: '100%' }} />
+
+    ![10hp](./img/diy-modular-synth/europcb-10-a.png?282x665)
+
     <a href="https://syntaxis.com.pl/en/index.php?controller=attachment&id_attachment=35" target="_blank">
       10hp
     </a>
+
   </div>
   <div>
-    <img src="./img/diy-modular-synth/europcb-8-16-a.png" style={{ width: '100%' }} />
+    
+    ![8hp with 16 slots](./img/diy-modular-synth/europcb-8-16-a.png?235x676)
+
     <a href="https://syntaxis.com.pl/en/index.php?controller=attachment&id_attachment=46" target="_blank">
       8hp with 16 slots
     </a>
+
   </div>
   <div>
-    <img src="./img/diy-modular-synth/europcb-8-18-a.png" style={{ width: '100%' }} />
+    
+    ![8hp with 18 slots](./img/diy-modular-synth/europcb-8-18-a.png?235x673)
+    
     <a href="https://syntaxis.com.pl/en/index.php?controller=attachment&id_attachment=48" target="_blank">
       8hp with 18 slots
     </a>
@@ -152,7 +160,7 @@ I used female headers to be able to remove the micromodules for other uses. [I a
 As I did not design my own modules, I could wire the components by following the instructions provided by Syntaxis.
 The only module that had no instructions was the Gliss module, for which I created my own instructions:
 
-![gliss](./img/diy-modular-synth/gliss.png)
+![gliss](./img/diy-modular-synth/gliss.png?752x853)
 
 If you plan to do the same, make sure to follow the PDFs, as the images in the shop contain some errors!
 
@@ -171,7 +179,7 @@ To put all those components together, I followed the following steps:
 
 After wiring, a module without panel looks like that:
 
-![wired module](./img/diy-modular-synth/wired-module.png)
+![wired module](./img/diy-modular-synth/wired-module.png?752x318)
 
 ## Cost
 
@@ -205,4 +213,4 @@ So far I am happy to have filled up 84HP rails. I am planning to add more module
 (as I already conceptualized in a [previous post](http://localhost:3000/polyphonic-cv)).
 I also want to write a post about actually using the synth, showing some example patches.
 
-![midi2cv](./img/diy-modular-synth/midi2cv-styleshot.png)
+![midi2cv](./img/diy-modular-synth/midi2cv-styleshot.png?752x564)
