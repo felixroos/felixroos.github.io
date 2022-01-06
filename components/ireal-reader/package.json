@@ -1,0 +1,57 @@
+{
+  "_from": "ireal-reader@^1.3.0",
+  "_id": "ireal-reader@1.3.0",
+  "_inBundle": false,
+  "_integrity": "sha512-S5u4dkR0vmkXQo77dwJ2Iy+yJP0Gn4mAU0g4rjAST5JjMb9FW5WbqhiaEEA8bTxedhF8g7mjDlUcEkmNOIZM5Q==",
+  "_location": "/ireal-reader",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "range",
+    "registry": true,
+    "raw": "ireal-reader@^1.3.0",
+    "name": "ireal-reader",
+    "escapedName": "ireal-reader",
+    "rawSpec": "^1.3.0",
+    "saveSpec": null,
+    "fetchSpec": "^1.3.0"
+  },
+  "_requiredBy": [
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/ireal-reader/-/ireal-reader-1.3.0.tgz",
+  "_shasum": "273711c349cdffc94ac3e24e553ac280b790e7b6",
+  "_spec": "ireal-reader@^1.3.0",
+  "_where": "/Users/felix/projects/nextjs-typescript-mdx-blog",
+  "author": {
+    "name": "Florin Alexandrescu"
+  },
+  "bugs": {
+    "url": "https://github.com/pianosnake/ireal-reader/issues"
+  },
+  "bundleDependencies": false,
+  "deprecated": false,
+  "description": "Read iReal Pro files into JS",
+  "devDependencies": {
+    "jasmine-node": "^1.14.5"
+  },
+  "homepage": "https://github.com/pianosnake/ireal-reader#readme",
+  "keywords": [
+    "iReal",
+    "iReal Pro",
+    "json",
+    "chords",
+    "music",
+    "music notation"
+  ],
+  "license": "MIT",
+  "main": "index.js",
+  "name": "ireal-reader",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/pianosnake/ireal-reader.git"
+  },
+  "scripts": {
+    "test": "jasmine-node spec"
+  },
+  "version": "1.3.0"
+}

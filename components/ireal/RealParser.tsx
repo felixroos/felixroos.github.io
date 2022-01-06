@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import iRealReader from 'ireal-reader';
+import iRealReader from '../ireal-reader'; // copy from node_modules with casing fix (Parser > parser)
 import JSONViewer from '../common/JSONViewer';
 import { Measure } from 'leetsheet/lib/Measure';
 import { RealParser } from 'leetsheet/lib/RealParser';

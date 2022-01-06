@@ -2,7 +2,7 @@ import React from 'react';
 import { countUnique } from '../ireal/analytics';
 import D3Shell from './D3Shell';
 import standards from '../../posts/ireal/jazz1350.json';
-import iRealReader from 'ireal-reader';
+import iRealReader from '../ireal-reader'; // copy from node_modules with casing fix (Parser > parser)
 import JSONViewer from './JSONViewer';
 import barChart from './barChart';
 import { normalizeProperty } from './statistics';
