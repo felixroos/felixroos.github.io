@@ -1,25 +1,15 @@
 import NextImage from 'next/image';
 import { useState } from 'react';
 
-function Img({ src, width = 750, height = 200, alt }: { width: number; height: number; src: string; alt?: string }) {
-  const [dimensions, setDimensions] = useState({ width, height });
-  return (
-    <span className="block relative" style={dimensions}>
-      <NextImage
-        src={src}
-        alt={alt || src}
-        layout="fill"
-        objectFit="cover"
-        unoptimized
-        onLoad={(e) => {
-          const { naturalWidth, naturalHeight } = (e?.nativeEvent as any)?.path?.[0];
-          const ratio = naturalWidth / naturalHeight;
-          const dim = { width: Math.min(naturalWidth, width), height: Math.min(naturalHeight, width / ratio) };
-          setDimensions(dim);
-        }}
-      />
-    </span>
-  );
+function Img({ src, alt }: { width: number; height: number; src: string; alt?: string }) {
+  let [url, q = ''] = src.split('?');
+  url = url.startsWith('.') ? url.slice(1) : url;
+  const [width, height] = q.split('&').map((s) => s.split('=')[1]);
+  // console.log(width, height, url);
+  if (!width || !height || url.startsWith('http')) {
+    return <img src={url} alt={alt} width={width} height={height} />;
+  }
+  return <NextImage src={url} alt={alt || url} width={width} height={height} />;
 }
 
 export default Img;

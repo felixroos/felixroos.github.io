@@ -2,7 +2,6 @@
 import React from 'react';
 import { getMDXComponent } from 'mdx-bundler/client';
 import { getAllPosts, getSinglePost } from '../lib/mdx';
-import { MetaProps } from '../types/layout';
 import Layout from '../components/Layout';
 import { format, parseISO } from 'date-fns';
 import Link from 'next/link';
