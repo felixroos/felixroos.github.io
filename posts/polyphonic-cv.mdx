@@ -16,7 +16,7 @@ To be able to play multiple notes at once, we need multiple channels of pitch an
 
 Using an Arduino + a DAC (= Digital to Analog Converter), we can set the pitch CV output to an analog voltage whenever a MIDI note message is received:
 
-![idea](./img/midi2cv/idea.png)
+![idea](./img/midi2cv/idea.png?752x585)
 
 The Arduino receives a MIDI note message, calculates the correct voltage for that note and sends the voltage through the DAC to the VCO.
 
@@ -43,7 +43,7 @@ You can read more about it [here](https://create.arduino.cc/projecthub/Arduino_S
 
 I tested this too (using a TL074 instead of a TL2451):
 
-![poor mands dac](./img/midi2cv/poormansdac.png)
+![poor mands dac](./img/midi2cv/poormansdac.png?752x489)
 
 The problem: In my test, I could only get a voltage range from 1.7V to 4.4V, which only gives us 3 octaves (at 1V/octave) + the resulting voltage was very shaky.
 
@@ -53,7 +53,7 @@ The next thing I tried was a resistor ladder.
 
 We can use a bunch of resistors and arrange them to a so called resistor ladder to build a proper DAC:
 
-![resistor ladder](./img/midi2cv/resistor-ladder-sketch.png)
+![resistor ladder](./img/midi2cv/resistor-ladder-sketch.png?752x862)
 
 Essentially, we are using a multi layered [Voltage Divider](https://en.wikipedia.org/wiki/Voltage_divider).
 The lower row of resistors are 2K and the upper row are 1K.
@@ -86,7 +86,7 @@ void loop() {
 The value can be set between 0 and 255 (= 256 values = 2^8 = 8 bit DAC).
 If we measure the voltage, we get approximately 2.5V for 127:
 
-![resistor ladder](./img/midi2cv/resistor-ladder.png)
+![resistor ladder](./img/midi2cv/resistor-ladder.png?752x454)
 
 Let's step up the game once more and look at an even better solution, as we would quickly run out of
 output pins if we built our multi channel dac with resistor ladders.
@@ -96,7 +96,7 @@ output pins if we built our multi channel dac with resistor ladders.
 Using an IC DAC, like the MCP4728, we can have 4 channel *true analog output*™ without using zillions of pins.
 The integration is really easy with a breakout board, like the one from Adafruit:
 
-![mcp4728](./img/midi2cv/mcp4728-sketch.png)
+![mcp4728](./img/midi2cv/mcp4728-sketch.png?752x570)
 
 Code:
 
@@ -133,7 +133,7 @@ void loop() { delay(1000); }
 
 Reading Channel B:
 
-![mcp4728 test](./img/midi2cv/mcp4728-test.png)
+![mcp4728 test](./img/midi2cv/mcp4728-test.png?752x647)
 
 For a full tutorial see [this page](https://learn.adafruit.com/adafruit-mcp4728-i2c-quad-dac).
 
@@ -212,7 +212,7 @@ Now we can use the output channel A to control a VCO via MIDI!
 Using the vco micromodules [introduced in the last post](../analog-synthesis),
 we can create a 3 oscillator setup like this:
 
-![3vco simple](./img/midi2cv/3vco-simple.png)
+![3vco simple](./img/midi2cv/3vco-simple.png?752x555)
 
 - Channels A, B and C of the DAC go the the VCOs 1V/oct inputs
 - Pots allow tuning the oscillators
