@@ -6,7 +6,309 @@ description: blabla
 draft: true
 ---
 
-AST
+import {
+  astify,
+  astifyRhythm,
+  visitAST,
+  mapAST,
+  cleanRhythmAST,
+  resolveMultiplication,
+} from '../components/rhythmical/tree/rhythmAST';
+import { getRhythmChildren } from '../components/rhythmical/util';
+import Player from '../components/rhythmical/components/Player.tsx';
+import { renderRhythm } from '../components/rhythmical/render';
+import drums from '../instruments/tidal';
+import { piano } from '../instruments/piano.ts';
+import JSONViewer from '../components/common/JSONViewer';
+import stringifyCompact from '../components/common/stringifyCompact';
+import DiffViewer from '../components/common/DiffViewer';
+
+Let's use this simple rhythmical object as an example:
+
+<Player
+  instruments={{ drums, piano }}
+  events={renderRhythm({
+    duration: 2,
+    parallel: [
+      {
+        instrument: 'drums',
+        sequential: ['bd', ['hh', 'hh'], 'sn', ['hh', 'hh']],
+      },
+      { instrument: 'piano', sequential: ['C2', ['Eb2', 'D2']] },
+    ],
+  })}
+/>
+
+```ts
+const rhythm = {
+  duration: 2,
+  parallel: [
+    {
+      instrument: 'drums',
+      sequential: ['bd', ['hh', 'hh'], 'sn', ['hh', 'hh']],
+    },
+    { instrument: 'piano', sequential: ['C2', ['Eb2', 'D2']] },
+  ],
+};
+```
+
+This object format is designed to be readable and short. This makes it more complicated to parse and process, because there are different types of nodes:
+
+- parallel (root node)
+- sequential nodes (first level)
+- array nodes (`[hh, hh]` and `[Eb2, D2]`) (treated as sequential nodes)
+- leaf nodes (plain strings)
+
+## Rhythmical Object to AST
+
+We can transform this rhythmical object into an AST. An ASTNode can be defined like this:
+
+```ts
+export declare type ASTNode<T> = {
+  type: string;
+  children?: ASTNode<T>[];
+  data?: T;
+  [property: string]: any;
+};
+```
+
+The transformation is quite straightforward:
+
+```ts
+// turn any tree T into an ASTNode<T>
+export function astify<T>(getChildren: (node: T) => T[], getType: (node: T) => string, tree: T): ASTNode<T> {
+  const children = getChildren(tree);
+  const type = getType(tree);
+  if (!children) {
+    return { type, data: tree };
+  }
+  return {
+    type,
+    data: tree,
+    children: children.map((child) => astify(getChildren, getType, child)),
+  };
+}
+
+// turn a rhythmical object into an ASTNode<T>
+export function astifyRhythm(rhythm) {
+  return astify(getRhythmChildren, getRhythmType, rhythm);
+}
+
+function getRhythmChildren<T>(node: RhythmNode<T>): RhythmNode<T>[] {
+  return Array.isArray(node) ? node : (node as RhythmObject<T>)?.parallel || (node as RhythmObject<T>)?.sequential;
+}
+
+function getRhythmType(node) {
+  if (typeof node !== 'object') {
+    return 'leaf';
+  }
+  if (Array.isArray(node)) {
+    return 'array';
+  }
+  if (node.sequential) {
+    return 'sequential';
+  }
+  if (node.parallel) {
+    return 'parallel';
+  }
+  return 'string';
+}
+```
+
+### Output
+
+Using the above function, we can transform our rhythm
+
+```ts
+const ast = astifyRhythm({
+  duration: 2,
+  parallel: [
+    {
+      instrument: 'drums',
+      sequential: ['bd', ['hh', 'hh'], 'sn', ['hh', 'hh']],
+    },
+    { instrument: 'piano', sequential: ['C2', ['Eb2', 'D2']] },
+  ],
+});
+```
+
+...to:
+
+export const astifiedRhythm = astifyRhythm({
+  duration: 2,
+  parallel: [
+    {
+      instrument: 'drums',
+      sequential: ['bd', ['hh', 'hh'], 'sn', ['hh', 'hh']],
+    },
+    { instrument: 'piano', sequential: ['C2', ['Eb2', 'D2']] },
+  ],
+});
+
+<JSONViewer
+  name="ast"
+  collapsed={1}
+  src={astifiedRhythm}
+  shouldCollapse={(n) => n.name === 'data' && n.type !== 'string'}
+/>
+
+In this representation, much of the readability is lost in favor of a simpler structure.
+
+## Visiting Nodes
+
+To visit every node, we can do this:
+
+```ts
+export function visitAST<T>(node: ASTNode<T>, visitor: ASTVisitor<T>): void {
+  visitor(node);
+  if (node.children) {
+    node.children.forEach((child) => visitAST(child, visitor));
+  }
+}
+```
+
+The same code for a rhythmical object would be much more complex.
+With our visitor, we could now collect all leaf nodes like so:
+
+```js
+export function leafNodes(tree) {
+  const nodes = [];
+  const ast = astifyRhythm(tree);
+  visitAST(ast, (node) => nodes.push(node));
+  return nodes.filter((node) => node.type === 'leaf').map((node) => node.data);
+}
+```
+
+export function leafNodes(tree) {
+  const nodes = [];
+  const ast = astifyRhythm(tree);
+  visitAST(ast, (node) => nodes.push(node));
+  return nodes.filter((node) => node.type === 'leaf').map((node) => node.data);
+}
+
+Output:
+
+```json
+["bd", "hh", "hh", "sn", "hh", "hh", "C2", "Eb2", "D2"]
+```
+
+The nodes are visited in a depth-first manner.
+
+## Transforming Nodes
+
+Editing the AST goes like this:
+
+```ts
+export declare type MapFn<T> = (node: T) => T;
+
+export function mapAST<T>(node: ASTNode<T>, mapFn: MapFn<ASTNode<T>>): ASTNode<T> {
+  const edited = mapFn(node);
+  if (edited.children) {
+    edited.children = node.children.map((child) => mapAST(child, mapFn));
+  }
+  return edited;
+}
+```
+
+### Simplification
+
+We can use this to simplify our rhythm AST a little bit.
+
+In the output of the above `astifyRhythm` function, the properties `duration` and `instrument` are hidden in the `data` field.
+It would be more practical to have all non-child-related properties on the top level of the node:
+
+```ts
+export function cleanRhythmAST<T>(node: ASTNode<RhythmNode<T>>): ASTNode<RhythmNode<T>> {
+  const { type, data, ...restOfNode } = node;
+  if (type === 'array') {
+    return { type, ...restOfNode }; // without data
+  }
+  if (type === 'leaf') {
+    return node; // with data
+  }
+  const { sequential, parallel, ...withoutChildProperties } = node.data as RhythmObject<T>;
+  return { type, ...withoutChildProperties, ...restOfNode }; // without data
+}
+```
+
+Output:
+
+<JSONViewer name="cleanRhythmAST" collapsed={1} src={mapAST(astifiedRhythm, cleanRhythmAST)} />
+
+### Feature: Multiplication
+
+Using the mapAST function, we can implement features with ease.
+For example, it would be nice to be able to add repeats using "\*" signs:
+
+```ts
+const rhythm = {
+  duration: 2,
+  parallel: [
+    {
+      instrument: 'drums',
+      sequential: ['bd', 'hh*2', 'sn', 'hh*2'],
+    },
+    { instrument: 'piano', sequential: ['C2', ['Eb2', 'D2']] },
+  ],
+};
+```
+
+export const withMultiplication = astifyRhythm({
+  duration: 2,
+  parallel: [
+    {
+      instrument: 'drums',
+      sequential: ['bd', 'hh*2', 'sn', 'hh*2'],
+    },
+    { instrument: 'piano', sequential: ['C2', ['Eb2', 'D2']] },
+  ],
+});
+
+To implement the multiplication feature, we need a map function that replaces the matching leaves:
+
+```ts
+export function resolveMultiplication(node: ASTNode<RhythmNode<string>>): ASTNode<RhythmNode<string>> {
+  if (node.type !== 'leaf') {
+    //  || !node.data.includes('*')
+    return node;
+  }
+  const [data, times] = (node.data as string).split('*');
+  const length = parseInt(times);
+  if (!length) {
+    // invalid length
+    return { type: 'leaf', data };
+  }
+  const children = Array.from({ length }, (_, i) => ({ type: 'leaf', data }));
+  console.log('times', times, data, children);
+  return {
+    type: 'sequential',
+    children,
+  };
+}
+```
+
+Usage:
+
+```ts
+const cleanAST = mapAST(withMultiplication, cleanRhythmAST);
+const ast = mapAST(cleanAST, resolveMultiplication);
+```
+
+Result:
+
+<DiffViewer
+  splitView={true}
+  showDiffOnly={true}
+  oldValue={stringifyCompact(mapAST(withMultiplication, cleanRhythmAST))}
+  newValue={stringifyCompact(mapAST(mapAST(withMultiplication, cleanRhythmAST), resolveMultiplication))}
+/>
+
+Multiplication of non leaves?
+
+### Feature: Replication
+
+Another feature that is similar to multiplication is replication.
+Instead of "\*" we can use "!" to replicate the pattern on the same level.
 
 ## Features
 
@@ -51,3 +353,16 @@ function nested(fn, getChildren) {
   };
 }
 ```
+
+- https://github.com/gibber-cc/tidal.pegjs
+- https://github.com/kach/nearley
+  - https://nearley.js.org/
+- https://github.com/no-context/moo
+- https://www.npmjs.com/package/itt
+
+- flip
+- expertenallianz / shopify
+- expertenallianz / fitnessapp
+- els / sections
+
+- prepare frontend

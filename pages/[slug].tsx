@@ -10,6 +10,7 @@ import Tag from '../components/Tag';
 import { useTheme } from 'next-themes';
 import { Prism, TomorrowNight } from '../lib/prism';
 import { NextSeo } from 'next-seo';
+import Img from '../components/layout/Img';
 
 const CustomLink = ({ as, href, ...otherProps }) => {
   if (href.startsWith('http')) {
@@ -23,13 +24,6 @@ const CustomLink = ({ as, href, ...otherProps }) => {
 };
 
 const Post = ({ code, frontmatter }) => {
-  const customMeta: MetaProps = {
-    title: `${frontmatter.title} - Loophole Letters`,
-    description: frontmatter.description,
-    // image: `${WEBSITE_HOST_URL}${frontMatter.image}`,
-    date: frontmatter.date,
-    type: 'article',
-  };
   // https://github.com/kentcdodds/mdx-bundler#globals
   const Component = React.useMemo(() => getMDXComponent(code) as any, [code]);
   const { theme } = useTheme();
@@ -59,25 +53,7 @@ const Post = ({ code, frontmatter }) => {
           <p className="italic p-0 m-0">{format(parseISO(frontmatter.date), 'MMMM dd, yyyy')}</p>
         </div>
         <div>
-          {/* frontmatter.image && <img src={frontmatter.image} /> */}
-          <Component
-            components={{
-              a: CustomLink,
-              /* h1: H(1),
-              h2: H(2),
-              h3: H(3),
-              h4: H(4), */
-              /* p: Themed.p,
-              ul: Themed.ul,
-              li: Themed.li,
-              img: Themed.img,
-              table: Themed.table,
-              td: Themed.td,
-              th: Themed.th,
-              tr: Themed.tr, */
-              /* input: CustomInput, */
-            }}
-          />
+          <Component components={{ a: CustomLink, img: Img }} />
         </div>
       </article>
     </Layout>

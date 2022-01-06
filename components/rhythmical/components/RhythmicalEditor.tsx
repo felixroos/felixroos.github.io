@@ -10,40 +10,44 @@ import prettier from 'prettier';
 import * as jsonParser from 'prettier/parser-babel';
 import { tieReducer } from '../reducers';
 
-export default function RhythmicalEditor() {
-  const [json, setJson] = useState({
-    duration: 4,
-    parallel: [
-      {
-        instrument: 'piano',
-        color: 'green',
-        sequential: [
-          [
-            ['Db3', 'Db3'],
-            ['Db3', 'B2', 'A2'],
+const renderRhythm = (json) =>
+  renderRhythmObject({ ...json }, [inheritProperty('instrument')]).reduce(tieReducer(), []);
+
+export default function RhythmicalEditor({ rhythm }) {
+  const [json, setJson] = useState(
+    rhythm || {
+      duration: 4,
+      parallel: [
+        {
+          instrument: 'piano',
+          color: 'green',
+          sequential: [
+            [
+              ['Db3', 'Db3'],
+              ['Db3', 'B2', 'A2'],
+            ],
+            ['G2', 'G2', 'G2', { sequential: ['_', 'A2', 'B2'], duration: 2 }],
           ],
-          ['G2', 'G2', 'G2', { sequential: ['_', 'A2', 'B2'], duration: 2 }],
-        ],
-      },
-      {
-        color: 'steelblue',
-        instrument: 'drums',
-        parallel: [
-          ['bd', 'sn', 'bd', 'sn'],
-          [
-            ['hh', 'hh', 'hh', 'hh'],
-            ['hh', 'hh', 'hh', 'hh', 'hh'],
+        },
+        {
+          color: 'steelblue',
+          instrument: 'drums',
+          parallel: [
+            ['bd', 'sn', 'bd', 'sn'],
+            [
+              ['hh', 'hh', 'hh', 'hh'],
+              ['hh', 'hh', 'hh', 'hh', 'hh'],
+            ],
           ],
-        ],
-      },
-    ],
-  });
+        },
+      ],
+    }
+  );
   const format = (_json) => prettier.format(JSON.stringify(_json), { parser: 'json', plugins: [jsonParser] });
   const [string, setString] = useState(format(json));
-  const render = () => renderRhythmObject({ ...json }, [inheritProperty('instrument')]).reduce(tieReducer(), []);
   return (
     <>
-      <Player instruments={{ drums, piano }} events={render()} />
+      <Player instruments={{ drums, piano }} events={renderRhythm(json)} />
       <CodeMirror
         className="rhythmical-editor"
         value={string}
