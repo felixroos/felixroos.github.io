@@ -11,6 +11,7 @@ import { useTheme } from 'next-themes';
 import { Prism, TomorrowNight } from '../lib/prism';
 import { NextSeo } from 'next-seo';
 import Img from '../components/layout/Img';
+import NextImage from 'next/image';
 
 const CustomLink = ({ as, href, ...otherProps }) => {
   if (href.startsWith('http')) {
@@ -25,7 +26,7 @@ const CustomLink = ({ as, href, ...otherProps }) => {
 
 const Post = ({ code, frontmatter }) => {
   // https://github.com/kentcdodds/mdx-bundler#globals
-  const Component = React.useMemo(() => getMDXComponent(code) as any, [code]);
+  const Component = React.useMemo(() => getMDXComponent(code, { NextImage }) as any, [code]);
   const { theme } = useTheme();
   return (
     <Layout loadKatex={frontmatter.loadKatex}>
