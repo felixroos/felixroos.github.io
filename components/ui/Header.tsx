@@ -9,7 +9,7 @@ const Header = (props) => (
       <h1 className="sm:text-3xl text-2xl">
         <a href={'/'} className="flex items-bottom">
           <div className="h-8 w-8 mr-3 relative">
-            <Image src={logo} alt="Logo" layout="fill" objectFit="cover" priority unoptimized />
+            <Image src={logo} alt="Logo" priority width={32} height={32} />
           </div>
           loophole letters
         </a>{' '}

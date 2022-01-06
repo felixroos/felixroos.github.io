@@ -41,7 +41,6 @@ export const Index = ({ posts }: IndexProps): JSX.Element => {
                           alt={post.frontmatter.title}
                           layout="fill"
                           objectFit="cover"
-                          unoptimized
                         />
                       </div>
                     </div>
