@@ -14,7 +14,7 @@ import NextImage from 'next/image';
 
 const CustomLink = ({ as, href, ...otherProps }) => {
   if (href.startsWith('http')) {
-    return <a target="_blank" {...{ as, href, ...otherProps }} />;
+    return <a target="_blank" rel="noreferrer" {...{ as, href, ...otherProps }} />;
   }
   return (
     <Link as={as} href={href}>
