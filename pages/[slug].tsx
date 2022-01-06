@@ -41,7 +41,7 @@ const Post = ({ code, frontmatter }) => {
       dark:prose-a:text-gray-300 prose-a:text-slate-900
       prose-blockquote:text-slate-800 dark:prose-blockquote:text-slate-400"
       >
-        <div className="border-b-4 border-dotted pb-2 border-slate-900 mb-4">
+        <div className="border-b-4 border-dotted pb-2 border-slate-900 mb-4 dark:border-slate-400">
           <div className="md:flex justify-between">
             <h1 className="mb-4 ">{frontmatter.title}</h1>
             <div className="flex space-x-2 items-start pb-4 md:pb-0">
