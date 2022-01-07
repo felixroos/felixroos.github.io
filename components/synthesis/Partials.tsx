@@ -79,29 +79,31 @@ export default function Partials({ width, height, base, generator }) {
         {notes.length ? <StopIcon /> : <PlayArrowIcon />}
       </Fab>
       <br />
-      <svg width={width} height={height}>
-        {partials.map(([p, a], i) => {
-          const length = (a / maxAmplitude) * (height - margin);
-          const [x, y] = [(p - 1) * bar, height - length - margin];
-          return (
-            <React.Fragment key={i}>
-              <rect
-                stroke="black"
-                onMouseEnter={(e) => handleMouseEnter(p, e)}
-                onMouseLeave={(e) => handleMouseLeave(p, e)}
-                x={x}
-                y={y}
-                width={bar}
-                height={length}
-                fill={!notes.length || notes.includes(base * p) ? frequencyColor(base * p) : 'gray'}
-              />
-              <text textAnchor="middle" x={x + bar / 2} y={height - 4} fill="black">
-                {p}
-              </text>
-            </React.Fragment>
-          );
-        })}
-      </svg>
+      <div className="w-full overflow-auto">
+        <svg width={width} height={height}>
+          {partials.map(([p, a], i) => {
+            const length = (a / maxAmplitude) * (height - margin);
+            const [x, y] = [(p - 1) * bar, height - length - margin];
+            return (
+              <React.Fragment key={i}>
+                <rect
+                  stroke="black"
+                  onMouseEnter={(e) => handleMouseEnter(p, e)}
+                  onMouseLeave={(e) => handleMouseLeave(p, e)}
+                  x={x}
+                  y={y}
+                  width={bar}
+                  height={length}
+                  fill={!notes.length || notes.includes(base * p) ? frequencyColor(base * p) : 'gray'}
+                />
+                <text textAnchor="middle" x={x + bar / 2} y={height - 4} fill="black">
+                  {p}
+                </text>
+              </React.Fragment>
+            );
+          })}
+        </svg>
+      </div>
       <br />
       <Slider
         step={1}

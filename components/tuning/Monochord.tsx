@@ -57,7 +57,7 @@ export default function Monochord({
   const frequencyLeft = (1 / x) * base * (1 / factor);
   // const frequencyRight = (1 / (1 - x)) * base * (1 / factor)
   const radius = 15;
-  width = width || 400;
+  width = width || 300;
   const margin = { left: radius * 2, right: radius * 2 };
   const colors = {
     line: 'gray',
@@ -102,69 +102,70 @@ export default function Monochord({
   const [rt, rb] = new Fraction(factor + (1 - x)).toFraction().split('/');
 
   return (
-    <svg width={width} height={height}>
-      <g onMouseEnter={() => play()} onClick={() => play()}>
-        {!label ? (
+    <div className="max-w-full">
+      <svg width={width} height={height}>
+        <g onMouseEnter={() => play()} onClick={() => play()}>
+          {!label ? (
+            <FractionCircle
+              cx={radius}
+              cy={radius - 1}
+              radius={radius}
+              strokeWidth={1}
+              onClick={() => play()}
+              onHover={() => play()}
+              top={(invert ? +lb : +lt) || 1}
+              bottom={(invert ? +lt : +lb) || 1}
+              invert={!invert}
+              base={base}
+            />
+          ) : (
+            <g>
+              <circle cx={radius} cy={radius} r={radius} fill={frequencyColor(frequencyLeft)} />
+              <text
+                style={{ pointerEvents: 'none', userSelect: 'none' }}
+                x={radius}
+                y={radius + radius / 3}
+                textAnchor="middle"
+              >
+                {label}
+              </text>
+            </g>
+          )}
+        </g>
+        {!disableRight ? (
           <FractionCircle
-            cx={radius}
+            cx={width - radius - 2}
             cy={radius - 1}
             radius={radius}
             strokeWidth={1}
-            onClick={() => play()}
-            onHover={() => play()}
-            top={(invert ? +lb : +lt) || 1}
-            bottom={(invert ? +lt : +lb) || 1}
+            top={(invert ? +rb : +rt) || 1}
+            bottom={(invert ? +rt : +rb) || 1}
             invert={!invert}
             base={base}
           />
         ) : (
-          <g>
-            <circle cx={radius} cy={radius} r={radius} fill={frequencyColor(frequencyLeft)} />
-            <text
-              style={{ pointerEvents: 'none', userSelect: 'none' }}
-              x={radius}
-              y={radius + radius / 3}
-              textAnchor="middle"
-            >
-              {label}
-            </text>
-          </g>
+          <line
+            stroke="gray"
+            strokeWidth={2}
+            x1={width - radius * 2}
+            x2={width - radius * 2}
+            y1={radius - 10}
+            y2={radius + 10}
+          />
         )}
-      </g>
-      {!disableRight ? (
-        <FractionCircle
-          cx={width - radius - 2}
-          cy={radius - 1}
-          radius={radius}
-          strokeWidth={1}
-          top={(invert ? +rb : +rt) || 1}
-          bottom={(invert ? +rt : +rb) || 1}
-          invert={!invert}
-          base={base}
-        />
-      ) : (
-        <line
-          stroke="gray"
-          strokeWidth={2}
-          x1={width - radius * 2}
-          x2={width - radius * 2}
-          y1={radius - 10}
-          y2={radius + 10}
-        />
-      )}
 
-      <g transform={`translate(${px(0)},0)`} onMouseEnter={() => play()}>
-        <Plot
-          margin={{ top: strokeWidth, bottom: strokeWidth, left: 0, right: 0 }}
-          functions={[(_x) => amplitude * Math.sin(harmonic * _x), (_x) => -amplitude * Math.sin(harmonic * _x)]}
-          range={{ x: [0, Math.PI], y: [-1, 1] }}
-          hideAxes={true}
-          height={radius * 2}
-          colors={[frequencyColor(frequencyLeft)]}
-          width={px(x) - px(0)}
-          strokeWidth={strokeWidth}
-        />
-        {/* <line
+        <g transform={`translate(${px(0)},0)`} onMouseEnter={() => play()}>
+          <Plot
+            margin={{ top: strokeWidth, bottom: strokeWidth, left: 0, right: 0 }}
+            functions={[(_x) => amplitude * Math.sin(harmonic * _x), (_x) => -amplitude * Math.sin(harmonic * _x)]}
+            range={{ x: [0, Math.PI], y: [-1, 1] }}
+            hideAxes={true}
+            height={radius * 2}
+            colors={[frequencyColor(frequencyLeft)]}
+            width={px(x) - px(0)}
+            strokeWidth={strokeWidth}
+          />
+          {/* <line
           className="string-left"
           x1={0}
           x2={px(x) - px(0)}
@@ -173,45 +174,46 @@ export default function Monochord({
           stroke={frequencyColor(frequencyLeft)}
           strokeWidth={strokeWidth}
         /> */}
-      </g>
-      <line
-        className="string-right"
-        x1={px(x)}
-        x2={px(1)}
-        y1={radius}
-        y2={radius}
-        {...(disableRight ? {} : { onMouseEnter: () => play() })}
-        stroke={disableRight ? 'gray' : frequencyColor((1 / (x ? 1 - x : 1)) * base)}
-        strokeWidth={strokeWidth}
-      />
-      <g style={{ pointerEvents: 'none', userSelect: 'none' }}>
-        {![1, 0].includes(x) && (
-          <line
-            className="tick"
-            y1={radius - circlePadding}
-            y2={radius + circlePadding}
-            x1={px(x)}
-            x2={px(x)}
-            stroke={colors.line}
-            strokeWidth={2}
-          />
+        </g>
+        <line
+          className="string-right"
+          x1={px(x)}
+          x2={px(1)}
+          y1={radius}
+          y2={radius}
+          {...(disableRight ? {} : { onMouseEnter: () => play() })}
+          stroke={disableRight ? 'gray' : frequencyColor((1 / (x ? 1 - x : 1)) * base)}
+          strokeWidth={strokeWidth}
+        />
+        <g style={{ pointerEvents: 'none', userSelect: 'none' }}>
+          {![1, 0].includes(x) && (
+            <line
+              className="tick"
+              y1={radius - circlePadding}
+              y2={radius + circlePadding}
+              x1={px(x)}
+              x2={px(x)}
+              stroke={colors.line}
+              strokeWidth={2}
+            />
+          )}
+        </g>
+        {draggable && (
+          <>
+            <circle
+              className="handle"
+              {...drag()}
+              cx={px(x)}
+              cy={radius}
+              style={{ cursor: 'pointer' }}
+              r={radius - 2}
+              strokeWidth={0}
+              stroke={colors.circle}
+              fill={colors.circle}
+            />
+          </>
         )}
-      </g>
-      {draggable && (
-        <>
-          <circle
-            className="handle"
-            {...drag()}
-            cx={px(x)}
-            cy={radius}
-            style={{ cursor: 'pointer' }}
-            r={radius - 2}
-            strokeWidth={0}
-            stroke={colors.circle}
-            fill={colors.circle}
-          />
-        </>
-      )}
-    </svg>
+      </svg>
+    </div>
   );
 }

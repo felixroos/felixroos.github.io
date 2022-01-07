@@ -119,12 +119,16 @@ export const colors = schemeTableau10;
 
 ![bolero](./img/bolero34.png?752x124)
 
+<div className="max-w-full overflow-auto">
+
 | color                      | value | type          | amount    | visual cue                  |
 | -------------------------- | ----- | ------------- | --------- | --------------------------- |
 | <Color color={colors[0]}/> | 3/4   | bar           | 2 total   | seperated by vertical lines |
 | <Color color={colors[1]}/> | 1/4   | 4ths          | 3 per bar | separated by space          |
 | <Color color={colors[2]}/> | 1/8   | 8ths          | 2 per 4th | connected by first beam     |
 | <Color color={colors[3]}/> | 1/24  | 16th triplets | 3 per 8th | connected by second beam    |
+
+</div>
 
 <div style={{ display: 'none' }}>
   <NestedGrid
@@ -843,12 +847,11 @@ for (let node of nestedWalker(tree)) {
 Output:
 
 ```js
-['A', ['B', 'C'], 'D']
-'A'
-['B', 'C']
-'B'
-'C'
-'D'
+['A', ['B', 'C'], 'D'];
+'A'[('B', 'C')];
+('B');
+('C');
+('D');
 ```
 
 #### Walking rhythmical objects

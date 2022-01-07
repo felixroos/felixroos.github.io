@@ -66,85 +66,87 @@ export function Plot({
   });
 
   return (
-    <svg width={width} height={height} onClick={(e) => onClick && onClick(e)}>
-      {!hideAxes && (
-        <>
-          {!hideXAxis && (
-            <g
-              className="x-axis plot-axis"
-              ref={(g) =>
-                select(g)
-                  /* .attr("transform", `translate(0,${y(0)})`) */
-                  .attr('transform', `translate(0,${height - margin.top})`)
-                  .call(axisBottom(x).ticks(width / 50))
-              }
-            />
-          )}
-          {!hideYAxis && (
-            <g
-              className="y-axis plot-axis"
-              ref={(g) =>
-                select(g)
-                  /* .attr("transform", `translate(${x(0)},0)`) */
-                  .attr('transform', `translate(${margin.left},0)`)
-                  .call(axisLeft(y).ticks(height / 50))
-              }
-            />
-          )}
-        </>
-      )}
-      {grid && (
-        <>
-          {grid.x && (
-            <g
-              className="grid"
-              ref={(g) =>
-                select(g)
-                  .attr('transform', `translate(0, ${y(range.y[1])})`)
-                  .call(
-                    axisBottom(x)
-                      .ticks(grid.x)
-                      .tickSize(innerHeight)
-                      .tickFormat(() => '')
-                  )
-              }
-            />
-          )}
-          {grid.y && (
-            <g
-              className="grid"
-              ref={(g) =>
-                select(g)
-                  .attr('transform', `translate(${x(range.x[0])}, 0)`)
-                  .call(
-                    axisLeft(y)
-                      .ticks(grid.y)
-                      .tickSize(-innerWidth)
-                      .tickFormat(() => '')
-                  )
-              }
-            />
-          )}
-        </>
-      )}
-      <g>
-        {plots.map((lines, i) =>
-          lines.map((line, j) => (
-            <path
-              onMouseEnter={() => onMouseEnter && onMouseEnter(i)}
-              onMouseLeave={() => onMouseLeave && onMouseLeave(i)}
-              key={i + '-' + j}
-              d={'M' + line.join('L')}
-              stroke={colors[i % colors.length] || 'black'}
-              strokeWidth={strokeWidth}
-              fill="none"
-            />
-          ))
+    <div className="max-w-full overflow-auto">
+      <svg width={width} height={height} onClick={(e) => onClick && onClick(e)}>
+        {!hideAxes && (
+          <>
+            {!hideXAxis && (
+              <g
+                className="x-axis plot-axis"
+                ref={(g) =>
+                  select(g)
+                    /* .attr("transform", `translate(0,${y(0)})`) */
+                    .attr('transform', `translate(0,${height - margin.top})`)
+                    .call(axisBottom(x).ticks(width / 50))
+                }
+              />
+            )}
+            {!hideYAxis && (
+              <g
+                className="y-axis plot-axis"
+                ref={(g) =>
+                  select(g)
+                    /* .attr("transform", `translate(${x(0)},0)`) */
+                    .attr('transform', `translate(${margin.left},0)`)
+                    .call(axisLeft(y).ticks(height / 50))
+                }
+              />
+            )}
+          </>
         )}
-        {/* <g transform={`translate(${m},0)`}></g> axisLeft(y) */}
-        {/* <g transform={`translate(0,${y(0)})`}></g> axisBottom(x) */}
-      </g>
-    </svg>
+        {grid && (
+          <>
+            {grid.x && (
+              <g
+                className="grid"
+                ref={(g) =>
+                  select(g)
+                    .attr('transform', `translate(0, ${y(range.y[1])})`)
+                    .call(
+                      axisBottom(x)
+                        .ticks(grid.x)
+                        .tickSize(innerHeight)
+                        .tickFormat(() => '')
+                    )
+                }
+              />
+            )}
+            {grid.y && (
+              <g
+                className="grid"
+                ref={(g) =>
+                  select(g)
+                    .attr('transform', `translate(${x(range.x[0])}, 0)`)
+                    .call(
+                      axisLeft(y)
+                        .ticks(grid.y)
+                        .tickSize(-innerWidth)
+                        .tickFormat(() => '')
+                    )
+                }
+              />
+            )}
+          </>
+        )}
+        <g>
+          {plots.map((lines, i) =>
+            lines.map((line, j) => (
+              <path
+                onMouseEnter={() => onMouseEnter && onMouseEnter(i)}
+                onMouseLeave={() => onMouseLeave && onMouseLeave(i)}
+                key={i + '-' + j}
+                d={'M' + line.join('L')}
+                stroke={colors[i % colors.length] || 'black'}
+                strokeWidth={strokeWidth}
+                fill="none"
+              />
+            ))
+          )}
+          {/* <g transform={`translate(${m},0)`}></g> axisLeft(y) */}
+          {/* <g transform={`translate(0,${y(0)})`}></g> axisBottom(x) */}
+        </g>
+      </svg>
+    </div>
   );
 }
 

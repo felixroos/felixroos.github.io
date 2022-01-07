@@ -30,42 +30,44 @@ As this is the third post of a series of a series about Just Intonation, let's t
 
 Let's start by stacking major thirds on top of each other. The most simple ratio that represents a major third is 5/4:
 
-<div className="flex mb-1">
-  <Monochord value={1} invert={true} base={220} />
-  <InlineMath>{`5^{0}*2^{0}`}</InlineMath>
-</div>
-<div className="flex mb-1">
-  <Monochord value={4 / 5} invert={true} base={220} />
-  <InlineMath>{`5^{1}*2^{-2}`}</InlineMath>
-</div>
-<div className="flex mb-1">
-  <Monochord value={16 / 25} invert={true} base={220} />
-  <InlineMath>{`5^{2}*2^{-4}`}</InlineMath>
-</div>
-<div className="flex mb-1">
-  <Monochord value={64 / 125} invert={true} base={220} />
-  <InlineMath>{`5^{3}*2^{-6}`}</InlineMath>
-</div>
-<div className="flex mb-1">
-  <Monochord value={256 / 625} invert={true} base={220} />
-  <InlineMath>{`5^{4}*2^{-8}`}</InlineMath>
-</div>
-<div className="flex mb-1">
-  <Monochord value={1024 / 3125} invert={true} base={220} />
-  <InlineMath>{`5^{5}*2^{-10}`}</InlineMath>
-</div>
-<div className="flex mb-1">
-  <Monochord value={4096 / 15625} invert={true} base={220} />
-  <InlineMath>{`5^{6}*2^{-12}`}</InlineMath>
+<div className="overflow-auto max-w-full">
+    <div className="flex mb-1">
+      <Monochord value={1} invert={true} base={220} />
+      <InlineMath>{`5^{0}*2^{0}`}</InlineMath>
+    </div>
+    <div className="flex mb-1">
+      <Monochord value={4 / 5} invert={true} base={220} />
+      <InlineMath>{`5^{1}*2^{-2}`}</InlineMath>
+    </div>
+    <div className="flex mb-1">
+      <Monochord value={16 / 25} invert={true} base={220} />
+      <InlineMath>{`5^{2}*2^{-4}`}</InlineMath>
+    </div>
+    <div className="flex mb-1">
+      <Monochord value={64 / 125} invert={true} base={220} />
+      <InlineMath>{`5^{3}*2^{-6}`}</InlineMath>
+    </div>
+    <div className="flex mb-1">
+      <Monochord value={256 / 625} invert={true} base={220} />
+      <InlineMath>{`5^{4}*2^{-8}`}</InlineMath>
+    </div>
+    <div className="flex mb-1">
+      <Monochord value={1024 / 3125} invert={true} base={220} />
+      <InlineMath>{`5^{5}*2^{-10}`}</InlineMath>
+    </div>
+    <div className="flex mb-1">
+      <Monochord value={4096 / 15625} invert={true} base={220} />
+      <InlineMath>{`5^{6}*2^{-12}`}</InlineMath>
+    </div>
 </div>
 
 Note that the ratios are frequency ratios instead of length ratios.
 
 Like in the last post, we are multiplying powers of harmonic partials, in this case 5 and 2, which is the same powering thirds:
 
-$$$
+$$
 5^{n} * 2^{-2n} = (\frac{5}{4})^{n}
-$$$
+$$
 
 I prefer the combination of powers of natural numbers, as this expresses more clearly what we are doing here: combining harmonic partials.
 
@@ -74,9 +76,9 @@ I prefer the combination of powers of natural numbers, as this expresses more cl
 We can clearly see and hear a pattern: There are 3 distinct pitches, which repeat in a detuned way.
 On strings 4 and 7, we arrive at a pitches that are really close to octaves of the fundamental frequency.
 
-$$$
+$$
 \frac{1}{1} \approx \frac{125}{64} * 2^{-1} \approx \frac{15625}{4096} * 2^{-2}
-$$$
+$$
 
 This makes sense if we compare that to standard western tuning, where 3 major thirds fit inside one octave.
 
@@ -84,9 +86,9 @@ This makes sense if we compare that to standard western tuning, where 3 major th
 
 This little "error" between 3 stacked thirds and 1 octave is called [Diesis](https://en.wikipedia.org/wiki/Diesis):
 
-$$$
+$$
 \frac{125}{64} : 2 = \frac{125}{128}
-$$$
+$$
 
 This is similar to the pythagorean comma, which is the little "error" between 12 stacked fifths and 7 octaves (see last post).
 
@@ -95,9 +97,9 @@ This is similar to the pythagorean comma, which is the little "error" between 12
 Now that we have a little knowledge of thirds, we can look at 5 limit tuning, which combines pure fifths and thirds (powers of 3 and powers of 5) to generate ratios.
 This means that for each number of fifths, we can add any number of thirds. As a formula, this means:
 
-$$$
+$$
 R_{5} = 2^{a} * 3^{b} * 5^{c}
-$$$
+$$
 
 Like in the last post, we will use octave reduction to automatically set the exponent of 2 to keep the end result between 1 and 2.
 Having that out of the way, we have free control over the two exponents b and c.
@@ -263,7 +265,7 @@ But let's stay with 3 and 5 for now.
         </select>
         <br />
         <Grid container spacing={2}>
-          <Grid item xs={6}>
+          <Grid item xs={12} sm={6}>
             {state.fifths} fifth{state.fifths !== 1 ? 's' : ''}
             <br />
             <Slider
@@ -275,7 +277,7 @@ But let's stay with 3 and 5 for now.
               onChange={(e, v) => v !== state.fifths && setState({ fifths: v })}
             />
           </Grid>
-          <Grid item xs={6}>
+          <Grid item xs={12} sm={6}>
             rotate by {state.rotateFifths} fifth
             {Math.abs(state.rotateFifths) !== 1 ? 's' : ''}
             <br />
@@ -290,7 +292,7 @@ But let's stay with 3 and 5 for now.
           </Grid>
         </Grid>
         <Grid container spacing={2}>
-          <Grid item xs={6}>
+          <Grid item xs={12} sm={6}>
             {state.thirds} third{state.thirds !== 1 ? 's' : ''}
             <Slider
               marks
@@ -301,7 +303,7 @@ But let's stay with 3 and 5 for now.
               onChange={(e, v) => v !== state.thirds && setState({ thirds: v })}
             />
           </Grid>
-          <Grid item xs={6}>
+          <Grid item xs={12} sm={6}>
             rotate by {state.rotateThirds} third
             {Math.abs(state.rotateThirds) !== 1 ? 's' : ''}
             <br />
@@ -326,68 +328,70 @@ But let's stay with 3 and 5 for now.
             </Button>
           ))}
         </ButtonGroup>*/}
-        <table>
-          <tbody>
-            {Array.from({ length: state.fifths + 1 }, (_, f) => (
-              <tr key={f}>
-                {Array.from({ length: state.thirds + 1 }, (_, t) => {
-                  const fifth = f + state.rotateFifths;
-                  const third = t + state.rotateThirds;
-                  const factor = Math.pow(3, fifth) * Math.pow(5, third);
-                  const exp = Math.ceil(Math.log(1 / factor) / Math.log(2));
-                  const value = Math.pow(2, exp) * factor;
-                  const [top, bottom] = new Fraction(value).toFraction().split('/');
-                  const isDisabled = !!state.disabled.find(([x, y]) => fifth === x && third === y);
-                  const colProps = {
-                    key: `${f}-${t}`,
-                    style: {
-                      color: 'black',
-                      paddingLeft: 10,
-                      border: 0,
-                      backgroundColor: isDisabled ? 'gray' : frequencyColor(value * base),
-                    },
-                    onClick: () => {
-                      {
-                        if (isDisabled) {
-                          setState({
-                            disabled: state.disabled.filter(([x, y]) => !(x === fifth && y === third)),
-                          });
-                        } else {
-                          setState({
-                            disabled: state.disabled.concat([[fifth, third]]),
-                          });
+        <div className="max-w-full overflow-auto">
+          <table>
+            <tbody>
+              {Array.from({ length: state.fifths + 1 }, (_, f) => (
+                <tr key={f}>
+                  {Array.from({ length: state.thirds + 1 }, (_, t) => {
+                    const fifth = f + state.rotateFifths;
+                    const third = t + state.rotateThirds;
+                    const factor = Math.pow(3, fifth) * Math.pow(5, third);
+                    const exp = Math.ceil(Math.log(1 / factor) / Math.log(2));
+                    const value = Math.pow(2, exp) * factor;
+                    const [top, bottom] = new Fraction(value).toFraction().split('/');
+                    const isDisabled = !!state.disabled.find(([x, y]) => fifth === x && third === y);
+                    const colProps = {
+                      key: `${f}-${t}`,
+                      style: {
+                        color: 'black',
+                        paddingLeft: 10,
+                        border: 0,
+                        backgroundColor: isDisabled ? 'gray' : frequencyColor(value * base),
+                      },
+                      onClick: () => {
+                        {
+                          if (isDisabled) {
+                            setState({
+                              disabled: state.disabled.filter(([x, y]) => !(x === fifth && y === third)),
+                            });
+                          } else {
+                            setState({
+                              disabled: state.disabled.concat([[fifth, third]]),
+                            });
+                          }
                         }
-                      }
-                    },
-                  };
-                  if (state.activeUnit === 'powers') {
-                    return (
-                      <td {...colProps}>
-                        <InlineMath>{`3^{${fifth}}*5^{${third}}*2^{${exp}} = \\frac{${top}}{${
-                          bottom || 1
-                        }}`}</InlineMath>
-                      </td>
-                    );
-                  }
-                  if (state.activeUnit === 'ratio') {
-                    return (
-                      <td {...colProps}>
-                        <InlineMath>{`\\frac{${top}}{${bottom || 1}}`}</InlineMath>
-                      </td>
-                    );
-                  }
-                  if (state.activeUnit === 'cent') {
-                    return <td {...colProps}>{Math.round(cents(value) * 10) / 10}</td>;
-                  }
-                  if (state.activeUnit === 'frequency') {
-                    return <td {...colProps}>{Math.round(value * base * 10) / 10}Hz</td>;
-                  }
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <ButtonGroup color="primary">
+                      },
+                    };
+                    if (state.activeUnit === 'powers') {
+                      return (
+                        <td {...colProps}>
+                          <InlineMath>{`3^{${fifth}}*5^{${third}}*2^{${exp}} = \\frac{${top}}{${
+                            bottom || 1
+                          }}`}</InlineMath>
+                        </td>
+                      );
+                    }
+                    if (state.activeUnit === 'ratio') {
+                      return (
+                        <td {...colProps}>
+                          <InlineMath>{`\\frac{${top}}{${bottom || 1}}`}</InlineMath>
+                        </td>
+                      );
+                    }
+                    if (state.activeUnit === 'cent') {
+                      return <td {...colProps}>{Math.round(cents(value) * 10) / 10}</td>;
+                    }
+                    if (state.activeUnit === 'frequency') {
+                      return <td {...colProps}>{Math.round(value * base * 10) / 10}Hz</td>;
+                    }
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <ButtonGroup color="primary" className="max-w-full">
           {Object.keys(units).map((unit) => (
             <Button
               key={unit}

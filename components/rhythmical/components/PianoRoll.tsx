@@ -77,19 +77,21 @@ export default function PianoRoll(props: PianoRollProps) {
     playheadX = round(timeOffset);
   }
   return (
-    <svg {...{ width, height }} className="max-w-full">
-      <g
-        style={{
-          transform: `translateX(${laneOffset}px)`,
-          willChange: 'transform',
-        }}
-      >
-        {renderLanes()}
-        {renderLanes(maxTime)}
-        {renderLanes(2 * maxTime)}
-      </g>
-      <line x1={playheadX} x2={playheadX} y1={0} y2={height} strokeWidth={strokeWidth * 2} stroke={'black'} />
-    </svg>
+    <div className="max-w-full overflow-auto">
+      <svg {...{ width, height }}>
+        <g
+          style={{
+            transform: `translateX(${laneOffset}px)`,
+            willChange: 'transform',
+          }}
+        >
+          {renderLanes()}
+          {renderLanes(maxTime)}
+          {renderLanes(2 * maxTime)}
+        </g>
+        <line x1={playheadX} x2={playheadX} y1={0} y2={height} strokeWidth={strokeWidth * 2} stroke={'black'} />
+      </svg>
+    </div>
   );
 }
 
@@ -200,7 +202,4 @@ function round(n: number) {
   return Math.floor(n * 2) / 2;
 }
 
-
-function getPitchRoll(events) {
-
-}
+function getPitchRoll(events) {}

@@ -3,7 +3,7 @@ title: Analyzing iReal Chord Changes
 date: '2020-06-14'
 tags: ['tools', 'music theory']
 description: 'Now that we have a huge dataset of chord changes, we can do some data mining on it.'
-image: ./img/ireal-composers.png 
+image: ./img/ireal-composers.png
 ---
 
 import Grid from '@material-ui/core/Grid';
@@ -140,8 +140,8 @@ And the gold medal for the most boring chords goes to: Massachusetts by the Bee 
 
 Most of this is no surprise, but let's try to describe the most common transitions for two big pop and jazz playlists:
 
-<Grid spacing={0} container style={{ width: 800 }}>
-  <Grid item xs={6}>
+<Grid spacing={0} container className="max-w-full">
+  <Grid item sm={6} xs={12}>
     <strong>
       <a href="https://www.irealb.com/forums/showthread.php?8483-Pop-400">Pop 400</a>
     </strong>
@@ -191,7 +191,7 @@ Most of this is no surprise, but let's try to describe the most common transitio
       </li>
     </ul>
   </Grid>
-  <Grid item xs={6}>
+  <Grid item sm={6} xs={12}>
     <strong>
       <a href="https://www.irealb.com/forums/showthread.php?12753-Jazz-1350-Standards">Jazz 1350</a>
     </strong>

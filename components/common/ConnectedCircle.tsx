@@ -87,90 +87,92 @@ export default function ConnectedCircle({
   });
 
   return (
-    <svg width={size} height={size} className="inline-block">
-      <circle
-        cx={maxDistance + nodeRadius + margin}
-        cy={maxDistance + nodeRadius + margin}
-        r={radius}
-        stroke="gray"
-        strokeWidth={2}
-        fill="none"
-      />
-      {links &&
-        links.map((link, i) => {
-          const { source, target, stroke, strokeWidth } = link;
-          return (
-            <path
-              onClick={() => onClick && onClick({ link })}
-              {...hover({ link })}
-              key={i}
-              stroke={stroke || 'gray'}
-              strokeWidth={strokeWidth || 4}
-              fill="none"
-              d={line()(nodePoints([source, target]))}
-            />
-          );
-        })}
+    <div className="max-w-full overflow-auto">
+      <svg width={size} height={size} className="inline-bloc">
+        <circle
+          cx={maxDistance + nodeRadius + margin}
+          cy={maxDistance + nodeRadius + margin}
+          r={radius}
+          stroke="gray"
+          strokeWidth={2}
+          fill="none"
+        />
+        {links &&
+          links.map((link, i) => {
+            const { source, target, stroke, strokeWidth } = link;
+            return (
+              <path
+                onClick={() => onClick && onClick({ link })}
+                {...hover({ link })}
+                key={i}
+                stroke={stroke || 'gray'}
+                strokeWidth={strokeWidth || 4}
+                fill="none"
+                d={line()(nodePoints([source, target]))}
+              />
+            );
+          })}
 
-      {sets &&
-        sets.map((_set, i) => {
-          const { set, stroke, offset } = _set;
+        {sets &&
+          sets.map((_set, i) => {
+            const { set, stroke, offset } = _set;
+            return (
+              <path
+                onClick={() => onClick && onClick({ set: _set })}
+                {...hover({ set: _set })}
+                key={i}
+                stroke={stroke || 'gray'}
+                strokeWidth={4}
+                fill="none"
+                d={line()(nodePoints(set, undefined, offset))}
+              />
+            );
+          })}
+        {label && (
+          <text x={size / 2} y={size / 2} textAnchor="middle">
+            {label}
+          </text>
+        )}
+        {nodes.map((node, i, a) => {
+          const { id, label, fill, radius: _radius, style, color } = node;
+          const [x, y] = nodePosition(id);
+          // tick position
+          const [tx, ty] = nodePosition(id, radius);
           return (
-            <path
-              onClick={() => onClick && onClick({ set: _set })}
-              {...hover({ set: _set })}
-              key={i}
-              stroke={stroke || 'gray'}
-              strokeWidth={4}
-              fill="none"
-              d={line()(nodePoints(set, undefined, offset))}
-            />
+            <React.Fragment key={i}>
+              <path
+                strokeWidth={2}
+                stroke={'gray'}
+                d={line()([
+                  [tx, ty],
+                  [x, y],
+                ])}
+              />
+              <circle
+                r={_radius || nodeRadius}
+                cx={x}
+                cy={y}
+                fill={fill}
+                stroke="gray"
+                strokeWidth={2}
+                style={style || {}}
+                onClick={() => onClick && onClick({ node })}
+                {...hover({ node })}
+              />
+              <text
+                style={{ userSelect: 'none', pointerEvents: 'none', fontSize }}
+                x={x}
+                y={y + nodeRadius / 4}
+                fill={color || 'black'}
+                textAnchor="middle"
+              >
+                {typeof label !== 'undefined' ? label : id}
+              </text>
+            </React.Fragment>
           );
         })}
-      {label && (
-        <text x={size / 2} y={size / 2} textAnchor="middle">
-          {label}
-        </text>
-      )}
-      {nodes.map((node, i, a) => {
-        const { id, label, fill, radius: _radius, style, color } = node;
-        const [x, y] = nodePosition(id);
-        // tick position
-        const [tx, ty] = nodePosition(id, radius);
-        return (
-          <React.Fragment key={i}>
-            <path
-              strokeWidth={2}
-              stroke={'gray'}
-              d={line()([
-                [tx, ty],
-                [x, y],
-              ])}
-            />
-            <circle
-              r={_radius || nodeRadius}
-              cx={x}
-              cy={y}
-              fill={fill}
-              stroke="gray"
-              strokeWidth={2}
-              style={style || {}}
-              onClick={() => onClick && onClick({ node })}
-              {...hover({ node })}
-            />
-            <text
-              style={{ userSelect: 'none', pointerEvents: 'none', fontSize }}
-              x={x}
-              y={y + nodeRadius / 4}
-              fill={color || 'black'}
-              textAnchor="middle"
-            >
-              {typeof label !== 'undefined' ? label : id}
-            </text>
-          </React.Fragment>
-        );
-      })}
-    </svg>
+      </svg>
+    </div>
   );
 }
 

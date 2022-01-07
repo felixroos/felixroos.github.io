@@ -16,7 +16,15 @@ export function Waveform({ pcm, playhead }: { pcm?: Float32Array; playhead?: any
       style: { width, height, ...style },
     };
   }
-  return <canvas ref={setCanvasRef} {...prettyCanvas(640, 200, { /* backgroundColor: '#BFBFBF' */ })} />;
+  return (
+    <canvas
+      className="max-w-full overflow-auto"
+      ref={setCanvasRef}
+      {...prettyCanvas(640, 200, {
+        /* backgroundColor: '#BFBFBF' */
+      })}
+    />
+  );
 }
 
 function drawPCM(values, canvas, playhead) {

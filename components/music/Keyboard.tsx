@@ -47,26 +47,28 @@ export default function Keyboard({ options, onClick, onAttack, onRelease, keyCon
     colorize: [...(options.colorize || []), { keys: colorized, color: 'red' }],
   });
   return (
-    <svg {...svg}>
-      {children
-        .filter((c) => !!c)
-        .map(({ polygon, circle, text, key }, index) => [
-          polygon && (
-            <polygon
-              {...polygon}
-              key={'p' + index}
-              {...onDrag(key)}
-              onMouseUp={() => deactivate(key)}
-              onClick={() => onClick && onClick(key)}
-            />
-          ),
-          circle && <circle {...circle} key={'c' + index} style={{ pointerEvents: 'none' }} />,
-          text && (
-            <text {...text} key={'t' + index} style={{ pointerEvents: 'none', userSelect: 'none' }}>
-              {text.value}
-            </text>
-          ),
-        ])}
-    </svg>
+    <div className="max-w-full overflow-auto">
+      <svg {...svg}>
+        {children
+          .filter((c) => !!c)
+          .map(({ polygon, circle, text, key }, index) => [
+            polygon && (
+              <polygon
+                {...polygon}
+                key={'p' + index}
+                {...onDrag(key)}
+                onMouseUp={() => deactivate(key)}
+                onClick={() => onClick && onClick(key)}
+              />
+            ),
+            circle && <circle {...circle} key={'c' + index} style={{ pointerEvents: 'none' }} />,
+            text && (
+              <text {...text} key={'t' + index} style={{ pointerEvents: 'none', userSelect: 'none' }}>
+                {text.value}
+              </text>
+            ),
+          ])}
+      </svg>
+    </div>
   );
 }

@@ -260,37 +260,39 @@ Now we can generate a whole tuning system, by picking a range of ratios. We can 
           />
           Sort
         </label> */}
-        <table>
-          <tbody>
-            <tr>
-              <th>position</th>
-              <th>powers</th>
-              <th>ratio</th>
-              <th>cents</th>
-              <th>listen</th>
-            </tr>
-            {ratios.map(({ ratio, power }, i) => {
-              const factor = Math.pow(3, power);
-              const [top, bottom] = new Fraction(ratio).toFraction().split('/');
-              const exp = Math.ceil(Math.log(1 / factor) / Math.log(2));
-              return (
-                <tr key={i}>
-                  <td>{i}</td>
-                  <td>
-                    <InlineMath key={i}>{`3^{${power}} * 2^{${exp}}`}</InlineMath>
-                  </td>
-                  <td>
-                    <InlineMath key={i}>{`\\frac{${top}}{${bottom || 1}}`}</InlineMath>
-                  </td>
-                  <td>{Math.round(cents(ratio))}</td>
-                  <td>
-                    <button onClick={() => harp.triggerAttackRelease(ratio * base, 1)}>Play</button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="max-w-full overflow-hidden">
+          <table>
+            <tbody>
+              <tr>
+                <th>position</th>
+                <th>powers</th>
+                <th>ratio</th>
+                <th>cents</th>
+                <th>listen</th>
+              </tr>
+              {ratios.map(({ ratio, power }, i) => {
+                const factor = Math.pow(3, power);
+                const [top, bottom] = new Fraction(ratio).toFraction().split('/');
+                const exp = Math.ceil(Math.log(1 / factor) / Math.log(2));
+                return (
+                  <tr key={i}>
+                    <td>{i}</td>
+                    <td>
+                      <InlineMath key={i}>{`3^{${power}} * 2^{${exp}}`}</InlineMath>
+                    </td>
+                    <td>
+                      <InlineMath key={i}>{`\\frac{${top}}{${bottom || 1}}`}</InlineMath>
+                    </td>
+                    <td>{Math.round(cents(ratio))}</td>
+                    <td>
+                      <button onClick={() => harp.triggerAttackRelease(ratio * base, 1)}>Play</button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
     );
   }}
@@ -314,6 +316,8 @@ Here we see the main reason for why western music uses a 12 note tuning system!
 This 12 note system is only almost perfect. The problem: if we stack another fifth ontop of the 12th one, the resulting pitch is a little bit too high than it should be.
 The system would be perfect if the 13ths fifth would end up being the fundamental ratio again. But this is mathematically impossible:
 
+<div className="max-w-full overflow-auto">
+
 $$
 2^{-19} * 3^{12} = \frac{531441}{524288} \approx 1.0136432 \neq 1
 $$
@@ -330,6 +334,8 @@ If we divide those 7 octaves to get the difference, we come to the same result a
 $$
 R_{pc} = {(\frac{3}{2})}^{12} : 2^7 = \frac{531441}{524288} \approx 1.0136432
 $$
+
+</div>
 
 This little "error" is called the pythagorean comma.
 

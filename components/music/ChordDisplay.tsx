@@ -42,7 +42,7 @@ export default function ChordDisplay() {
 
   return (
     <>
-      <div className="flex space-x-1 items-center">
+      <div className="sm:flex space-y-2 sm:space-x-1 items-center">
         <select
           value={note.replace(/[0-9]/, '')}
           onChange={(e) => {

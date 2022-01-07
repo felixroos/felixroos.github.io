@@ -61,6 +61,7 @@ If the length gets shorter, the pitch goes up.
 Because of that, the standard way of describing pitch ratios is the inversion of the length ratio, which is the ratio of the frequencies:
 
 {' '}
+
 <div className="space-y-2">
   <Monochord value={1} base={440} invert={true} />
   <Monochord value={4 / 5} base={440} invert={true} />
@@ -94,67 +95,67 @@ The harmonic series is a natural way of sorting ratios. As already shown in my l
 
 <Center>
   <div className="space-y-2">
-    <Monochord label={1} harmonic={1} amplitude={1} base={110} />
-    <div className="flex">
-      <Monochord label={2} harmonic={2} amplitude={1} base={110} />
+    <div className="sm:flex">
+      <Monochord label={1} harmonic={1} amplitude={1} base={110} />
       <InlineMath>{`\\frac{2}{1} = \\text{octave}`}</InlineMath>
     </div>
-    <div className="flex">
-      <Monochord label={3} harmonic={3} amplitude={1} base={110} />
+    <div className="sm:flex">
+      <Monochord label={2} harmonic={2} amplitude={1} base={110} />
       <InlineMath>{`\\frac{3}{2} = \\text{perfect fifth}`}</InlineMath>
     </div>
-    <div className="flex">
-      <Monochord label={4} harmonic={4} amplitude={1} base={110} />
+    <div className="sm:flex">
+      <Monochord label={3} harmonic={3} amplitude={1} base={110} />
       <InlineMath>{`\\frac{4}{3} = \\text{perfect fourth}`}</InlineMath>
     </div>
-    <div className="flex">
-      <Monochord label={5} harmonic={5} amplitude={1} base={110} />
+    <div className="sm:flex">
+      <Monochord label={4} harmonic={4} amplitude={1} base={110} />
       <InlineMath>{`\\frac{5}{4} = \\text{major third}`}</InlineMath>
     </div>
-    <div className="flex">
-      <Monochord label={6} harmonic={6} amplitude={1} base={110} />
+    <div className="sm:flex">
+      <Monochord label={5} harmonic={5} amplitude={1} base={110} />
       <InlineMath>{`\\frac{6}{5} = \\text{minor third}`}</InlineMath>
     </div>
-    <div className="flex">
-      <Monochord label={7} harmonic={7} amplitude={1} base={110} />
+    <div className="sm:flex">
+      <Monochord label={6} harmonic={6} amplitude={1} base={110} />
       <InlineMath>{`\\frac{7}{6} = \\text{minor third}`}</InlineMath>
     </div>
-    <div className="flex">
-      <Monochord label={8} harmonic={8} amplitude={1} base={110} />
+    <div className="sm:flex">
+      <Monochord label={7} harmonic={7} amplitude={1} base={110} />
       <InlineMath>{`\\frac{8}{7} = \\text{major second}`}</InlineMath>
     </div>
-    <div className="flex">
-      <Monochord label={9} harmonic={9} amplitude={1} base={110} />
+    <div className="sm:flex">
+      <Monochord label={8} harmonic={8} amplitude={1} base={110} />
       <InlineMath>{`\\frac{9}{8} = \\text{major second}`}</InlineMath>
     </div>
-    <div className="flex">
-      <Monochord label={10} harmonic={10} amplitude={1} base={110} />
+    <div className="sm:flex">
+      <Monochord label={9} harmonic={9} amplitude={1} base={110} />
       <InlineMath>{`\\frac{10}{9} = \\text{major second}`}</InlineMath>
     </div>
-    <div className="flex">
-      <Monochord label={11} harmonic={11} amplitude={1} base={110} />
+    <div className="sm:flex">
+      <Monochord label={10} harmonic={10} amplitude={1} base={110} />
       <InlineMath>{`\\frac{11}{10} = \\text{? second}`}</InlineMath>
     </div>
-    <div className="flex">
-      <Monochord label={12} harmonic={12} amplitude={1} base={110} />
+    <div className="sm:flex">
+      <Monochord label={11} harmonic={11} amplitude={1} base={110} />
       <InlineMath>{`\\frac{12}{11} = \\text{? second}`}</InlineMath>
     </div>
-    <div className="flex">
-      <Monochord label={13} harmonic={13} amplitude={1} base={110} />
+    <div className="sm:flex">
+      <Monochord label={12} harmonic={12} amplitude={1} base={110} />
       <InlineMath>{`\\frac{13}{12} = \\text{? second}`}</InlineMath>
     </div>
-    <div className="flex">
-      <Monochord label={14} harmonic={14} amplitude={1} base={110} />
+    <div className="sm:flex">
+      <Monochord label={13} harmonic={13} amplitude={1} base={110} />
       <InlineMath>{`\\frac{14}{13} = \\text{minor second}`}</InlineMath>
     </div>
-    <div className="flex">
-      <Monochord label={15} harmonic={15} amplitude={1} base={110} />
+    <div className="sm:flex">
+      <Monochord label={14} harmonic={14} amplitude={1} base={110} />
       <InlineMath>{`\\frac{15}{14} = \\text{minor second}`}</InlineMath>
     </div>
-    <div className="flex">
-      <Monochord label={16} harmonic={16} amplitude={1} base={110} />
+    <div className="sm:flex">
+      <Monochord label={15} harmonic={15} amplitude={1} base={110} />
       <InlineMath>{`\\frac{16}{15} = \\text{minor second}`}</InlineMath>
     </div>
+    <Monochord label={16} harmonic={16} amplitude={1} base={110} />
   </div>
 </Center>
 
@@ -270,7 +271,7 @@ We can add ratios together by multiplying:
 Here we add a fifth and a fourth together, resulting in the ratio for one octave
 higher. In length ratios, this would be inversed:
 
-<div className="flex mb-2">
+<div className="sm:sm:flex mb-2 space-y-2">
   <Monochord value={2 / 3} invert={false} base={440} />
   <InlineMath>{`*\\frac{3}{4}`}</InlineMath>
 </div>
@@ -284,7 +285,7 @@ As opposed to adding by multiplying, we can subtract ratios by dividing:
 
 If we subtract a fourth from one octave, we get a fifth. The same with length ratios
 
-<div className="flex mb-2">
+<div className="sm:sm:flex mb-2 space-y-2">
   <Monochord value={1 / 2} invert={false} base={440} />
   <InlineMath>{`:\\frac{3}{4} = *\\frac{4}{3}`}</InlineMath>
 </div>
@@ -303,7 +304,7 @@ On a monochord, stacking 4 fifths would look like that:
   {() =>
     Array.from({ length: 5 }, (_, i) => (
       <React.Fragment key={i}>
-        <div className="flex mb-2">
+        <div className="sm:flex mb-2 space-y-2">
           <Monochord value={Math.pow(2 / 3, i)} invert={false} base={220} />
           <InlineMath>{`\\frac{2}{3}^{${i}}`}</InlineMath>
         </div>
@@ -323,23 +324,23 @@ Moving ratios inside that range is called octave reduction.
 
 For example, we could reduce the above stacked fifths into one octave like that:
 
-<div className="flex mb-2">
+<div className="sm:flex mb-2 space-y-2">
   <Monochord value={1} invert={false} base={220} />
   <InlineMath>{`\\frac{2}{3}^{0} * 2^0`}</InlineMath>
 </div>
-<div className="flex mb-2">
+<div className="sm:flex mb-2 space-y-2">
   <Monochord value={2 / 3} invert={false} base={220} />
   <InlineMath>{`\\frac{2}{3}^{1} * 2^0`}</InlineMath>
 </div>
-<div className="flex mb-2">
+<div className="sm:flex mb-2 space-y-2">
   <Monochord value={8 / 9} invert={false} base={220} />
   <InlineMath>{`\\frac{2}{3}^{2} * 2^1`}</InlineMath>
 </div>
-<div className="flex mb-2">
+<div className="sm:flex mb-2 space-y-2">
   <Monochord value={16 / 27} invert={false} base={220} />
   <InlineMath>{`\\frac{2}{3}^{3} * 2^1`}</InlineMath>
 </div>
-<div className="flex mb-2">
+<div className="sm:flex mb-2 space-y-2">
   <Monochord value={64 / 81} invert={false} base={220} />
   <InlineMath>{`\\frac{2}{3}^{4} * 2^2`}</InlineMath>
 </div>
@@ -350,23 +351,23 @@ Note that with length ratios, the movement direction is reversed (like above, po
 
 Ratios that have been octave reduced can be sorted, to receive a harmonious scale:
 
-<div className="flex mb-2">
+<div className="sm:flex mb-2 space-y-2">
   <Monochord value={1} invert={false} base={220} />
   <InlineMath>{`\\frac{2}{3}^{0}*2^0`}</InlineMath>
 </div>
-<div className="flex mb-2">
+<div className="sm:flex mb-2 space-y-2">
   <Monochord value={8 / 9} invert={false} base={220} />
   <InlineMath>{`\\frac{2}{3}^{2}*2^1`}</InlineMath>
 </div>
-<div className="flex mb-2">
+<div className="sm:flex mb-2 space-y-2">
   <Monochord value={64 / 81} invert={false} base={220} />
   <InlineMath>{`\\frac{2}{3}^{4}*2^2`}</InlineMath>
 </div>
-<div className="flex mb-2">
+<div className="sm:flex mb-2 space-y-2">
   <Monochord value={2 / 3} invert={false} base={220} />
   <InlineMath>{`\\frac{2}{3}^{1}*2^0`}</InlineMath>
 </div>
-<div className="flex mb-2">
+<div className="sm:flex mb-2 space-y-2">
   <Monochord value={16 / 27} invert={false} base={220} />
   <InlineMath>{`\\frac{2}{3}^{3} * 2^1`}</InlineMath>
 </div>
