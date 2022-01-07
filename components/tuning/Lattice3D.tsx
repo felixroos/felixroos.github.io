@@ -22,7 +22,7 @@ export default function Lattice3D(props) {
   });
   const { points, lines, fractions, zIndices } = useMemo(() => lattice(props), [props]);
   return (
-    <SVG viewBox="-200 -200 400 400" width="600">
+    <SVG viewBox="-200 -200 400 400" width="600" className="max-w-full m-auto">
       {lines.map(([[x1, y1], [x2, y2]], i) => (
         <line key={i} {...{ x1, y1, x2, y2 }} stroke="black" strokeWidth="1" />
       ))}

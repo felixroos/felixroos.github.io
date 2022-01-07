@@ -83,36 +83,24 @@ export default function Lattice2D(props: LatticeProps) {
   return (
     <div style={{ position: 'relative', textAlign: 'center' }}>
       {showSettings && (
-        <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
-          <ButtonGroup color="primary">
-            {Object.keys(units).map((unit) => (
-              <Button
-                key={unit}
-                variant={activeUnit === unit ? 'contained' : 'outlined'}
-                onClick={() => setActiveUnit(unit)}
-              >
-                {units[unit]}
-              </Button>
-            ))}
-          </ButtonGroup>
-          <ButtonGroup color="primary">
-            {Object.keys(views).map((view) => (
-              <Button
-                key={view}
-                variant={activeView === view ? 'contained' : 'outlined'}
-                onClick={() => setActiveView(view)}
-              >
-                {views[view]}
-              </Button>
-            ))}
-          </ButtonGroup>
-        </div>
+        <ButtonGroup color="primary">
+          {Object.keys(units).map((unit) => (
+            <Button
+              key={unit}
+              variant={activeUnit === unit ? 'contained' : 'outlined'}
+              onClick={() => setActiveUnit(unit)}
+            >
+              {units[unit]}
+            </Button>
+          ))}
+        </ButtonGroup>
       )}
       {activeView === 'lattice' && (
         <svg
           viewBox={`${minX - padding} ${minY - padding} ${totalWidth + padding} ${totalHeight}`}
           width={width}
           height={width / ratio}
+          className="max-w-full m-auto"
         >
           {/* axis */}
           {/* <line x1="0" y1="-100" x2="0" y2="100" stroke="black" strokeWidth="2" />
@@ -137,6 +125,19 @@ export default function Lattice2D(props: LatticeProps) {
       )}
       {activeView === 'circle' && (
         <RatioCircle ratios={ratios} unit={activeUnit} onTrigger={(n) => triggerAttackRelease([n], 1)} />
+      )}
+      {showSettings && (
+        <ButtonGroup color="primary">
+          {Object.keys(views).map((view) => (
+            <Button
+              key={view}
+              variant={activeView === view ? 'contained' : 'outlined'}
+              onClick={() => setActiveView(view)}
+            >
+              {views[view]}
+            </Button>
+          ))}
+        </ButtonGroup>
       )}
     </div>
   );
