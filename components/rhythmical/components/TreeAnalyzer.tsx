@@ -42,11 +42,11 @@ export function TreeAnalyzer(props) {
   const columns = props.columns || [8, 4];
   return (
     <Grid container>
-      <Grid item xs={columns[0]}>
+      <Grid item xs={12} sm={columns[0]}>
         <Tree data={data} onClick={(event, d) => setNode(d)} theme={theme} selected={node} {...props} />
       </Grid>
       {node && !hideChips && (
-        <Grid item xs={columns[1]}>
+        <Grid item xs={12} sm={columns[1]}>
           <Chip label={`selected node: ${node.data.name}`} {...controlColors(['selected'])} />
           <br />
           <Chip label={`parent: ${node.parent?.data?.name || 'none'}`} {...controlColors(['parent', 'parentLink'])} />

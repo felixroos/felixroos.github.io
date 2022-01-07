@@ -75,6 +75,7 @@ export default function Tree(props) {
       width={width}
       height={height}
       viewBox={viewBox}
+      className="max-w-full"
       ref={(el) => {
         const svg = select(el);
         svg.selectAll('*').remove();

@@ -77,7 +77,7 @@ export default function PianoRoll(props: PianoRollProps) {
     playheadX = round(timeOffset);
   }
   return (
-    <svg {...{ width, height }}>
+    <svg {...{ width, height }} className="max-w-full">
       <g
         style={{
           transform: `translateX(${laneOffset}px)`,

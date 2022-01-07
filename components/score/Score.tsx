@@ -25,5 +25,5 @@ export function Score(props: ScoreProps) {
     renderScore({ renderer: rendererRef.current, ...props });
   }, [props.staves]);
 
-  return <div style={{ background: 'white', padding: 10 }} ref={container} />;
+  return <div style={{ background: 'white', padding: 10 }} className="max-w-full overflow-auto" ref={container} />;
 }
