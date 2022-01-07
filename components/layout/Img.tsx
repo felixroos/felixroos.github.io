@@ -8,7 +8,7 @@ function Img({ src, alt }: { width: number; height: number; src: string; alt?: s
   if (!width || !height || url.startsWith('http')) {
     return <img src={url} alt={alt} width={width} height={height} />;
   }
-  return <NextImage src={url} alt={alt || url} width={width} height={height} />;
+  return <NextImage src={url} alt={alt || url} width={width} height={height} />; // placeholder="blur"
 }
 
 export default Img;
