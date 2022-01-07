@@ -111,7 +111,7 @@ export default function chromaColor(chroma) {
 export const circleOfFifths = Array.from({ length: 12 }, (_, i) => Note.get(Note.fromMidi(60 + ((i * 7) % 12))).pc);
 export const scaleColor = (scale) => chromaColor(scaleChroma(scale));
 export const familyScales = (family) => (
-  <ul style={{ margin: 0 }} className="p-0">
+  <ul style={{ margin: 0 }} className="p-0 max-w-full overflow-auto">
     {circleOfFifths.map((tonic) => (
       <li style={{ marginBottom: 2, listStyle: 'none', display: 'flex' }} key={tonic}>
         {Scale.modeNames(`${tonic} ${family}`).map(([root, scale], i) => (
@@ -174,7 +174,7 @@ While the coloring inside one scale family works, we can see that some scales ac
 
 This is because the center is the same for both:
 
-<div style={{ display: 'flex' }}>
+<div className="sm:flex">
   <div>
     <center>C melodic minor</center>
     {numberedCircle('C melodic minor')}
