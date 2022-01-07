@@ -51,7 +51,7 @@ There are (at least) two ways we can represent 12 notes in a circle:
       <>
         <center>
           <Grid spacing={0} container style={{ width: '100%' }} alignItems="center">
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <h3>Circle of Fifths</h3>
               <HarmonicCircle
                 sets={[{ stroke: 'steelblue', set }]}
@@ -69,7 +69,7 @@ There are (at least) two ways we can represent 12 notes in a circle:
                 transpose
               </Button>
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <h3>Chromatic Circle</h3>
               <ChromaticCircle
                 sets={[{ stroke: 'steelblue', set }]}
