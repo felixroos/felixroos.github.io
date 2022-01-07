@@ -34,7 +34,7 @@ export function Graph({ json, editable, options, containerStyle }: any) {
   return (
     <>
       <style>{`.graphviz-container > svg \{ width: 100%; height: 100% \}`}</style>
-      <div className={'graphviz-container'} ref={(e) => setEl(e)} style={{ width, height, ...containerStyle }}></div>
+      <div className="graphviz-container max-w-full overflow-auto" ref={(e) => setEl(e)} style={{ width, height, ...containerStyle }}></div>
       {editable && (
         <textarea style={{ width: '100%', height: '600px' }} value={value} onChange={(e) => setValue(e.target.value)} />
       )}

@@ -40,6 +40,7 @@ Here is a video where Barry Harris talks about chords vs keys:
 <iframe
   width="560"
   height="315"
+  className="max-w-full"
   src="https://www.youtube.com/embed/3V2eNh8qWVo"
   title="YouTube video player"
   frameBorder="0"
@@ -130,7 +131,7 @@ export const chordScale = (chord, scale, harmonic) => {
         <Switch checked={state.harmonic} color="default" onChange={(e) => setState({ harmonic: e.target.checked })} />
         harmonic
       </label>
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <div className="sm:flex justify-center text-center">
         {chordScale('Dm7', 'D dorian', state.harmonic)}
         {chordScale('Dm7', 'D aeolian', state.harmonic)}
         {chordScale('Dm7', 'D phrygian', state.harmonic)}
@@ -140,7 +141,7 @@ export const chordScale = (chord, scale, harmonic) => {
         <div>{chordScale('G7', 'G mixolydian', state.harmonic)}</div>
       </center>
       <p>There are 2 scales that could be played over a the C major 7 chord:</p>
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <div className="sm:flex justify-center text-center">
         {chordScale('C^7', 'C lydian', state.harmonic)}
         {chordScale('C^7', 'C major', state.harmonic)}
       </div>
