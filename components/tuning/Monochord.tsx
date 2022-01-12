@@ -164,6 +164,7 @@ export default function Monochord({
             colors={[frequencyColor(frequencyLeft)]}
             width={px(x) - px(0)}
             strokeWidth={strokeWidth}
+            onlySVG={true}
           />
           {/* <line
           className="string-left"
