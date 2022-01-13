@@ -25,7 +25,7 @@ const CustomLink = ({ as, href, ...otherProps }) => {
 
 const Post = ({ code, frontmatter }) => {
   // https://github.com/kentcdodds/mdx-bundler#globals
-  const Component = React.useMemo(() => getMDXComponent(code, { NextImage }) as any, [code]);
+  const Component = React.useMemo(() => getMDXComponent(code, {}) as any, [code]);
   const { theme } = useTheme();
   return (
     <Layout loadKatex={frontmatter.loadKatex}>
