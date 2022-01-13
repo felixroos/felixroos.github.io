@@ -12,7 +12,7 @@ import { NextSeo } from 'next-seo';
 import Img from '../components/layout/Img';
 import NextImage from 'next/image';
 
-const CustomLink = ({ as, href, ...otherProps }) => {
+export const CustomLink = ({ as, href, ...otherProps }) => {
   if (href.startsWith('http')) {
     return <a target="_blank" rel="noreferrer" {...{ as, href, ...otherProps }} />;
   }
