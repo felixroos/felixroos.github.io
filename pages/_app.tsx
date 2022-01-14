@@ -12,6 +12,7 @@ const MyApp = ({ Component, pageProps }: AppProps): JSX.Element => {
     <ThemeProvider attribute="class" enableSystem={false} defaultTheme="light">
       <Head>
         <meta charSet="utf-8" />
+        <meta name="google-site-verification" content="wp4E26TNY3Zd1V8nc5aARrFgpjNWT2pf6LU5KYriEzY" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge,chrome=1" />
         <meta name="HandheldFriendly" content="true" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
