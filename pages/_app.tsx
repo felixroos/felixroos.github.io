@@ -5,6 +5,7 @@ import '../styles.css';
 import '../fonts.css';
 import { DefaultSeo } from 'next-seo';
 import Head from 'next/head';
+import { WEBSITE_HOST_URL } from '../components/Head';
 
 const MyApp = ({ Component, pageProps }: AppProps): JSX.Element => {
   return (
@@ -17,8 +18,13 @@ const MyApp = ({ Component, pageProps }: AppProps): JSX.Element => {
         <meta name="apple-touch-fullscreen" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0" />
-        <link rel="alternate" type="application/rss+xml" title="RSS Feed for felixroos.github.io" href="/rss.xml" />
-        <link rel="alternate" type="application/atom+xml" title="Atom Feed for felixroos.github.io" href="/atom.xml" />
+        <link rel="alternate" type="application/rss+xml" title={`RSS Feed for ${WEBSITE_HOST_URL}`} href="/rss.xml" />
+        <link
+          rel="alternate"
+          type="application/atom+xml"
+          title={`Atom Feed for ${WEBSITE_HOST_URL}`}
+          href="/atom.xml"
+        />
         {/* <!-- Für Apple-Geräte --> */}
         <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon-180x180.png" />
         {/* <!-- Für Browser --> */}
@@ -34,7 +40,7 @@ const MyApp = ({ Component, pageProps }: AppProps): JSX.Element => {
         openGraph={{
           type: 'website',
           locale: 'en',
-          url: 'https://felixroos.github.io/',
+          url: WEBSITE_HOST_URL,
           site_name: 'Loophole Letters Blog',
           images: [
             {

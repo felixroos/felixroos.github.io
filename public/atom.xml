@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-    <id>https://felixroos.github.io/</id>
+    <id>https://loophole-letters.vercel.app/</id>
     <title>Loophole Letters Blog</title>
-    <updated>2022-01-14T20:34:21.957Z</updated>
+    <updated>2022-01-14T20:49:25.171Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://felixroos.github.io/"/>
     <subtitle>Coding, Music and Electronics</subtitle>
-    <logo>https://felixroos.github.io/logo.png</logo>
+    <logo>https://loophole-letters.vercel.app/logo.png</logo>
     <rights>©Felix Roos</rights>
     <category term="Technology"/>
     <contributor>
@@ -16,8 +16,8 @@
     </contributor>
     <entry>
         <title type="html"><![CDATA[Abstract Syntax Trees]]></title>
-        <id>https://felixroos.github.io/abstract-syntax-trees</id>
-        <link href="https://felixroos.github.io/abstract-syntax-trees"/>
+        <id>https://loophole-letters.vercel.app/abstract-syntax-trees</id>
+        <link href="https://loophole-letters.vercel.app/abstract-syntax-trees"/>
         <updated>2022-01-14T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[Let's understand how ASTs work]]></summary>
         <author>
@@ -28,8 +28,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[New Blog Launched]]></title>
-        <id>https://felixroos.github.io/next-blog</id>
-        <link href="https://felixroos.github.io/next-blog"/>
+        <id>https://loophole-letters.vercel.app/next-blog</id>
+        <link href="https://loophole-letters.vercel.app/next-blog"/>
         <updated>2022-01-14T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[This blog now runs with Next.js.]]></summary>
         <author>
@@ -40,8 +40,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[DIY Modular Synth]]></title>
-        <id>https://felixroos.github.io/diy-modular-synth</id>
-        <link href="https://felixroos.github.io/diy-modular-synth"/>
+        <id>https://loophole-letters.vercel.app/diy-modular-synth</id>
+        <link href="https://loophole-letters.vercel.app/diy-modular-synth"/>
         <updated>2021-11-28T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[Let's build a modular synth!]]></summary>
         <author>
@@ -52,8 +52,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Harmonic Lattices]]></title>
-        <id>https://felixroos.github.io/harmonic-lattices</id>
-        <link href="https://felixroos.github.io/harmonic-lattices"/>
+        <id>https://loophole-letters.vercel.app/harmonic-lattices</id>
+        <link href="https://loophole-letters.vercel.app/harmonic-lattices"/>
         <updated>2021-08-18T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[A powerful way to vizualize the "harmonic space" of any collection of ratios is using a so called lattice.]]></summary>
         <author>
@@ -64,8 +64,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Polyphonic MIDI to CV]]></title>
-        <id>https://felixroos.github.io/polyphonic-cv</id>
-        <link href="https://felixroos.github.io/polyphonic-cv"/>
+        <id>https://loophole-letters.vercel.app/polyphonic-cv</id>
+        <link href="https://loophole-letters.vercel.app/polyphonic-cv"/>
         <updated>2021-05-22T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[After looking at the basics of analog synthesis in the last post let's now look at how to approach polyphony.]]></summary>
         <author>
@@ -76,8 +76,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[A Macro View on Analog Synthesis]]></title>
-        <id>https://felixroos.github.io/analog-synthesis</id>
-        <link href="https://felixroos.github.io/analog-synthesis"/>
+        <id>https://loophole-letters.vercel.app/analog-synthesis</id>
+        <link href="https://loophole-letters.vercel.app/analog-synthesis"/>
         <updated>2021-05-14T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[Lately, I've been learning about analog synthesis]]></summary>
         <author>
@@ -88,8 +88,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Rhythmical Trees]]></title>
-        <id>https://felixroos.github.io/rhythmical-trees</id>
-        <link href="https://felixroos.github.io/rhythmical-trees"/>
+        <id>https://loophole-letters.vercel.app/rhythmical-trees</id>
+        <link href="https://loophole-letters.vercel.app/rhythmical-trees"/>
         <updated>2021-04-30T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[After the posts about Rhythmical Arrays and Rhythmical Objects, I want to investigate the actual data structure that is at play: trees.]]></summary>
         <author>
@@ -100,8 +100,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Chord Scales]]></title>
-        <id>https://felixroos.github.io/chord-scales</id>
-        <link href="https://felixroos.github.io/chord-scales"/>
+        <id>https://loophole-letters.vercel.app/chord-scales</id>
+        <link href="https://loophole-letters.vercel.app/chord-scales"/>
         <updated>2021-04-11T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[Let's find the best chord scales with a common path finding algorithm.]]></summary>
         <author>
@@ -112,8 +112,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[DIY MIDI Keyboard Scanner]]></title>
-        <id>https://felixroos.github.io/diy-midi-keyboard</id>
-        <link href="https://felixroos.github.io/diy-midi-keyboard"/>
+        <id>https://loophole-letters.vercel.app/diy-midi-keyboard</id>
+        <link href="https://loophole-letters.vercel.app/diy-midi-keyboard"/>
         <updated>2021-02-11T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[How to make two MIDI keyboards out of one..]]></summary>
         <author>
@@ -124,8 +124,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Pitch Class Sets]]></title>
-        <id>https://felixroos.github.io/pitch-class-sets</id>
-        <link href="https://felixroos.github.io/pitch-class-sets"/>
+        <id>https://loophole-letters.vercel.app/pitch-class-sets</id>
+        <link href="https://loophole-letters.vercel.app/pitch-class-sets"/>
         <updated>2021-01-03T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[Let's explore the world of pitch class sets.]]></summary>
         <author>
@@ -136,8 +136,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Coloring Musical Scales]]></title>
-        <id>https://felixroos.github.io/coloring-scales</id>
-        <link href="https://felixroos.github.io/coloring-scales"/>
+        <id>https://loophole-letters.vercel.app/coloring-scales</id>
+        <link href="https://loophole-letters.vercel.app/coloring-scales"/>
         <updated>2021-01-02T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[After we found a basic way of coloring pitches, let's now look at a way to color scales.]]></summary>
         <author>
@@ -148,8 +148,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Using MIDI with JavaScript]]></title>
-        <id>https://felixroos.github.io/webmidi</id>
-        <link href="https://felixroos.github.io/webmidi"/>
+        <id>https://loophole-letters.vercel.app/webmidi</id>
+        <link href="https://loophole-letters.vercel.app/webmidi"/>
         <updated>2020-12-30T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[With the Web MIDI API, we can send and receive MIDI events from javascript]]></summary>
         <author>
@@ -160,8 +160,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Recording Audio on the Web]]></title>
-        <id>https://felixroos.github.io/web-audio-recorder</id>
-        <link href="https://felixroos.github.io/web-audio-recorder"/>
+        <id>https://loophole-letters.vercel.app/web-audio-recorder</id>
+        <link href="https://loophole-letters.vercel.app/web-audio-recorder"/>
         <updated>2020-10-27T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[I made a few experiments on Audio Recording, using the Web Audio API.]]></summary>
         <author>
@@ -172,8 +172,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Recreating SNES Music with Chipsynth SFC]]></title>
-        <id>https://felixroos.github.io/chipsynth-sfc</id>
-        <link href="https://felixroos.github.io/chipsynth-sfc"/>
+        <id>https://loophole-letters.vercel.app/chipsynth-sfc</id>
+        <link href="https://loophole-letters.vercel.app/chipsynth-sfc"/>
         <updated>2020-10-20T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[Recently, Chipsynth SFC was released, which brings a really accurate emulation of the SNES soundchip to VST or standalone format. Let's play around with it.]]></summary>
         <author>
@@ -184,8 +184,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Voicing Permutation]]></title>
-        <id>https://felixroos.github.io/voicing-permutation</id>
-        <link href="https://felixroos.github.io/voicing-permutation"/>
+        <id>https://loophole-letters.vercel.app/voicing-permutation</id>
+        <link href="https://loophole-letters.vercel.app/voicing-permutation"/>
         <updated>2020-08-11T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[Let's try to generate any possible voicing by permutation.]]></summary>
         <author>
@@ -196,8 +196,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Rhythmical Mutations]]></title>
-        <id>https://felixroos.github.io/rhythmical-reducers</id>
-        <link href="https://felixroos.github.io/rhythmical-reducers"/>
+        <id>https://loophole-letters.vercel.app/rhythmical-reducers</id>
+        <link href="https://loophole-letters.vercel.app/rhythmical-reducers"/>
         <updated>2020-08-02T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[In this post, I want to develop the idea of mutation to allow more flexibility.]]></summary>
         <author>
@@ -208,8 +208,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Rhythmical Chords]]></title>
-        <id>https://felixroos.github.io/rhythmical-chords</id>
-        <link href="https://felixroos.github.io/rhythmical-chords"/>
+        <id>https://loophole-letters.vercel.app/rhythmical-chords</id>
+        <link href="https://loophole-letters.vercel.app/rhythmical-chords"/>
         <updated>2020-07-30T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[To bring rhythmical one step closer to being a hackable backing track player, I want to implement one of the most important things: chord symbols]]></summary>
         <author>
@@ -220,8 +220,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Rhythmical Ties]]></title>
-        <id>https://felixroos.github.io/rhythmical-ties</id>
-        <link href="https://felixroos.github.io/rhythmical-ties"/>
+        <id>https://loophole-letters.vercel.app/rhythmical-ties</id>
+        <link href="https://loophole-letters.vercel.app/rhythmical-ties"/>
         <updated>2020-07-10T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[In modern music, ties across barlines are a common way of adding interest to a melody. Let's add tie support to rhythmical]]></summary>
         <author>
@@ -232,8 +232,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Using Sampled Instruments with Tone.js]]></title>
-        <id>https://felixroos.github.io/sampler-instruments</id>
-        <link href="https://felixroos.github.io/sampler-instruments"/>
+        <id>https://loophole-letters.vercel.app/sampler-instruments</id>
+        <link href="https://loophole-letters.vercel.app/sampler-instruments"/>
         <updated>2020-07-08T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[To get away from cheap synth sounds, let's implement instruments that use samples, with the help of Tone.js.]]></summary>
         <author>
@@ -244,8 +244,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Analyzing iReal Chord Changes]]></title>
-        <id>https://felixroos.github.io/ireal-analytics</id>
-        <link href="https://felixroos.github.io/ireal-analytics"/>
+        <id>https://loophole-letters.vercel.app/ireal-analytics</id>
+        <link href="https://loophole-letters.vercel.app/ireal-analytics"/>
         <updated>2020-06-14T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[Now that we have a huge dataset of chord changes, we can do some data mining on it.]]></summary>
         <author>
@@ -256,8 +256,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Parsing iReal Chord Changes]]></title>
-        <id>https://felixroos.github.io/ireal-changes</id>
-        <link href="https://felixroos.github.io/ireal-changes"/>
+        <id>https://loophole-letters.vercel.app/ireal-changes</id>
+        <link href="https://loophole-letters.vercel.app/ireal-changes"/>
         <updated>2020-06-13T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[Let's get access to a huge collection of chord changes.]]></summary>
         <author>
@@ -268,8 +268,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Building a Minimoog MIDI Controller]]></title>
-        <id>https://felixroos.github.io/midimoog</id>
-        <link href="https://felixroos.github.io/midimoog"/>
+        <id>https://loophole-letters.vercel.app/midimoog</id>
+        <link href="https://loophole-letters.vercel.app/midimoog"/>
         <updated>2020-06-11T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[Last week, a friend a I built a MIDI Controller for the Arturia Mini V3 VST.]]></summary>
         <author>
@@ -280,8 +280,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[SVG Piano Roll Component]]></title>
-        <id>https://felixroos.github.io/svg-piano-roll</id>
-        <link href="https://felixroos.github.io/svg-piano-roll"/>
+        <id>https://loophole-letters.vercel.app/svg-piano-roll</id>
+        <link href="https://loophole-letters.vercel.app/svg-piano-roll"/>
         <updated>2020-06-10T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[After playback was implemented in the last post, we can now feed our eyes with some colored bars.]]></summary>
         <author>
@@ -292,8 +292,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Tone.js Playback]]></title>
-        <id>https://felixroos.github.io/rhythmical-playback</id>
-        <link href="https://felixroos.github.io/rhythmical-playback"/>
+        <id>https://loophole-letters.vercel.app/rhythmical-playback</id>
+        <link href="https://loophole-letters.vercel.app/rhythmical-playback"/>
         <updated>2020-06-09T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[Before implementing more rhythmical features, it would be good to hear some results. This is where the Player comes in.]]></summary>
         <author>
@@ -304,8 +304,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Rhythmical Objects]]></title>
-        <id>https://felixroos.github.io/rhythmical-objects</id>
-        <link href="https://felixroos.github.io/rhythmical-objects"/>
+        <id>https://loophole-letters.vercel.app/rhythmical-objects</id>
+        <link href="https://loophole-letters.vercel.app/rhythmical-objects"/>
         <updated>2020-05-29T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[Today, I want to write about why and how the powerful rhythmical object format is implemented.]]></summary>
         <author>
@@ -316,8 +316,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Rhythmical Arrays]]></title>
-        <id>https://felixroos.github.io/rhythmical-arrays</id>
-        <link href="https://felixroos.github.io/rhythmical-arrays"/>
+        <id>https://loophole-letters.vercel.app/rhythmical-arrays</id>
+        <link href="https://loophole-letters.vercel.app/rhythmical-arrays"/>
         <updated>2020-05-27T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[In this post, I want to describe how and why rhythmical is implemented.]]></summary>
         <author>
@@ -328,8 +328,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Rhythmical Staff Notation]]></title>
-        <id>https://felixroos.github.io/rhythmical-staff</id>
-        <link href="https://felixroos.github.io/rhythmical-staff"/>
+        <id>https://loophole-letters.vercel.app/rhythmical-staff</id>
+        <link href="https://loophole-letters.vercel.app/rhythmical-staff"/>
         <updated>2020-05-24T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[In this post, I want to find out how I can render rhythmical format as staff notation.]]></summary>
         <author>
@@ -340,8 +340,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Trumpet Harmonics]]></title>
-        <id>https://felixroos.github.io/trumpet-harmonics</id>
-        <link href="https://felixroos.github.io/trumpet-harmonics"/>
+        <id>https://loophole-letters.vercel.app/trumpet-harmonics</id>
+        <link href="https://loophole-letters.vercel.app/trumpet-harmonics"/>
         <updated>2020-05-19T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[The harmonic spiral from last post can also be used to vizualize the harmonics of instruments that work with overblowing, like a trumpet.]]></summary>
         <author>
@@ -352,8 +352,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Harmonic Spirals]]></title>
-        <id>https://felixroos.github.io/harmonic-spirals</id>
-        <link href="https://felixroos.github.io/harmonic-spirals"/>
+        <id>https://loophole-letters.vercel.app/harmonic-spirals</id>
+        <link href="https://loophole-letters.vercel.app/harmonic-spirals"/>
         <updated>2020-05-09T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[Let's create some harmonic spirals by winding the number line.]]></summary>
         <author>
@@ -364,8 +364,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[DIY Monochord]]></title>
-        <id>https://felixroos.github.io/monochord</id>
-        <link href="https://felixroos.github.io/monochord"/>
+        <id>https://loophole-letters.vercel.app/monochord</id>
+        <link href="https://loophole-letters.vercel.app/monochord"/>
         <updated>2020-05-07T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[After fiddling around with digital monochords and cheap web audio sounds, I decided to give my build a physical monochord from scrap wood.]]></summary>
         <author>
@@ -376,8 +376,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[5 Limit Just Intonation]]></title>
-        <id>https://felixroos.github.io/5limit-just-intonation</id>
-        <link href="https://felixroos.github.io/5limit-just-intonation"/>
+        <id>https://loophole-letters.vercel.app/5limit-just-intonation</id>
+        <link href="https://loophole-letters.vercel.app/5limit-just-intonation"/>
         <updated>2020-05-02T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[As this is the third post of a series of a series about Just Intonation, let's talk about thirds.]]></summary>
         <author>
@@ -388,8 +388,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[3 Limit Just Intonation]]></title>
-        <id>https://felixroos.github.io/3limit-just-intonation</id>
-        <link href="https://felixroos.github.io/3limit-just-intonation"/>
+        <id>https://loophole-letters.vercel.app/3limit-just-intonation</id>
+        <link href="https://loophole-letters.vercel.app/3limit-just-intonation"/>
         <updated>2020-04-26T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[After building a foundation of understanding pure intervals in the last post, we will now look at different ways of building tuning systems with them.]]></summary>
         <author>
@@ -400,8 +400,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Pure Intervals]]></title>
-        <id>https://felixroos.github.io/intervals</id>
-        <link href="https://felixroos.github.io/intervals"/>
+        <id>https://loophole-letters.vercel.app/intervals</id>
+        <link href="https://loophole-letters.vercel.app/intervals"/>
         <updated>2020-04-22T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[This article is the first of a series about Just Intonation.]]></summary>
         <author>
@@ -412,8 +412,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[The Harmonic Series & Additive Synthesis]]></title>
-        <id>https://felixroos.github.io/harmonics</id>
-        <link href="https://felixroos.github.io/harmonics"/>
+        <id>https://loophole-letters.vercel.app/harmonics</id>
+        <link href="https://loophole-letters.vercel.app/harmonics"/>
         <updated>2020-04-20T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[Let's understand the harmonic series by looking at monochords.]]></summary>
         <author>
@@ -424,8 +424,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Animating React Components]]></title>
-        <id>https://felixroos.github.io/animation</id>
-        <link href="https://felixroos.github.io/animation"/>
+        <id>https://loophole-letters.vercel.app/animation</id>
+        <link href="https://loophole-letters.vercel.app/animation"/>
         <updated>2020-04-19T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[Let's make a react component that can be used to animate anything.]]></summary>
         <author>
@@ -436,8 +436,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Plotting Functions with React and d3.js]]></title>
-        <id>https://felixroos.github.io/plotting-functions</id>
-        <link href="https://felixroos.github.io/plotting-functions"/>
+        <id>https://loophole-letters.vercel.app/plotting-functions</id>
+        <link href="https://loophole-letters.vercel.app/plotting-functions"/>
         <updated>2020-04-18T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[As the basis of many upcoming visualizations.]]></summary>
         <author>
@@ -448,8 +448,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Coloring Pitches]]></title>
-        <id>https://felixroos.github.io/coloring-pitches</id>
-        <link href="https://felixroos.github.io/coloring-pitches"/>
+        <id>https://loophole-letters.vercel.app/coloring-pitches</id>
+        <link href="https://loophole-letters.vercel.app/coloring-pitches"/>
         <updated>2020-04-01T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[Let's play with colors. Vizualization loves color. To map musical notes to color, we can do various things.]]></summary>
         <author>
@@ -460,8 +460,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Combinatorial Search]]></title>
-        <id>https://felixroos.github.io/combinatorial-search</id>
-        <link href="https://felixroos.github.io/combinatorial-search"/>
+        <id>https://loophole-letters.vercel.app/combinatorial-search</id>
+        <link href="https://loophole-letters.vercel.app/combinatorial-search"/>
         <updated>2020-03-31T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[Let's look at a concept that be used in a future post to find all possible piano voicings for a given chord.]]></summary>
         <author>
@@ -472,8 +472,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Chords and Scales]]></title>
-        <id>https://felixroos.github.io/chords</id>
-        <link href="https://felixroos.github.io/chords"/>
+        <id>https://loophole-letters.vercel.app/chords</id>
+        <link href="https://loophole-letters.vercel.app/chords"/>
         <updated>2020-03-27T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[Let's use the SVG Piano to display chords.]]></summary>
         <author>
@@ -484,8 +484,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[SVG Piano]]></title>
-        <id>https://felixroos.github.io/svg-piano</id>
-        <link href="https://felixroos.github.io/svg-piano"/>
+        <id>https://loophole-letters.vercel.app/svg-piano</id>
+        <link href="https://loophole-letters.vercel.app/svg-piano"/>
         <updated>2020-03-26T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[Let's talk about virtual keyboards: They are good to visualize chords as a static image and melodies as an animation.]]></summary>
         <author>
@@ -496,8 +496,8 @@
     </entry>
     <entry>
         <title type="html"><![CDATA[Hello, let me enter]]></title>
-        <id>https://felixroos.github.io/hello</id>
-        <link href="https://felixroos.github.io/hello"/>
+        <id>https://loophole-letters.vercel.app/hello</id>
+        <link href="https://loophole-letters.vercel.app/hello"/>
         <updated>2020-03-25T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[I will write about music and coding here.]]></summary>
         <author>

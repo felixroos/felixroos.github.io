@@ -9,7 +9,7 @@ import fs from 'fs';
 
 console.log('update rss feed...');
 
-const siteUrl = 'https://felixroos.github.io/';
+const siteUrl = 'https://loophole-letters.vercel.app/';
 
 const feed = new Feed({
   title: 'Loophole Letters Blog',

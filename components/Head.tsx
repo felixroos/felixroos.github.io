@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import React from 'react';
 import { MetaProps } from '../types/layout';
 
-export const WEBSITE_HOST_URL = 'https://felixroos.github.io';
+export const WEBSITE_HOST_URL = 'https://loophole-letters.vercel.app';
 
 const Head = ({ customMeta, loadKatex }: { customMeta?: MetaProps; loadKatex?: boolean }): JSX.Element => {
   const router = useRouter();
