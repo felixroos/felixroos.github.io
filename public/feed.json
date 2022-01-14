@@ -6,6 +6,30 @@
     "icon": "https://felixroos.github.io/logo.png",
     "items": [
         {
+            "id": "https://felixroos.github.io/abstract-syntax-trees",
+            "url": "https://felixroos.github.io/abstract-syntax-trees",
+            "title": "Abstract Syntax Trees",
+            "summary": "Let's understand how ASTs work",
+            "image": "https://felixroos.github.io/img/ast.png",
+            "date_modified": "2022-01-14T00:00:00.000Z",
+            "author": {
+                "name": "Felix Roos",
+                "url": "https://github.com/felixroos"
+            }
+        },
+        {
+            "id": "https://felixroos.github.io/next-blog",
+            "url": "https://felixroos.github.io/next-blog",
+            "title": "New Blog Launched",
+            "summary": "This blog now runs with Next.js.",
+            "image": "https://felixroos.github.io/logo.png",
+            "date_modified": "2022-01-14T00:00:00.000Z",
+            "author": {
+                "name": "Felix Roos",
+                "url": "https://github.com/felixroos"
+            }
+        },
+        {
             "id": "https://felixroos.github.io/diy-modular-synth",
             "url": "https://felixroos.github.io/diy-modular-synth",
             "title": "DIY Modular Synth",

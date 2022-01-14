@@ -1,0 +1,476 @@
+---
+title: Abstract Syntax Trees
+date: '2022-01-14'
+tags: ['coding']
+image: ./img/ast.png
+description: Let's understand how ASTs work
+---
+
+After realizing that [rhythms are trees](./rhythmical-trees), I want to investigate a special kind of tree,
+that is normally used by program language compilers to represent the syntax of a program.
+
+I have the idea to transform rhythmical objects into an AST to allow easier transformations before rendering.
+Before doing that, I want to look at ASTs in general, particularly by using [unified](https://unifiedjs.com/).
+
+## Unified
+
+As already [described in the last post](./next-blog#unified-plugins), this whole blog is only possible thanks to unified and the tool ecosystem around mdx, markdown and html.
+At the heart of unified, there is [unist](https://github.com/syntax-tree/unist), which is a specification for syntax trees.
+
+### unist, mdast, hast
+
+In a nutshell, unist defines [types](https://www.npmjs.com/package/@types/unist) that can be seen as a basis to represent ASTs. The 2 most important are:
+
+```ts
+interface Node {
+  type: string; // The variant of a node.
+  data?: Data | undefined; // Information from the ecosystem.
+  position?: Position | undefined; // Location of a node in a source document. Must not be present if a node is generated.
+}
+export interface Parent extends Node {
+  children: Node[]; // List representing the children of a node.
+}
+```
+
+<details>
+  <summary>show others</summary>
+
+```ts
+export interface Data {
+  [key: string]: unknown;
+}
+export interface Position {
+  start: Point; // Place of the first character of the parsed source region.
+  end: Point; // Place of the first character after the parsed source region.
+  indent?: number[] | undefined; // Start column at each index (plus start line) in the source region, for elements that span multiple lines.
+}
+export interface Point {
+  line: number; // Line in a source file (1-indexed integer).
+  column: number; // Column in a source file (1-indexed integer).
+  offset?: number | undefined; // Character in a source file (0-indexed integer).
+}
+export interface Literal extends Node {
+  value: unknown;
+}
+```
+
+Also checkout [this guide](https://unifiedjs.com/learn/guide/syntax-trees-typescript/#unist)
+
+</details>
+
+A unified tool for a specific language can use those types as a basis to define its AST.
+For example, this blog is using:
+
+- [mdast](https://github.com/syntax-tree/mdast) markdown AST
+- [hast](https://github.com/syntax-tree/hast) HTML AST
+- [mdxast / mdxhast](https://github.com/mdx-js/specification#mdxast) MDX AST
+
+## mdast Example
+
+Using mdast, we can parse this markdown text:
+
+```md
+# Test
+
+In botany, a tree is a perennial plant with
+
+- an elongated stem, or trunk,
+- supporting branches
+- leaves
+```
+
+...into
+
+### mdast json
+
+export const mdastExample = {
+  type: 'root',
+  children: [
+    {
+      type: 'heading',
+      depth: 1,
+      children: [
+        {
+          type: 'text',
+          value: 'Test',
+          position: {
+            start: {
+              line: 1,
+              column: 3,
+              offset: 2,
+            },
+            end: {
+              line: 1,
+              column: 7,
+              offset: 6,
+            },
+          },
+        },
+      ],
+      position: {
+        start: {
+          line: 1,
+          column: 1,
+          offset: 0,
+        },
+        end: {
+          line: 1,
+          column: 7,
+          offset: 6,
+        },
+      },
+    },
+    {
+      type: 'paragraph',
+      children: [
+        {
+          type: 'text',
+          value: 'In botany, a tree is a perennial plant with',
+          position: {
+            start: {
+              line: 3,
+              column: 1,
+              offset: 8,
+            },
+            end: {
+              line: 3,
+              column: 44,
+              offset: 51,
+            },
+          },
+        },
+      ],
+      position: {
+        start: {
+          line: 3,
+          column: 1,
+          offset: 8,
+        },
+        end: {
+          line: 3,
+          column: 45,
+          offset: 52,
+        },
+      },
+    },
+    {
+      type: 'list',
+      ordered: false,
+      start: null,
+      spread: false,
+      children: [
+        {
+          type: 'listItem',
+          spread: false,
+          checked: null,
+          children: [
+            {
+              type: 'paragraph',
+              children: [
+                {
+                  type: 'text',
+                  value: 'an elongated stem, or trunk,',
+                  position: {
+                    start: {
+                      line: 5,
+                      column: 3,
+                      offset: 56,
+                    },
+                    end: {
+                      line: 5,
+                      column: 31,
+                      offset: 84,
+                    },
+                  },
+                },
+              ],
+              position: {
+                start: {
+                  line: 5,
+                  column: 3,
+                  offset: 56,
+                },
+                end: {
+                  line: 5,
+                  column: 32,
+                  offset: 85,
+                },
+              },
+            },
+          ],
+          position: {
+            start: {
+              line: 5,
+              column: 1,
+              offset: 54,
+            },
+            end: {
+              line: 5,
+              column: 32,
+              offset: 85,
+            },
+          },
+        },
+        {
+          type: 'listItem',
+          spread: false,
+          checked: null,
+          children: [
+            {
+              type: 'paragraph',
+              children: [
+                {
+                  type: 'text',
+                  value: 'supporting branches',
+                  position: {
+                    start: {
+                      line: 6,
+                      column: 3,
+                      offset: 88,
+                    },
+                    end: {
+                      line: 6,
+                      column: 22,
+                      offset: 107,
+                    },
+                  },
+                },
+              ],
+              position: {
+                start: {
+                  line: 6,
+                  column: 3,
+                  offset: 88,
+                },
+                end: {
+                  line: 6,
+                  column: 22,
+                  offset: 107,
+                },
+              },
+            },
+          ],
+          position: {
+            start: {
+              line: 6,
+              column: 1,
+              offset: 86,
+            },
+            end: {
+              line: 6,
+              column: 22,
+              offset: 107,
+            },
+          },
+        },
+        {
+          type: 'listItem',
+          spread: false,
+          checked: null,
+          children: [
+            {
+              type: 'paragraph',
+              children: [
+                {
+                  type: 'text',
+                  value: 'leaves',
+                  position: {
+                    start: {
+                      line: 7,
+                      column: 3,
+                      offset: 110,
+                    },
+                    end: {
+                      line: 7,
+                      column: 9,
+                      offset: 116,
+                    },
+                  },
+                },
+              ],
+              position: {
+                start: {
+                  line: 7,
+                  column: 3,
+                  offset: 110,
+                },
+                end: {
+                  line: 7,
+                  column: 9,
+                  offset: 116,
+                },
+              },
+            },
+          ],
+          position: {
+            start: {
+              line: 7,
+              column: 1,
+              offset: 108,
+            },
+            end: {
+              line: 7,
+              column: 9,
+              offset: 116,
+            },
+          },
+        },
+      ],
+      position: {
+        start: {
+          line: 5,
+          column: 1,
+          offset: 54,
+        },
+        end: {
+          line: 7,
+          column: 9,
+          offset: 116,
+        },
+      },
+    },
+  ],
+  position: {
+    start: {
+      line: 1,
+      column: 1,
+      offset: 0,
+    },
+    end: {
+      line: 7,
+      column: 9,
+      offset: 116,
+    },
+  },
+};
+
+import JSONViewer from '../components/common/JSONViewer';
+
+<JSONViewer collapsed={3} src={mapAST(mdastExample, ({ position, ...node }) => node)} />
+
+These nodes are an extension of the unist standard. I omitted the position info to make it shorter.
+[Open this tree in AST Explorer](https://astexplorer.net/#/gist/7dbe8f09522bd8b430e1d4c6942c5d20/50f77c68d8bacf1885d2dfbb9e66aa95829056ba).
+
+import Tree from '../components/rhythmical/components/Tree.tsx';
+import { mapAST } from '../components/rhythmical/tree/rhythmAST.ts';
+import { Color } from '../components/common/Color.tsx';
+
+export const mdastColors = {
+  root: 'black',
+  heading: 'steelblue',
+  text: 'gray',
+  paragraph: 'yellow',
+  list: 'salmon',
+  listItem: 'tomato',
+};
+
+### mdast visualization
+
+Of course, we can also visualize this AST with a tree:
+
+<Tree
+  width={620}
+  nodeRadius={10}
+  dx={20}
+  columns={[12, 12]}
+  data={mapAST(mdastExample, (node) => {
+    return {
+      ...node,
+      color: mdastColors[node.type],
+    };
+  })}
+  hideJson={true}
+/>
+
+| color                                  | type      |
+| -------------------------------------- | --------- |
+| <Color color={mdastColors.root}/>      | root      |
+| <Color color={mdastColors.heading}/>   | heading   |
+| <Color color={mdastColors.text}/>      | text      |
+| <Color color={mdastColors.paragraph}/> | paragraph |
+| <Color color={mdastColors.list}/>      | list      |
+| <Color color={mdastColors.listItem}/>  | listItem  |
+
+### md to mdast in code
+
+To turn markdown into an AST, you can use [mdast-util-from-markdown](https://www.npmjs.com/package/mdast-util-from-markdown):
+
+```js
+import { fromMarkdown } from 'mdast-util-from-markdown';
+const ast = fromMarkdown(
+  "'# Test\n\nIn botany, a tree is a perennial plant with\n\n- an elongated stem, or trunk,\n- supporting branches\n- leaves\n'"
+);
+console.log(ast);
+```
+
+In practice, you will most likely parse markdown, transform the AST using a plugin and then outputting markdown again.
+This is what remark does:
+
+```js
+import remarkToc from 'remark-toc';
+
+const file = await remark()
+  .use(remarkToc)
+  .process('# Hi\n\n## Table of contents\n\n## Hello\n\n*Some* ~more~ _things_.');
+console.log(String(file));
+```
+
+This will find all headings and generate a table of contents below "Table of contents", creating this diff for the above example:
+
+import DiffViewer from '../components/common/DiffViewer';
+
+<DiffViewer
+  splitView={true}
+  showDiffOnly={false}
+  hideLineNumbers={false}
+  {...{
+    oldValue: '# Hi\n\n## Table of contents\n\n## Hello\n\n*Some* ~more~ _things_.',
+    newValue: '# Hi\n\n## Table of contents\n\n*   [Hello](#hello)\n\n## Hello\n\n*Some* ~more~ _things_.',
+  }}
+/>
+
+## Writing plugins
+
+Above `remark-toc` is a plugin that transforms markdown AST. To write our own plugin, we take the AST as input and output back the transformed AST.
+
+Now having obtained an AST, we can use it to our behalf. For example, we could transform all unordered lists to ordered ones like this:
+
+```js
+import { remark } from 'remark';
+import { visit } from 'unist-util-visit';
+
+export const bringOrder = () => (tree) => {
+  visit(tree, 'list', (node: any) => {
+    node.ordered = true;
+  });
+};
+const file = await remark()
+  .use(bringOrder)
+  .process(
+    '# Test\n\nIn botany, a tree is a perennial plant with\n\n- an elongated stem, or trunk,\n- supporting branches\n- leaves'
+  );
+console.log(String(file));
+```
+
+which produces the following diff:
+
+<DiffViewer
+  splitView={true}
+  showDiffOnly={false}
+  hideLineNumbers={false}
+  {...{
+    oldValue:
+      '# Test\n\nIn botany, a tree is a perennial plant with\n\n- an elongated stem, or trunk,\n- supporting branches\n- leaves',
+    newValue:
+      '# Test\n\nIn botany, a tree is a perennial plant with\n\n1. an elongated stem, or trunk,\n2. supporting branches\n3. leaves',
+  }}
+/>
+
+Also check out [this egghead.io course about unified](https://egghead.io/lessons/javascript-create-a-remark-plugin-to-modify-markdown-headings).
+
+## Outlook
+
+In the future, I could see using unified style ASTs to represent rhythical objects.
+It would simplify the implementation of plugins a lot. In the end, the rhythmical renderer would talk the AST and output events.
+
+Also having a unified AST format allows implementing a "mini notation" á la tidal, that enables writing rhythmical in a shorter string notation.

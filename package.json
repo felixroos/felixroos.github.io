@@ -11,7 +11,8 @@
     "lint": "next lint",
     "test": "jest",
     "test-all": "yarn lint && yarn type-check && yarn test",
-    "rss": "babel-node --plugins @babel/plugin-transform-modules-commonjs scripts/rss.js"
+    "rss": "babel-node --plugins @babel/plugin-transform-modules-commonjs scripts/rss.js",
+    "remark": "babel-node --plugins @babel/plugin-transform-modules-commonjs scripts/remark.js"
   },
   "lint-staged": {
     "*.@(ts|tsx)": [
@@ -73,6 +74,8 @@
     "three": "^0.133.1",
     "tone": "^14.7.77",
     "treeify": "^1.1.0",
+    "unist-util-visit": "^4.1.0",
+    "unist-util-visit-parents": "^5.1.0",
     "vexflow": "^3.0.9",
     "webmidi": "^2.5.2",
     "zippa": "^0.3.1"

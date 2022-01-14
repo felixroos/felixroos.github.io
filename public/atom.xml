@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://felixroos.github.io/</id>
     <title>Loophole Letters Blog</title>
-    <updated>2021-12-30T20:25:32.761Z</updated>
+    <updated>2022-01-14T20:34:21.957Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://felixroos.github.io/"/>
     <subtitle>Coding, Music and Electronics</subtitle>
@@ -14,6 +14,30 @@
         <email>flix91@gmail.com</email>
         <uri>https://github.com/felixroos</uri>
     </contributor>
+    <entry>
+        <title type="html"><![CDATA[Abstract Syntax Trees]]></title>
+        <id>https://felixroos.github.io/abstract-syntax-trees</id>
+        <link href="https://felixroos.github.io/abstract-syntax-trees"/>
+        <updated>2022-01-14T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Let's understand how ASTs work]]></summary>
+        <author>
+            <name>Felix Roos</name>
+            <email>flix91@gmail.com</email>
+            <uri>https://github.com/felixroos</uri>
+        </author>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[New Blog Launched]]></title>
+        <id>https://felixroos.github.io/next-blog</id>
+        <link href="https://felixroos.github.io/next-blog"/>
+        <updated>2022-01-14T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[This blog now runs with Next.js.]]></summary>
+        <author>
+            <name>Felix Roos</name>
+            <email>flix91@gmail.com</email>
+            <uri>https://github.com/felixroos</uri>
+        </author>
+    </entry>
     <entry>
         <title type="html"><![CDATA[DIY Modular Synth]]></title>
         <id>https://felixroos.github.io/diy-modular-synth</id>
