@@ -13,6 +13,7 @@ const MyApp = ({ Component, pageProps }: AppProps): JSX.Element => {
       <Head>
         <meta charSet="utf-8" />
         <meta name="google-site-verification" content="wp4E26TNY3Zd1V8nc5aARrFgpjNWT2pf6LU5KYriEzY" />
+        <meta name="google-site-verification" content="mP7iII171nPKwKE8siqax9_knpN2qElkZiyMy7PANaA" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge,chrome=1" />
         <meta name="HandheldFriendly" content="true" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
