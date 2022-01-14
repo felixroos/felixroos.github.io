@@ -1,5 +1,7 @@
 # Links
 
+- https://cswr.github.io/JsonSchema/
+
 ## react stuff
 
 - https://kentcdodds.com/blog/fix-the-slow-render-before-you-fix-the-re-render

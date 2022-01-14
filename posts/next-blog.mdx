@@ -1,33 +1,45 @@
 ---
-title: Moved Blog to Next.js
-date: '2021-12-30'
+title: New Blog Launched
+date: '2022-01-14'
 tags: ['coding']
-description: How I moved my blog from Gatsby to Next.js
-draft: true
+image: ./logo_cropped.png
+description: This blog now runs with Next.js.
 ---
 
-I recently moved this blog from Gatsby to Next.js.
+This blog has now been moved from Gatsby to Next.js.
 
-## Why I chose Next.js over Gatsby
+## New Logo
 
-While settings up my gatsby blog was quite straightforward, changing it was not that easy.
-I was using [gatsby-theme-blog](https://www.gatsbyjs.com/plugins/gatsby-theme-blog/), which allows starting a blog using MDX in no time.
-Gatsby uses so called [themes](https://www.gatsbyjs.com/docs/themes/), where the actual code of the theme is versioned but you can change files by "shadowing".
-The advantage is that you get upstream changes without needing to update unshadowed files.
-This sounds good in theory, but in practice, it became a little blackboxy:
+This is the new logo, which is a repurposed VSCode logo to look like the infinity symbol, which also happens to look a little bit like an envelope:
 
-- I found it hard to know which files to shadow, as I needed to manually crawl through the gatsbyjs monorepo. For example, as for the time of writing this article, the "View plugin on GitHub" link on the [gatsby-theme-blog](https://www.gatsbyjs.com/plugins/gatsby-theme-blog/) doc page is dead..
-- In practice, I did not manage to update gatsby-theme-blog to the new version in a reasonable amount of time.
-- I did not really know what was actually happening under the hood.
-- The worst of all: code splitting seemed to not work with mdx, as everything was in one bundle!
+![new logo](./logo_cropped.png?200x200)
 
-On the other hand, I imagined having a "simple" Next.js project with no layer of abstraction would be much easier to work with.
+I think this is a neat visual metaphor that also happened to be really quick to stitch together 😅.
 
-Also, Next.js had introduced static builds, so I gave it a try.
+## Style Update
 
-## Packages
+This is the before / after of the homepage:
 
-I am using the following packages (excluding packages used in posts):
+![before after](./img/next-blog-before-after.png?752x498)
+
+I kept the fonts but styled everything to not look like the default gatsby blog template + added images to soup up the look and spark some curiosity.
+Also, I added tags for each post, for which I want to add a filter in the future.
+
+The post detail page now looks like that:
+
+![before after post](./img/post-detail-before-after.png?752x520)
+
+Dark mode:
+
+![dark mode](./img/next-blog-darkmode.png)
+
+On Mobile:
+
+![mobile](./img/next-blog-mobile.png)
+
+## Tech Stack
+
+These are the most important packages:
 
 - [Next.js](https://nextjs.org/) as the foundation
 - [tailwindcss](https://tailwindcss.com/) for style
@@ -36,6 +48,7 @@ I am using the following packages (excluding packages used in posts):
 - [feed](https://www.npmjs.com/package/feed) for [RSS feed generation](https://github.com/felixroos/felixroos.github.io/blob/4c62f8496ca78caf1ee28f5f07582537be2e0d17/scripts/rss.js)
 - [mdx-bundler](https://www.npmjs.com/package/mdx-bundler) to bundle posts which are mdx files
 - [gray-matter](https://www.npmjs.com/package/gray-matter) to parse post metadata
+- some unified plugins (see below)
 
 ## Bundling MDX
 
@@ -75,17 +88,29 @@ To enrich the posts, I am using the following plugins:
 - [rehype-autolink-headings](https://www.npmjs.com/package/rehype-autolink-headings) to add anchor links to headings.
 - [remark-toc](https://www.npmjs.com/package/remark-toc) to generate a table of contents.
 
-## Feed
+## Why I chose Next.js over Gatsby
 
-- https://www.npmjs.com/package/next-rss inspired by
-- https://www.npmjs.com/package/feed using
-- https://www.petefreitag.com/item/384.cfm
-- https://validator.w3.org/feed/ validator
-- https://babeljs.io/docs/en/babel-plugin-transform-modules-commonjs - to be able to import from mdx.js
-- https://babeljs.io/docs/en/babel-node.html
+While settings up my gatsby blog was quite straightforward, changing it was not that easy.
+I was using [gatsby-theme-blog](https://www.gatsbyjs.com/plugins/gatsby-theme-blog/), which allows starting a blog using MDX in no time.
+Gatsby uses so called [themes](https://www.gatsbyjs.com/docs/themes/), where the actual code of the theme is versioned but you can change files by "shadowing".
+The advantage is that you get upstream changes without needing to update unshadowed files.
+This sounds good in theory, but in practice, it became a little blackboxy:
 
-## logo / favicon
+- I found it hard to know which files to shadow, as I needed to manually crawl through the gatsbyjs monorepo. For example, as for the time of writing this article, the "View plugin on GitHub" link on the [gatsby-theme-blog](https://www.gatsbyjs.com/plugins/gatsby-theme-blog/) doc page is dead..
+- In practice, I did not manage to update gatsby-theme-blog to the new version in a reasonable amount of time.
+- I did not really know what was actually happening under the hood.
+- The worst of all: code splitting seemed to not work with mdx, as everything was in one bundle!
 
-- https://www.hoststar.ch/de/tools/favicon-generator
+On the other hand, I imagined having a "simple" Next.js project with no layer of abstraction would be much easier to work with.
 
-- https://santhalakshminarayana.github.io/blog/build-blog-with-nextjs-mdx-and-deploy-to-github-pages
+Also, Next.js had introduced static builds, so I gave it a try.
+
+## Deployment
+
+I started out deploying to github pages like before, but turned to vercel as they have a free plan for hobbyists + out of the box images optimization.
+Maybe I will move back to gh-pages when version 3 of [next-optimized-images](https://www.npmjs.com/package/next-optimized-images) is ready.
+I like the simplicity of a static build, but on the other hand it does not really matter..
+
+## Conclusion
+
+Now that the update is done (after tiny step by tiny step migration in the last months), I can write some more posts..
