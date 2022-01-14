@@ -15,7 +15,7 @@ const feed = new Feed({
   title: 'Loophole Letters Blog',
   description: 'Coding, Music and Electronics',
   id: siteUrl,
-  link: 'https://felixroos.github.io/',
+  link: siteUrl,
   language: 'en',
   copyright: '©Felix Roos',
   image: siteUrl + 'logo.png',
