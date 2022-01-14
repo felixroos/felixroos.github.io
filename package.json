@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "lsof -t -i tcp:3000 | xargs kill -9 && next dev",
-    "build": "next build",
+    "build": "npm run rss && next build",
     "export": "npm run rss && next build && next export -o docs && cp .nojekyll docs",
     "start": "next start",
     "type-check": "tsc --pretty --noEmit",
