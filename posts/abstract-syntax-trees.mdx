@@ -393,18 +393,21 @@ Of course, we can also visualize this AST with a tree:
 
 ### md to mdast in code
 
-To turn markdown into an AST, you can use [mdast-util-from-markdown](https://www.npmjs.com/package/mdast-util-from-markdown):
+To turn markdown into an AST, we can use [remark](https://www.npmjs.com/package/remark)'s parse function:
 
 ```js
-import { fromMarkdown } from 'mdast-util-from-markdown';
-const ast = fromMarkdown(
-  "'# Test\n\nIn botany, a tree is a perennial plant with\n\n- an elongated stem, or trunk,\n- supporting branches\n- leaves\n'"
+import { remark } from 'remark';
+
+const ast = await remark().parse(
+  '# Test\n\nIn botany, a tree is a perennial plant with\n\n- an elongated stem, or trunk,\n- supporting branches\n- leaves\n'
 );
 console.log(ast);
 ```
 
+Internally `parse` uses [mdast-util-from-markdown](https://www.npmjs.com/package/mdast-util-from-markdown) to convert the string to an AST.
+
 In practice, you will most likely parse markdown, transform the AST using a plugin and then outputting markdown again.
-This is what remark does:
+This is what the process function does:
 
 ```js
 import remarkToc from 'remark-toc';
