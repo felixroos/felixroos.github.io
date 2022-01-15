@@ -1,4 +1,32 @@
 import { getRhythmChildren, makeRhythmParent, RhythmNode, RhythmObject, toRhythmObject } from '../util';
+import { Node, Parent } from 'unist'
+import { curry } from 'ramda';
+
+declare interface UnifyProps {
+  getChildren?: (node: any) => any[],
+  getType?: (node: any) => string,
+  map?: (node: any) => any,
+  excludeData?: boolean
+} // TODO: find out how to type this...
+
+// like astify, but using props
+export const unify = curry((props, data) => {
+  const {
+    getChildren = (node) => node.children,
+    getType = (node) => node.type,
+    map = ({ type, data, children }) => ({ type, data, ...(children ? { children } : {}) }),
+  } = props;
+  const type = getType(data);
+  const children = getChildren(data);
+  if (!children) {
+    return map({ type, data });
+  }
+  return map({
+    type,
+    data,
+    children: children.map(unify(props)),
+  });
+});
 
 export declare interface ASTNode<T> {
   type: string;
@@ -7,9 +35,13 @@ export declare interface ASTNode<T> {
   [property: string]: any
 };
 
-
 // more general version of toAST
-export function astify<T>(getChildren: (node: T) => T[], getType: (node: T) => string, tree: T): ASTNode<T> {
+export function astify<T>(
+  getChildren: (node: T) => T[],
+  getType: (node: T) => string,
+  tree: T,
+  excludeData? // if true, no data will be set
+): ASTNode<T> {
   const children = getChildren(tree);
   const type = getType(tree);
   if (!children) {
@@ -17,8 +49,8 @@ export function astify<T>(getChildren: (node: T) => T[], getType: (node: T) => s
   }
   return {
     type,
-    data: tree,
-    children: children.map((child) => astify(getChildren, getType, child)),
+    ...(excludeData ? {} : { data: tree }),
+    children: children.map((child) => astify(getChildren, getType, child, excludeData)),
   };
 }
 
@@ -91,8 +123,8 @@ export function resolveMultiplication(node: ASTNode<RhythmNode<string>>): ASTNod
   if (!length) { // invalid length
     return { type: 'leaf', data };
   }
-  const children =  Array.from({ length }, (_, i) => ({ type: 'leaf', data }));
-  console.log('times',times,data, children);
+  const children = Array.from({ length }, (_, i) => ({ type: 'leaf', data }));
+  console.log('times', times, data, children);
   return {
     type: 'sequential',
     children
