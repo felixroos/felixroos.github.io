@@ -1,5 +1,4 @@
 import { Note } from '@tonaljs/tonal';
-import Fraction from 'fraction.js';
 import React from 'react';
 import ConnectedCircle from '../common/ConnectedCircle';
 import { cents, frequencyColor, getRatioLabel } from './tuning';

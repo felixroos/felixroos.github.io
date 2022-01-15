@@ -44,6 +44,7 @@ export function playEvents(
   const playableEvents = events.filter(
     (e) => ['string', 'number'].includes(typeof e.value) // && e.value !== 'r'
   );
+  // console.log(playableEvents)
   let { loop = true, instruments = { synth }, duration = max(playableEvents.map((e) => e.time + e.duration)) } = config;
   const part = new Tone.Part((time, event: any) => {
     if (event.value === 'r' || !['string', 'number'].includes(typeof event.value)) {

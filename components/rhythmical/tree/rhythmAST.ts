@@ -10,7 +10,7 @@ declare interface UnifyProps {
 } // TODO: find out how to type this...
 
 // like astify, but using props
-export const unify = curry((props, data) => {
+export const unifyAST = curry((props, data) => {
   const {
     getChildren = (node) => node.children,
     getType = (node) => node.type,
@@ -24,7 +24,7 @@ export const unify = curry((props, data) => {
   return map({
     type,
     data,
-    children: children.map(unify(props)),
+    children: children.map(unifyAST(props)),
   });
 });
 
