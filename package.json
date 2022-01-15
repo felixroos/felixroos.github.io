@@ -70,6 +70,7 @@
     "remark-gfm": "^1.0.0",
     "remark-math": "^4.0.0",
     "rhythmical": "^0.1.6",
+    "sitemap": "^7.1.0",
     "svg-piano": "^0.3.1",
     "three": "^0.133.1",
     "tone": "^14.7.77",
