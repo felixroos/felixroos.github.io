@@ -220,9 +220,9 @@ function TidalSandbox() {
             </fieldset>
           ))}
       </div>
-      <Player fold={true} instruments={{ drums, piano }} events={events} query={query} />
+      <Player fold={true} instruments={{ drums, piano }} events={events} />
     </>
-  );
+  ); // query={query}
 }
 
 export default TidalSandbox;
