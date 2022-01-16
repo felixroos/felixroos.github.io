@@ -39,6 +39,7 @@ export function playEvents(
     instrument?;
     instruments?: any[];
     loop?: boolean;
+    query?: (n) => void;
   } = {}
 ) {
   const playableEvents = events.filter(
@@ -46,17 +47,26 @@ export function playEvents(
   );
   // console.log(playableEvents)
   let { loop = true, instruments = { synth }, duration = max(playableEvents.map((e) => e.time + e.duration)) } = config;
+  let run = 0;
   const part = new Tone.Part((time, event: any) => {
+    if (event.value === 'start') {
+      config?.query?.(run++);
+      return;
+    }
     if (event.value === 'r' || !['string', 'number'].includes(typeof event.value)) {
       return;
     }
-    pickInstrument(event.instrument, instruments).triggerAttackRelease(
-      event.value,
-      event.duration,
-      time,
-      event.velocity || 0.9
-    );
-  }, playableEvents).start(0);
+    try {
+      pickInstrument(event.instrument, instruments).triggerAttackRelease(
+        event.value,
+        event.duration,
+        time,
+        event.velocity || 0.9
+      );
+    } catch (error) {
+      console.warn('could not play event', event, error);
+    }
+  }, [{ time: 0, value: 'start' } as ValueChild<string>].concat(playableEvents)).start(0);
   part.loop = loop;
   part.loopEnd = duration;
   Tone.Transport.start('+0.1');

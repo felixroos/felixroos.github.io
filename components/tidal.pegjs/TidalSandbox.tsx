@@ -1,6 +1,12 @@
 import { curry, pick } from 'ramda';
 import Pattern from 'tidal.pegjs/dist/pattern.js';
+import Player from '../rhythmical/components/Player';
 import { unifyAST } from '../rhythmical/tree/rhythmAST';
+import drums from '../../instruments/tidal';
+import { piano } from '../../instruments/piano';
+import { useEffect, useState } from 'react';
+import produce from 'immer';
+import Input from '../layout/Input';
 
 // props per type that should be picked to be spread to the unified object
 const customProps = {
@@ -42,6 +48,10 @@ export const e =
 export const q = curry((start, end, duration, instrument: string, pattern: string) => {
   const p = Pattern(pattern);
   return p.query(start, end).map(e(duration, instrument));
+});
+// query pattern for events
+export const qp = curry((start, end, duration, instrument: string, pattern: any) => {
+  return pattern.query(start, end).map(e(duration, instrument));
 });
 
 // q(0, 1, 2, '[bd [hh hh] sn [hh hh]]')
@@ -156,3 +166,63 @@ export const p2Data = {
 };
 
 export const p2DataUnified = unifyPatternData(p2Data);
+
+function TidalSandbox() {
+  const duration = 3;
+  const qDuration = 2;
+  const [patterns, setPatterns] = useState([
+    { instrument: 'drums', pattern: '[[[bd ~ bd] sn] [bd bd sn],hh*12]' },
+    { instrument: 'piano', pattern: '[[C2 G1]*3 [<[Bb1 G1 Bb1] [Bb1 F1 Bb1]>]]' },
+    { instrument: 'piano', pattern: '[[E3,G3,B3] [[F3,G3,Bb3] ~ <[F3,Ab3,Bb3] [F3,A3,Bb3]>]]' },
+  ]);
+  const patternField = curry((pattern, prop) => ({
+    value: pattern[prop],
+    onChange: (e) =>
+      setPatterns(
+        produce(patterns, (p) => {
+          const index = patterns.indexOf(pattern);
+          p[index][prop] = e.target.value;
+        })
+      ),
+  }));
+  const [events, setEvents] = useState([]);
+  const query = (n) => {
+    const _events = patterns.reduce((e, p, i) => {
+      try {
+        const patternEvents = q(n, qDuration, duration, p.instrument, p.pattern);
+        return e.concat(patternEvents);
+      } catch (err) {
+        console.log('err in pattern', err, i);
+        return e;
+      }
+    }, []);
+    setEvents(_events);
+  };
+  useEffect(() => {
+    query(0);
+  }, [patterns]);
+
+  return (
+    <>
+      <div className="space-y-1 mb-2">
+        {patterns
+          .map((p) => patternField(p))
+          .map((register, i) => (
+            <fieldset key={i} className="flex space-x-1 text-sm w-full">
+              <div className="w-32">
+                {!i && <label>instr</label>}
+                <Input.Select options={['drums', 'piano']} {...register('instrument')} />
+              </div>
+              <div className="w-full">
+                {!i && <label className="text-right">pattern</label>}
+                <Input type="text" {...register('pattern')} />
+              </div>
+            </fieldset>
+          ))}
+      </div>
+      <Player fold={true} instruments={{ drums, piano }} events={events} query={query} />
+    </>
+  );
+}
+
+export default TidalSandbox;

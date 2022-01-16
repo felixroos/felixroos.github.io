@@ -16,6 +16,9 @@ export const CustomLink = ({ as, href, ...otherProps }) => {
   if (href.startsWith('http')) {
     return <a target="_blank" rel="noreferrer" {...{ as, href, ...otherProps }} />;
   }
+  if (href.startsWith('./')) {
+    href = href.slice(1);
+  }
   return (
     <Link as={as} href={href}>
       <a {...otherProps} />

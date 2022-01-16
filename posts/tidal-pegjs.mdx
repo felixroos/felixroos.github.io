@@ -6,6 +6,8 @@ image: ./img/tidal-pegjs.png
 description: Let's see how tidal.pegjs can be used to generate some rhythms.
 ---
 
+<TidalSandbox />
+
 [tidal.pegjs](https://www.npmjs.com/package/tidal.pegjs) is a library that is able to parse [tidal style mini notation](http://tidalcycles.org/docs/reference/mini_notation/).
 It would be a really valuable addition to [rhythmical](./rhythmical-objects). It could be used like this:
 
@@ -142,8 +144,8 @@ The syntax would be much nicer if this was a rhythmical object like this:
 {
   "parallel": [
     { "instrument": "drums", "tidal": "[[[bd ~ bd] sn] [bd bd sn],hh*12]" },
-    { "instrument": "piano", "tidal": "[[C2 G1]*3 [Bb1 G1 Bb1]]" },
-    { "instrument": "piano", "tidal": "[[E3,G3,B3] [[F3,G3,Bb3] ~ [F3,Ab3,Bb3]]]" }
+    { "instrument": "piano", "tidal": "[[C2 G1]*3 [<[Bb1 G1 Bb1] [Bb1 F1 Bb1]>]]" },
+    { "instrument": "piano", "tidal": "[[E3,G3,B3] [[F3,G3,Bb3] ~ <[F3,Ab3,Bb3] [F3,A3,Bb3]>]]" }
   ]
 }
 ```
@@ -236,7 +238,13 @@ console.log('ast', ast);
 
 Which creates the following diff:
 
-import { unifyPattern, pData, pDataUnified, unifiedPattern, q } from '../components/tidal.pegjs/TidalSandbox.tsx';
+import TidalSandbox, {
+  unifyPattern,
+  pData,
+  pDataUnified,
+  unifiedPattern,
+  q,
+} from '../components/tidal.pegjs/TidalSandbox.tsx';
 import DiffViewer from '../components/common/DiffViewer';
 
 <DiffViewer

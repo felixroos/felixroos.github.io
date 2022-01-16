@@ -7,17 +7,29 @@ import { playEvents, synth, drawCallback } from './Player';
 import drums from '../../../instruments/tidal';
 import * as Tone from 'tone';
 import { useState, useRef, useEffect } from 'react';
+import { ValueChild } from '../helpers/objects';
 
-export default function PlayButton({ events, instruments, draw, loop }) {
+function getSafeEvents(_events) {
+  const max = 1000;
+  if (_events.length > max) {
+    console.warn(`cannot add more than ${max} events...`);
+  }
+  return _events.slice(0, max);
+}
+
+export default function PlayButton({ events, instruments, draw, loop, query }) {
   const [part, setPart] = useState<any>(false);
   const [pending, setPending] = useState(false);
   const drawLoop = useRef<any>();
+
   useEffect(() => {
     if (!part) {
       return;
     }
-    part?.removeAll?.();
-    events.forEach((e) => part.add(e.time, e));
+    part?.cancel?.();
+    [{ time: 0, value: 'start' } as ValueChild<string>]
+      .concat(getSafeEvents(events))
+      .forEach((e) => part.add(e.time, e));
   }, [events]);
   function stop() {
     drawLoop.current && drawLoop.current.stop();
@@ -25,6 +37,7 @@ export default function PlayButton({ events, instruments, draw, loop }) {
     Tone.Transport.stop();
     setPart(false);
   }
+
   /* async function loadInstruments() {
     return await Promise.all(
       Object.keys(instruments || {}).map(async (key) => {
@@ -63,9 +76,10 @@ export default function PlayButton({ events, instruments, draw, loop }) {
     // console.log('loaded instruments', loadedInstruments);
     // await loadInstruments();
     setPart(
-      playEvents(events, {
+      playEvents(getSafeEvents(events), {
         instruments: loadedInstruments || { synth, drums },
         loop,
+        query,
       })
     );
     drawLoop.current = drawCallback(draw);
