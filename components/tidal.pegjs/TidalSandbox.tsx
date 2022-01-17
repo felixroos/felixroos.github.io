@@ -226,3 +226,21 @@ function TidalSandbox() {
 }
 
 export default TidalSandbox;
+
+/*
+
+cool patterns:
+
+----
+
+[[<bd bd*2> <sn [sn ~ ~ sn]>],[hh hh*2]*3]*2
+[C2 [D2*4 <F2 [~ D2]>]]
+[[[E3,G3]*2 [<[F3,G3] [F3,A3]> [~ [[F3,G3]*3]]]],[<[C5*6 [D5*5 B4*4 C5*3]] G4>]]
+
+----
+
+[[[bd ~ ~ bd] sn] [[bd ~ bd] ~  sn [~ bd]],hh*8]
+[[C2 G1]*1 [<[Bb1 [G1 Bb1]] [D2 [F1 Bb1]]>]]
+[[E3,G3,B3] [[F3,G3,Bb3] <[F3,Ab3,Bb3]*6 [F3,A3,Bb3]*3>]]
+
+*/

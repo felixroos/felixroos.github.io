@@ -154,7 +154,7 @@ I want to implement this when rhythmical ASTs are ready.
 
 ## Getting the AST
 
-To be generate events, the grammar generates the AST which is used as an intermediate representation.
+To generate events, the grammar generates the AST which is used as an intermediate representation.
 We can get obtain the AST like this:
 
 ```js
@@ -221,7 +221,7 @@ In the case of the tree returned by tidal.pegjs, we can then do:
 
 ```js
 export const unifyPatternData = (patternData: Pattern) => {
-  return unify(
+  return unifyAST(
     {
       getChildren: (node) => node.values,
       map: ({ type, data: { value }, children }) => (children ? { type, children } : { type, value }),
@@ -299,7 +299,7 @@ const customProps = {
 
 export const unifyPatternData = (patternData: Pattern) => {
   console.log('unifyPatternData', patternData);
-  const u = unify(
+  const u = unifyAST(
     {
       getChildren: (node) => node.values || (node.value?.type ? [node.value] : null), // value can be an object = single child
       map: ({ type, data, children }) => ({
