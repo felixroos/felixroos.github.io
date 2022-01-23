@@ -37,7 +37,7 @@ export const Index = ({ posts }: IndexProps): JSX.Element => {
                       </p>
                       <div className="w-full relative h-[120px] sm:w-[120px] sm:h-[120px] rounded-md sm:rounded-xl border border-slate-400 overflow-hidden shadow-md">
                         <Image
-                          src={post.frontmatter.image.slice(1)}
+                          src={post.frontmatter.image?.slice(1) || '/logo.png'}
                           alt={post.frontmatter.title}
                           layout="fill"
                           objectFit="cover"

@@ -1,0 +1,137 @@
+---
+title: Loops vs Spirals
+date: '2021-05-01'
+keywords: ['voicings', 'draft']
+draft: true
+---
+
+import Player from '../components/rhythmical/components/Player.tsx';
+import DynamicSchedule from '../components/rhythmical/components/DynamicSchedule';
+import RandomBleeps from '../components/rhythmical/components/RandomBleeps';
+import { renderRhythmObject } from '../components/rhythmical/rhythmical.ts';
+import { voicingReducer } from '../components/voicing-permutation/old.ts';
+
+So far, the workflow of playing music with rhythmical was this:
+
+1. generate timed events from a rhythmical tree object
+2. throw those events into a web audio player
+3. repeat those exact events until the end of time
+
+The problem with this approach is that it's rigid.
+The loop never changes and there is no interaction between the user and the event stream.
+To really get an expressive music tool, it should be possible to change the events while they play.
+
+Even without user interaction, the loop should be able to retain a state over time. Take this example from the [rhythmical chords post](./rhythmical-chords):
+
+<Player
+  fold={false}
+  instruments={{ tinypiano, drums }}
+  events={renderRhythmObject({
+    duration: 12,
+    sequential: [
+      'Cm7',
+      'Em7',
+      'Dm7',
+      'Cm7',
+      'Em7',
+      'Dm7',
+      { value: 'Cm7', duration: 2 },
+      { value: 'Bm7', duration: 2 },
+    ],
+  }).reduce(voicingReducer(lefthand, ['C3', 'C6']), [])}
+/>
+
+In the post, I said:
+
+> This seems to work perfectly, the only jump remains at the repetition, which could be fixed by regenerating the voicing each round, which I will implement in the future.
+
+## Where the Spiral comes in
+
+If you give a pianist a leadsheet with chord symbols, he or she might play each form differently.
+For example, when transitioning from the last chord of the form to the first, the voice leading should still be smooth.
+So the pianist might choose to play a different voicing for the first chord on the second playthrough.
+
+This is what the metaphor of the spiral means: A stream of events that is oriented towards a repeating pattern,
+but that is constantly changing in time.
+
+## Time Slices
+
+To get that spirally behaviour, we need to generate a new slice of time once the old one is about to finish.
+When generating the new slice, we can continue where we left off in an organic way.
+
+This behaviour reminds me of audio buffers, where a certain number of samples is generated and pushed to sound driver.
+We want to do the same, but in a more macroscopic fashion.
+
+## Voice Leading Example
+
+This example showcases user interaction while playing. A random sequence of chords is played, voicing as smooth as possible inside the variable range:
+
+<DynamicSchedule />
+
+- Using schedule callbacks, refering to values of react state won't work, as they are not mutated.. 
+  - [same problem here](https://react.christmas/2020/15)
+  - [not much help here](https://github.com/Tonejs/Tone.js/wiki/Using-Tone.js-with-React-or-Vue)
+
+## Random Bleeps
+
+<RandomBleeps />
+
+## ..
+
+In the last post about [rhythmical trees](./rhythmical-trees), I used generator functions to iterate over tree nodes.
+In this post, I want to investigate if generators could be used to hold state and generate musical data step by step.
+This would solve the problem
+
+## Stateful Generators
+
+I found out that the next function of a generator also [accepts an argument](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Iterators_and_Generators#advanced_generators)!
+This allows data to flow in and out of the generator, enabling it to manage state:
+
+```js
+export function* infiniteGenerator() {
+  let state = '';
+  while (true) {
+    state += yield state;
+  }
+}
+
+test('infiniteGenerator', () => {
+  const generator = infiniteGenerator();
+  generator.next(); // A value passed to the first invocation of next() is always ignored.
+  expect(generator.next('x').value).toBe('x');
+  expect(generator.next('y').value).toBe('xy');
+  expect(generator.next('z').value).toBe('xyz');
+});
+```
+
+## Generating Voicings
+
+The state can be used to hold anything, like the latest voicing:
+
+```js
+export function* voicingGenerator({ range, dictionary, voiceLeading }) {
+  let lastVoicing;
+  let chord;
+  while (true) {
+    lastVoicing = chord ? Voicing.get(chord, range, dictionary, voiceLeading, lastVoicing) : [];
+    chord = yield lastVoicing;
+  }
+}
+
+test('voicingGenerator', () => {
+  const range = ['E3', 'A4'],
+    dictionary = lefthand,
+    voiceLeading = topNoteDiff;
+  const generator = voicingGenerator({ range, dictionary, voiceLeading });
+  generator.next();
+  expect(generator.next('Dm7').value).toEqual(['F3', 'A3', 'C4', 'E4']);
+  expect(generator.next('G7').value).toEqual(['F3', 'A3', 'B3', 'E4']);
+  expect(generator.next('C^7').value).toEqual(['E3', 'G3', 'B3', 'D4']);
+});
+```
+
+## scheduling 
+
+- https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Advanced_techniques
+- https://www.html5rocks.com/en/tutorials/audio/scheduling/
+- https://github.com/Tonejs/Tone.js/issues/507 => add tip to useStateRef inside scheduling callbacks?

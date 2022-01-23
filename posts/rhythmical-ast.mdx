@@ -74,6 +74,8 @@ export declare type ASTNode<T> = {
 
 The transformation is quite straightforward:
 
+TODO: use unifyRhythm
+
 ```ts
 // turn any tree T into an ASTNode<T>
 export function astify<T>(getChildren: (node: T) => T[], getType: (node: T) => string, tree: T): ASTNode<T> {

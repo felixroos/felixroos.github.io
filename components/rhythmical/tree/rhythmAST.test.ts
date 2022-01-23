@@ -1,22 +1,55 @@
-import { getRhythmChildren, makeRhythmParent, RhythmNode } from '../util';
-import { astify, fromAST, rhythmAST, toAST } from './rhythmAST';
+import { Parent } from 'unist';
+import { getRhythmChildren, getRhythmType, makeRhythmParent, RhythmNode, toRhythmObject } from '../util';
+import { unifyRhythm } from './rhythmAST';
+import { unifyAST } from './unifyAST';
 
-test('astify', () => {
+test('unifyRhythm', () => {
+  expect(unifyRhythm(['C', ['D', 'E'], 'F'])).toEqual({
+    type: 'sequential',
+    children: [
+      { type: 'leaf', value: 'C' },
+      {
+        type: 'sequential',
+        children: [
+          { type: 'leaf', value: 'D' },
+          { type: 'leaf', value: 'E' },
+        ],
+      },
+      { type: 'leaf', value: 'F' },
+    ],
+  });
+});
+
+test('unifyAST', () => {
   expect(
-    astify<RhythmNode<string>>(
-      getRhythmChildren,
-      (node) => {
-        if (Array.isArray(node) || (typeof node === 'object' && node.sequential)) {
-          return 'sequential';
-        }
-        if (typeof node === 'object' && node.parallel) {
-          return 'parallel';
-        }
-        return 'leaf';
+    unifyAST<RhythmNode<string>, Parent & any>(
+      (r) => {
+        const children = getRhythmChildren<string>(r);
+        const type = getRhythmType(r);
+        return { data: r, type, ...(children ? { children } : {}) };
       },
       ['C', ['D', 'E'], 'F']
     )
   ).toEqual({
+    type: 'sequential',
+    data: ['C', ['D', 'E'], 'F'],
+    children: [
+      { type: 'leaf', data: 'C' },
+      {
+        type: 'sequential',
+        data: ['D', 'E'],
+        children: [
+          { type: 'leaf', data: 'D' },
+          { type: 'leaf', data: 'E' },
+        ],
+      },
+      { type: 'leaf', data: 'F' },
+    ],
+  });
+});
+/* 
+test('astify', () => {
+  expect(astify<RhythmNode<string>>(getRhythmChildren, getRhythmType, ['C', ['D', 'E'], 'F'])).toEqual({
     type: 'sequential',
     data: ['C', ['D', 'E'], 'F'],
     children: [
@@ -117,3 +150,4 @@ test('transformRhythm', () => {
     })
   ).toEqual(['C', ['D', 'E'], 'F']);
 });
+ */

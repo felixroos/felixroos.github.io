@@ -238,13 +238,8 @@ console.log('ast', ast);
 
 Which creates the following diff:
 
-import TidalSandbox, {
-  unifyPattern,
-  pData,
-  pDataUnified,
-  unifiedPattern,
-  q,
-} from '../components/tidal.pegjs/TidalSandbox.tsx';
+import TidalSandbox from '../components/tidal.pegjs/TidalSandbox.tsx';
+import { unifiedPattern, unifyPattern, pData, pDataUnified, q } from '../components/tidal.pegjs/tidalAST';
 import DiffViewer from '../components/common/DiffViewer';
 
 <DiffViewer

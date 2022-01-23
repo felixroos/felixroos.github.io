@@ -1,39 +1,26 @@
-import { getRhythmChildren, makeRhythmParent, RhythmNode, RhythmObject, toRhythmObject } from '../util';
-import { Node, Parent } from 'unist'
-import { curry } from 'ramda';
+import { getRhythmChildren, getRhythmType, makeRhythmParent, RhythmNode, RhythmObject, toRhythmObject } from '../util';
+import { Node, Parent } from 'unist';
+import { unifyAST } from './unifyAST';
 
-declare interface UnifyProps {
-  getChildren?: (node: any) => any[],
-  getType?: (node: any) => string,
-  map?: (node: any) => any,
-  excludeData?: boolean
-} // TODO: find out how to type this...
+export const unifyRhythm = (rhythm: RhythmNode<string>) =>
+  unifyAST<RhythmNode<string>, Parent & any>((r) => {
+    const children = getRhythmChildren(r);
+    const type = getRhythmType(r);
+    const { sequential, parallel, ...obj } = toRhythmObject(r); // TODO: remove all children generating props
+    if (children !== undefined) {
+      return { ...obj, type, children };
+    }
+    return { ...obj, type };
+  }, rhythm);
 
-// like astify, but using props
-export const unifyAST = curry((props, data) => {
-  const {
-    getChildren = (node) => node.children,
-    getType = (node) => node.type,
-    map = ({ type, data, children }) => ({ type, data, ...(children ? { children } : {}) }),
-  } = props;
-  const type = getType(data);
-  const children = getChildren(data);
-  if (!children) {
-    return map({ type, data });
-  }
-  return map({
-    type,
-    data,
-    children: children.map(unifyAST(props)),
-  });
-});
+// TODO: remove below stuff
 
 export declare interface ASTNode<T> {
   type: string;
   children?: ASTNode<T>[];
   data?: T;
-  [property: string]: any
-};
+  [property: string]: any;
+}
 
 // more general version of toAST
 export function astify<T>(
@@ -54,28 +41,7 @@ export function astify<T>(
   };
 }
 
-export function astifyRhythm(rhythm) {
-  return astify(
-    getRhythmChildren,
-    getRhythmType, rhythm)
-}
-
-function getRhythmType(node) {
-  if (typeof node !== 'object') {
-    return 'leaf';
-  }
-  if (Array.isArray(node)) {
-    return 'array';
-  }
-  if (node.sequential) {
-    return 'sequential';
-  }
-  if (node.parallel) {
-    return 'parallel';
-  }
-  return 'string';
-}
-
+// TODO: type..
 export declare type ASTVisitor<T> = (node: ASTNode<T>) => void;
 
 export function visitAST<T>(node: ASTNode<T>, visitor: ASTVisitor<T>): void {
@@ -95,6 +61,27 @@ export function mapAST<T>(node: ASTNode<T>, mapFn: MapFn<ASTNode<T>>): ASTNode<T
   return edited;
 }
 
+// TODO: remove
+export function astifyRhythm(rhythm) {
+  return astify(getRhythmChildren, getRhythmType, rhythm);
+}
+
+/* function getRhythmType(node) {
+  if (typeof node !== 'object') {
+    return 'leaf';
+  }
+  if (Array.isArray(node)) {
+    return 'array';
+  }
+  if (node.sequential) {
+    return 'sequential';
+  }
+  if (node.parallel) {
+    return 'parallel';
+  }
+  return 'string';
+} */
+
 export function cleanRhythmAST<T>(node: ASTNode<RhythmNode<T>>): ASTNode<RhythmNode<T>> {
   const { type, data, ...restOfNode } = node;
   if (type === 'array') {
@@ -108,30 +95,28 @@ export function cleanRhythmAST<T>(node: ASTNode<RhythmNode<T>>): ASTNode<RhythmN
 }
 
 export function toRhythmAST(rhythm) {
-  const ast = astify(
-    getRhythmChildren,
-    getRhythmType, rhythm)
+  const ast = astify(getRhythmChildren, getRhythmType, rhythm);
   return mapAST(ast, cleanRhythmAST);
 }
 
 export function resolveMultiplication(node: ASTNode<RhythmNode<string>>): ASTNode<RhythmNode<string>> {
-  if (node.type !== 'leaf') { //  || !node.data.includes('*')
+  if (node.type !== 'leaf') {
+    //  || !node.data.includes('*')
     return node;
   }
   const [data, times] = (node.data as string).split('*');
   const length = parseInt(times);
-  if (!length) { // invalid length
+  if (!length) {
+    // invalid length
     return { type: 'leaf', data };
   }
   const children = Array.from({ length }, (_, i) => ({ type: 'leaf', data }));
   console.log('times', times, data, children);
   return {
     type: 'sequential',
-    children
-  }
+    children,
+  };
 }
-
-
 
 // OLD
 

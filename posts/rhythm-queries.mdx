@@ -1,0 +1,196 @@
+---
+title: Rhythm Queries
+date: '2022-01-22'
+keywords: ['rhythmical', 'draft']
+draft: true
+---
+
+In the [last post](./tidal-pegjs), we saw that tidal.pegjs parses a rhythm string into an [AST](./abstract-syntax-trees), which is then used to query events.
+For the query implementation, the target AST is independent of the original string.
+This means, we could also unify a [rhythmical object](./rhythmical-objects) to the same AST structure and be able to generate events from both inputs with a single function.
+
+## Table of Contents
+
+## Generating unified ASTs
+
+First, let's use this `unifyAST`, which outputs a [unified AST](./abstract-syntax-trees#unified) from any input:
+
+```js
+import { Node, Parent } from 'unist';
+
+export const unifyAST = <From, To extends Node | Parent>(
+  getNode: (node: From) => To & { children?: From[] },
+  data: From
+): To => {
+  const node = getNode(data);
+  if ('children' in node) {
+    return {
+      ...node,
+      children: node.children.map((child) => unifyAST(getNode, child)),
+    };
+  }
+  return node;
+};
+```
+
+This implementation is a simplified version on the [`unifyAST` method of the last post](./tidal-pegjs#getting-the-ast), using only one function instead of an object of multiple functions.
+The function is now fully typed, extending unist types.
+
+### From a pattern
+
+We can then unify a pattern like this:
+
+```js
+import Pattern from 'tidal.pegjs/dist/pattern.js';
+
+const rename = {
+  string: 'leaf',
+  group: 'sequential',
+  layers: 'parallel',
+};
+
+export const unifyPatternData = (patternData: Pattern, shouldRename = false) => {
+  return unifyAST((node) => {
+    const { type, value, values, ...data } = node;
+    const children = values || (value?.type ? [value] : null);
+    return {
+      type: shouldRename ? rename[type] || type : type,
+      ...data,
+      ...(children ? { children } : { value }),
+    };
+  }, patternData);
+};
+export const unifyPattern = (pattern: string, rename = true) => unifyPatternData(Pattern(pattern).__data, rename); // with rename
+```
+
+The shouldRename flag makes renames the types to be consistent with rhythmical. I could've done the renaming the other way around but I wanted less confusion while implementing. I might rename the types in the future to something tidally.
+
+Now we can turn a pattern like `[A [B C]]` into:
+
+```json
+{
+  "type": "sequential",
+  "children": [
+    { "type": "leaf", "value": "A" },
+    {
+      "type": "sequential",
+      "children": [
+        { "type": "leaf", "value": "B" },
+        { "type": "leaf", "value": "C" }
+      ]
+    }
+  ]
+}
+```
+
+Looking at the [tidal.pegjs grammar](https://github.com/gibber-cc/tidal.pegjs/blob/master/src/tidal.pegjs), we can make out the following types:
+
+- group: sequential
+- layers: parallel
+- onestep
+- bjorklund
+- degrade
+- speed
+- rest
+- polymeter
+- string
+- number
+
+### From a rhythmical object
+
+Using the same `unifyAST` function, we can unify a rhythmical object like this:
+
+```ts
+export const unifyRhythm = (rhythm: RhythmNode<string>) =>
+  unifyAST<RhythmNode<string>, Parent>((r) => {
+    const children = getRhythmChildren(r);
+    const type = getRhythmType(r);
+    const { sequential, parallel, ...obj } = toRhythmObject(r);
+    return { ...obj, type, ...(children ? { children } : {}) };
+  }, rhythm);
+```
+
+Now we can turn this:
+
+```json
+["A", ["B", "C"]]
+```
+
+into:
+
+```json
+{
+  "type": "sequential",
+  "children": [
+    { "type": "leaf", "value": "A" },
+    {
+      "type": "sequential",
+      "children": [
+        { "type": "leaf", "value": "B" },
+        { "type": "leaf", "value": "C" }
+      ]
+    }
+  ]
+}
+```
+
+..which is exactly the same AST as we generated earlier from the pattern `[A [B C]]`.
+
+## Querying the AST
+
+We can now write a query function that generates events from an AST, and it will work with rhythmical and with tidal.pegjs as well!
+
+TBD
+
+now, we can visit each tree node and call the respective function:
+
+```js
+const state = {};
+mapAST(ast, (node) => {
+  node.start = node.start || 0;
+  node.end = node.start || 1;
+  node.duration = node.end - node.start; // for easier calculation in child
+  return types[node.type](node, state);
+});
+```
+
+add function for each type:
+
+```js
+const types = {
+  parallel(node) {
+    // returns children with start end (from 0 to 1)
+  },
+  sequential(node, state) {
+    // returns children with start end (from 0 to 1)
+    state.time = 0;
+    node.children = node.children.map((child, i) => {
+      const duration = child.duration || 1;
+      child.start = state.time * node.duration;
+      child.end = (state.time + duration) * node.duration;
+      state.time += duration;
+      // could also multiply with node.duration here
+      return child;
+    });
+  },
+};
+```
+
+yields:
+
+```js
+// [A [B C]]
+const ast = {
+  type: 'sequential',
+  children: [
+    { type: 'text', value: 'A' },
+    {
+      type: 'sequential',
+      children: [
+        { type: 'text', value: 'B' },
+        { type: 'text', value: 'C' },
+      ],
+    },
+  ],
+};
+```
