@@ -1,7 +1,6 @@
 import { Node, Parent } from 'unist';
 import { editAST } from '../rhythmical/tree/editAST';
 
-
 // AST transformer plugins
 
 export function sequential(node, { isPost }) {

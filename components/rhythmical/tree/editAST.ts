@@ -16,7 +16,7 @@ export interface EditAST<T extends Node | Parent> {
   (
     node: T,
     mapFn: (node: T, state?: Partial<TraverseState>) => T,
-    traverseState: Partial<TraverseState> // need to add index: 0 for root node?
+    traverseState?: Partial<TraverseState> // need to add index: 0 for root node?
   ): T;
 }
 
