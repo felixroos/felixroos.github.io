@@ -17,7 +17,7 @@ export const scaleDegrees = curry((pattern, name) => degrees(pattern, scale(name
 
 export const nestedDegrees = indices => map(i => indices.map(d => i + d - 1))
 
-export const nest = curry((patterns, notes) => pipe(
+export const nest = curry<any>((patterns, notes) => pipe(
   () => patterns[0],
   ...patterns.slice(1)
     .map(pattern => pipe(
