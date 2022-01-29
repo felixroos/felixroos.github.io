@@ -66,12 +66,12 @@ export function sequentialToArc(node: RhythmNode, state: TraverseState): RhythmN
 
 type EditRhythmAST = EditAST<RhythmNode>;
 
-export function editRhythmAST(
+/* export function editRhythmAST(
   ast: RhythmNode,
   mapFn: (node: RhythmNode, state?: Partial<TraverseState>) => RhythmNode
 ): RhythmNode {
   return editAST<RhythmNode>(ast, mapFn);
-}
+} */
 
 export function stack<T>(children: T[]): Arc[] {
   return children.map(() => ({ start: new Fraction(0), end: new Fraction(1) }));
