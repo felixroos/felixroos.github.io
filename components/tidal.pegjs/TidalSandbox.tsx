@@ -5,6 +5,7 @@ import { piano } from '../../instruments/piano';
 import drums from '../../instruments/tidal';
 import Input from '../layout/Input';
 import Player from '../rhythmical/components/Player';
+import { queryPattern } from './queryPattern';
 import { q } from './tidalAST';
 
 function TidalSandbox() {
@@ -14,6 +15,12 @@ function TidalSandbox() {
     { instrument: 'drums', pattern: '[[[bd ~ bd] sn] [bd bd sn],hh*12]' },
     { instrument: 'piano', pattern: '[[C2 G1]*3 [<[Bb1 G1 Bb1] [Bb1 F1 Bb1]>]]' },
     { instrument: 'piano', pattern: '[[E3,G3,B3] [[F3,G3,Bb3] ~ <[F3,Ab3,Bb3] [F3,A3,Bb3]>]]' },
+    /* { instrument: 'drums', pattern: '[[[bd ~ bd] sn] [bd bd sn],hh]' },
+    { instrument: 'piano', pattern: '[[C2 G1] [<[Bb1 G1 Bb1] [Bb1 F1 Bb1]>]]' },
+    { instrument: 'piano', pattern: '[[E3,G3,B3] [[F3,G3,Bb3] ~ <[F3,Ab3,Bb3] [F3,A3,Bb3]>]]' }, */
+    /* { instrument: 'drums', pattern: 'bd <sn [sn sn sn]>' },
+    { instrument: 'piano', pattern: '<c3 b2 a2 g2 f2 e2 g2>' },
+    { instrument: 'piano', pattern: '<c2 d2 e3 f3 g3 a3>' }, */
   ]);
   const patternField = curry((pattern, prop) => ({
     value: pattern[prop],
@@ -29,7 +36,19 @@ function TidalSandbox() {
   const query = (n) => {
     const _events = patterns.reduce((e, p, i) => {
       try {
-        const patternEvents = q(n, qDuration, duration, p.instrument, p.pattern);
+        const useNewQuerying = false;
+        const patternEvents = useNewQuerying
+          ? queryPattern(p.pattern, n, true).map((e) => ({
+              ...e,
+              instrument: p.instrument,
+              time: e.time * duration,
+              duration: e.duration * duration,
+            }))
+          : q(n, qDuration, duration, p.instrument, p.pattern);
+        /* console.log(
+          'pp',
+          patternEvents.map((e) => e.value)
+        ); */
         return e.concat(patternEvents);
       } catch (err) {
         console.log('err in pattern', err, i);
@@ -60,7 +79,17 @@ function TidalSandbox() {
             </fieldset>
           ))}
       </div>
-      <Player fold={true} instruments={{ drums, piano }} events={events} />
+      <Player
+        fold={true}
+        instruments={{ drums, piano }}
+        events={events}
+        duration={duration}
+        center={0}
+        query={(n) => {
+          // console.log('q', n);
+          query(n);
+        }}
+      />
     </>
   ); // query={query}
 }

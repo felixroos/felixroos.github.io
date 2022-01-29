@@ -1,34 +1,9 @@
-import { Parent, Node } from 'unist';
 import { curry } from 'ramda';
 import Pattern from 'tidal.pegjs/dist/pattern.js';
-import { unifyAST } from '../rhythmical/tree/unifyAST';
 
-const rename = {
-  string: 'leaf',
-  group: 'sequential',
-  layers: 'parallel',
-};
+// this file is used by tidal-pegjs blog post
 
-export const unifyPatternData = (patternData, shouldRename = false) => {
-  return unifyAST<any, Node | Parent>((node) => {
-    const { type, value, values, left, right, ...data } = node;
-    let children;
-    if (values) {
-      children = values;
-    } else if (value?.type) {
-      // some types have a single object as value, which is like a single child
-      children = [value];
-    } else if (left && right) {
-      // polymeter
-      children = [left, right];
-    }
-    return {
-      type: shouldRename ? rename[type] || type : type,
-      ...data,
-      ...(children ? { children } : { value }),
-    };
-  }, patternData);
-};
+// console.log('unifiedPattern', unifiedPattern('[[E3,G3,B3] [[F3,G3,Bb3] ~ <[F3,Ab3,Bb3] [F3,A3,Bb3]>]]'));
 
 // get value of fraction
 const f = ({ n, d }) => n / d;
@@ -56,12 +31,8 @@ export const qp = curry((start, end, duration, instrument: string, pattern: any)
 // q(0, 2, 1, '<bd sn>')
 // ['bd sn', 'hh*8'].map(q(0, 2, 2)).flat()
 
-export const unifiedPattern = (pattern: string) => unifyPatternData(Pattern(pattern).__data);
-export const unifyPattern = (pattern: string, rename = true) => unifyPatternData(Pattern(pattern).__data, rename); // with rename
-
-// console.log('unifiedPattern', unifiedPattern('[[E3,G3,B3] [[F3,G3,Bb3] ~ <[F3,Ab3,Bb3] [F3,A3,Bb3]>]]'));
-
 // hard coded p.__data with "type" as first prop. Pattern throws "type" to end which is not so readable
+
 export const pData = {
   type: 'group',
   values: [
@@ -163,5 +134,3 @@ export const p2Data = {
     },
   ],
 };
-
-export const p2DataUnified = unifyPatternData(p2Data);

@@ -11,7 +11,7 @@ export default function Tree(props) {
   //const root = cluster().nodeSize([dx || 40, dy || height / (h.height + 1)])(h);
   const root = tree().nodeSize([dx || 40, dy || height / (h.height + 1)])(h);
   let viewBox, linker;
-  viewBox = `${-width / 2} -20 ${width} ${height}`;
+  viewBox = `${-width / 2} -${nodeRadius} ${width} ${height}`;
   linker = (d: any) => `
     M${d.target.x},${d.target.y}
     L${d.source.x},${d.source.y}`;

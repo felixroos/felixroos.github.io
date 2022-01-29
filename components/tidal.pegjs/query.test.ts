@@ -1,7 +1,7 @@
 import Pattern from 'tidal.pegjs/dist/pattern.js';
-import { unifyRhythm } from '../rhythmical/tree/rhythmAST';
-import { query, queryPattern, queryRhythm, transform, transformEvents } from './query';
-import { unifyPattern } from './tidalAST';
+import { queryRhythm, unifyRhythm } from '../rhythmical/tree/rhythmAST';
+import { query, transform, transformEvents } from './query';
+import { queryPattern, unifyPattern } from './queryPattern';
 
 const r1 = ['A', ['B', 'C']];
 const p1 = 'A [B C]';
@@ -153,6 +153,7 @@ const events3_1 = [
 ];
 
 const p4 = 'A <B <C D>>';
+// <bd <sn <hh cp>>>
 const ast4 = {
   type: 'sequential',
   children: [

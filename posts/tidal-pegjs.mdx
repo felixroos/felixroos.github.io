@@ -220,7 +220,7 @@ export const unifyAST = curry((props, data) => {
 In the case of the tree returned by tidal.pegjs, we can then do:
 
 ```js
-export const unifyPatternData = (patternData: Pattern) => {
+export const unifyPatternAST = (patternData: Pattern) => {
   return unifyAST(
     {
       getChildren: (node) => node.values,
@@ -229,9 +229,9 @@ export const unifyPatternData = (patternData: Pattern) => {
     patternData
   );
 };
-export const unifiedPattern = (pattern: string) => unifyPatternData(Pattern(pattern).__data);
+export const unifyPattern = (pattern: string) => unifyPatternAST(Pattern(pattern).__data);
 
-const ast = unifiedPattern('[A [B C]]');
+const ast = unifyPattern('[A [B C]]');
 
 console.log('ast', ast);
 ```
@@ -239,7 +239,8 @@ console.log('ast', ast);
 Which creates the following diff:
 
 import TidalSandbox from '../components/tidal.pegjs/TidalSandbox.tsx';
-import { unifiedPattern, unifyPattern, pData, pDataUnified, q } from '../components/tidal.pegjs/tidalAST';
+import { pData, pDataUnified, q } from '../components/tidal.pegjs/tidalAST';
+import { unifyPattern } from '../components/tidal.pegjs/queryPattern';
 import DiffViewer from '../components/common/DiffViewer';
 
 <DiffViewer
@@ -277,7 +278,7 @@ import { mapAST } from '../components/rhythmical/tree/rhythmAST.ts';
 When using other features of the library:
 
 ```js
-unifiedPattern('[0 [1 2]*4 <5 6 7> 8]');
+unifyPattern('[0 [1 2]*4 <5 6 7> 8]');
 ```
 
 ... some properties are swallowed form the original ast.
@@ -292,8 +293,8 @@ const customProps = {
   speed: ['rate'],
 };
 
-export const unifyPatternData = (patternData: Pattern) => {
-  console.log('unifyPatternData', patternData);
+export const unifyPatternAST = (patternData: Pattern) => {
+  console.log('unifyPatternAST', patternData);
   const u = unifyAST(
     {
       getChildren: (node) => node.values || (node.value?.type ? [node.value] : null), // value can be an object = single child
@@ -305,39 +306,20 @@ export const unifyPatternData = (patternData: Pattern) => {
     },
     patternData
   );
-  console.log('unifiedPattern', u);
+  console.log('unifyPattern', u);
   return u;
 };
 ```
 
 Now all children are properly populated:
 
-export const patternTypeColor = {
-  group: 'steelblue',
-  string: 'tomato',
-  number: 'salmon',
-  speed: 'green',
-  onestep: 'darkblue',
-};
+import TidalTree from '../components/tidal.pegjs/TidalTree';
 
-<Tree
-  width={620}
-  nodeRadius={10}
-  dx={50}
-  columns={[12, 12]}
-  data={mapAST(unifiedPattern('[0 [1 2]*4 <5 6 7> 8]'), (node) => {
-    return {
-      ...node,
-      name: node.value ?? node.type,
-      color: patternTypeColor[node.type],
-    };
-  })}
-  hideJson={true}
-/>
+<TidalTree pattern="[0 [1 2]*4 <5 6 7> 8]" shouldRename={false} />
 
 import JSONViewer from '../components/common/JSONViewer';
 
-<JSONViewer collapsed={3} src={unifiedPattern('[0 [1 2]*4 <5 6 7> 8]')} />
+<JSONViewer collapsed={3} src={unifyPattern('[0 [1 2]*4 <5 6 7> 8]')} />
 
 ## Outlook
 

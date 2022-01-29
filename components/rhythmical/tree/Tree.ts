@@ -18,4 +18,4 @@ export const Tree = {
     }
     return makeParent(newNode, children.map(Tree.map(getChildren, makeParent, mapFn)));
   }),
-}
+};

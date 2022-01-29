@@ -1,29 +1,6 @@
-import { unifyRhythm } from './../rhythmical/tree/rhythmAST';
-import { unifyPattern } from './tidalAST';
-import { RhythmNode } from '../rhythmical/util';
 import { Node, Parent } from 'unist';
+import { editAST } from '../rhythmical/tree/editAST';
 
-// general AST functions
-
-interface TraverseState {
-  index: number;
-  // siblings: T[];
-  isPost: boolean;
-  [key: string]: any;
-}
-export function editAST<T extends Node | Parent>(
-  node: T,
-  mapFn: (node: T, state: Partial<TraverseState>) => T,
-  traverseState: Partial<TraverseState> = {} // need to add index: 0 for root node?
-): T {
-  const edited = mapFn(node, { ...traverseState, isPost: false });
-  if ('children' in edited) {
-    edited.children = edited.children.map((child, index) =>
-      editAST(child, mapFn, { ...traverseState, index, parent: edited, originalParent: node })
-    );
-  }
-  return mapFn(edited, { ...traverseState, isPost: true });
-}
 
 // AST transformer plugins
 
@@ -90,6 +67,7 @@ export function onestep(node, state) {
   const branchProduct = state.branches.reduce((acc, f) => f * acc, 1); // f
   state.branches.push(factor);
   const offset = node.index ?? 0; // i // TODO: find way to get index without having to pass it in
+  // need sum of preceding indicies?
   const index = ((state.query - offset) / branchProduct) % factor; // q - i / f
   // console.log('onestep q=', state.query, 'i=', offset, 'f=', branchProduct, 'index =', index);
   return {
@@ -137,15 +115,6 @@ export function query(ast, n = 0, durationEvents = false) {
     return transformEvents(state.events);
   }
   return state.events;
-}
-
-export function queryPattern(pattern: string, n = 0, durationEvents = false) {
-  const ast = unifyPattern(pattern);
-  return query(ast, n, durationEvents);
-}
-export function queryRhythm(rhythm: RhythmNode<string>, n = 0, durationEvents = false) {
-  const ast = unifyRhythm(rhythm);
-  return query(ast, n, durationEvents);
 }
 
 // transform events

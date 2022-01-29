@@ -1,6 +1,12 @@
 import { getRhythmChildren, getRhythmType, makeRhythmParent, RhythmNode, RhythmObject, toRhythmObject } from '../util';
 import { Node, Parent } from 'unist';
 import { unifyAST } from './unifyAST';
+import { query } from '../../tidal.pegjs/query';
+
+export function queryRhythm(rhythm: RhythmNode<string>, n = 0, durationEvents = false) {
+  const ast = unifyRhythm(rhythm);
+  return query(ast, n, durationEvents);
+}
 
 export const unifyRhythm = (rhythm: RhythmNode<string>) =>
   unifyAST<RhythmNode<string>, Parent & any>((r) => {

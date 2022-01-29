@@ -5,7 +5,7 @@ import canUseDOM from '../../canUseDOM';
 import { max } from 'd3-array';
 import { useState } from 'react';
 import PianoRoll from './PianoRoll';
-import PlayButton from './PlayButton';
+import PlayButton, { getSafeEvents } from './PlayButton';
 const { PolySynth, Synth } = Tone;
 
 export const synth =
@@ -42,15 +42,16 @@ export function playEvents(
     query?: (n) => void;
   } = {}
 ) {
-  const playableEvents = events.filter(
-    (e) => ['string', 'number'].includes(typeof e.value) // && e.value !== 'r'
-  );
+  let { duration } = config;
+  const playableEvents = getSafeEvents(events, duration);
+  const maxEnd = max(playableEvents.map((e) => e.time + e.duration));
+  duration = duration || maxEnd;
+  let { loop = true, instruments = { synth } } = config;
   // console.log(playableEvents)
-  let { loop = true, instruments = { synth }, duration = max(playableEvents.map((e) => e.time + e.duration)) } = config;
   let run = 0;
   const part = new Tone.Part((time, event: any) => {
     if (event.value === 'start') {
-      config?.query?.(run++);
+      config?.query?.(++run);
       return;
     }
     if (event.value === 'r' || !['string', 'number'].includes(typeof event.value)) {
@@ -66,7 +67,7 @@ export function playEvents(
     } catch (error) {
       console.warn('could not play event', event, error);
     }
-  }, [{ time: 0, value: 'start' } as ValueChild<string>].concat(playableEvents)).start(0);
+  }, playableEvents).start(0);
   part.loop = loop;
   part.loopEnd = duration;
   Tone.Transport.start('+0.1');

@@ -8,16 +8,30 @@ import drums from '../../../instruments/tidal';
 import * as Tone from 'tone';
 import { useState, useRef, useEffect } from 'react';
 import { ValueChild } from '../helpers/objects';
+import { max } from 'd3-array';
 
-function getSafeEvents(_events) {
-  const max = 1000;
-  if (_events.length > max) {
-    console.warn(`cannot add more than ${max} events...`);
+export function getSafeEvents(_events, duration = 1) {
+  const maxEvents = 1000;
+  _events = _events.filter(
+    (e) => ['string', 'number'].includes(typeof e.value) // && e.value !== 'r'
+  );
+  if (_events.length > maxEvents) {
+    console.warn(`cannot add more than ${maxEvents} events...`);
+    _events = _events.slice(0, max);
   }
-  return _events.slice(0, max);
+  const maxTime = max(_events.map((e) => e.time));
+  duration = duration || max(_events.map((e) => e.time + e.duration));
+  // const bufferAt = maxTime + (duration - maxTime) / 2; // buffer halfway between last start and end of part
+  const bufferAt = duration - 0.08; // buffer halfway between last start and end of part
+  // console.log('bufferAt', bufferAt);
+  if (isNaN(bufferAt)) {
+    console.warn('bufferAt is NaN', maxTime, duration, _events);
+  }
+  // last event => after that, we can change events asap (+10ms tolerance)
+  return [{ time: bufferAt, value: 'start' } as ValueChild<string>].concat(_events);
 }
 
-export default function PlayButton({ events, instruments, draw, loop, query }) {
+export default function PlayButton({ events, instruments, draw, loop, query, duration }) {
   const [part, setPart] = useState<any>(false);
   const [pending, setPending] = useState(false);
   const drawLoop = useRef<any>();
@@ -27,9 +41,7 @@ export default function PlayButton({ events, instruments, draw, loop, query }) {
       return;
     }
     part?.cancel?.();
-    [{ time: 0, value: 'start' } as ValueChild<string>]
-      .concat(getSafeEvents(events))
-      .forEach((e) => part.add(e.time, e));
+    getSafeEvents(events, duration).forEach((e) => part.add(e.time, e));
   }, [events]);
   function stop() {
     drawLoop.current && drawLoop.current.stop();
@@ -76,10 +88,11 @@ export default function PlayButton({ events, instruments, draw, loop, query }) {
     // console.log('loaded instruments', loadedInstruments);
     // await loadInstruments();
     setPart(
-      playEvents(getSafeEvents(events), {
+      playEvents(events, {
         instruments: loadedInstruments || { synth, drums },
         loop,
         query,
+        duration,
       })
     );
     drawLoop.current = drawCallback(draw);

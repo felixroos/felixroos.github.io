@@ -1,0 +1,437 @@
+---
+title: Rhythmical Alternations
+date: '2022-01-29'
+keywords: ['rhythmical']
+image: './img/onestep.png'
+loadKatex: true
+---
+
+Last time, I looked at [tidal.pegjs](./tidal-pegjs), which has an [AST](./abstract-syntax-trees) that is conceptually similar to [rhythmical objects](rhythmical-objects).
+In addition to sequential and parallel nodes, there are more ideas I haven't yet explored.
+
+In this post, I want to take a look at alternating rhythms, which are enclosed with `<` and `>` in tidal mini notation.
+
+Disclaimer: This post will be heavily repetetive and mathematical. As I am not a mathematician, I might not use conventional symbols for tree theory (if there are any).
+
+## Table of Contents
+
+## Example
+
+```
+C3 <Eb3 F3>
+```
+
+Playing back this pattern will have the following result:
+
+```
+C3 Eb3 C3 F3 C3 Eb3 C3 F3 C3 ...
+```
+
+In traditional western music notation, this could be notated like that:
+
+![voltas](./img/voltas.png)
+
+In tidal.pegjs, the AST for `C3 <Eb3 F3>` looks like this:
+
+import JSONViewer from '../components/common/JSONViewer';
+import { unifyPattern } from '../components/tidal.pegjs/queryPattern';
+import TidalTree from '../components/tidal.pegjs/TidalTree';
+
+<JSONViewer collapsed={3} src={unifyPattern('C3 <Eb3 F3>')} />
+
+... which can be visualized with this tree:
+
+<TidalTree pattern="C3 <Eb3 F3>" />
+
+## Event Querying
+
+So far, rendering the events for a rhythmical tree involved traversing the tree and calculating time and duration for each leaf.
+
+When having alternating nodes, we need to know at which run through of the tree we are, to know which of the possible choices to pick.
+In the example above, we have two different ways to go, so for every first run, we pick the first and for every second run, we pick the second.
+
+This can be made clearer with a table:
+
+import QueryTable from '../components/tidal.pegjs/QueryTable';
+
+<QueryTable values={['C3 Eb3', 'C3 F3', 'C3 Eb3', 'C3 F3']} cols={[[0, 1, 0, 1]]} length={2} />
+
+- Q = query count
+- V = event value(s)
+- B0 = index of selected value in branch
+- the dash indicates where it repeats
+
+In this case, we can say:
+
+$$
+B_0 = Q \% 2
+$$
+
+To know which value to pick, the C3 is completely irrelevant, so we can ignore any non alternating nodes before and after.
+
+## Building Intuition
+
+To further understand the behaviour of alternations, let's look at some more examples
+
+### Variable Branching Factor
+
+The branching factor is the number of children of a node. The pattern `<A B C>` has three children, so the branching factor is 3.
+The table looks like this:
+
+<QueryTable values={['A', 'B', 'C', 'A']} length={3} cols={[[0, 1, 2, 0]]} />
+
+Now, the index of the selected value is modulo 3:
+
+$$
+B_0 = Q \% 3
+$$
+
+More general, we can deduce:
+
+$$
+B_0 = Q \% F_0
+$$
+
+## Nested Alternations
+
+It gets more complicated when we nest alternations into each other. Example: `<<A B> C>`
+
+<TidalTree
+  pattern="<<A B> C>"
+  mapFn={(node) => (node.type === 'onestep' ? { ...node, children: node.children[0].children } : node)}
+/>
+
+<QueryTable
+  values={['A', 'C', 'B', 'C', 'A']}
+  length={4}
+  cols={[
+    [0, 1, 0, 1, 0],
+    [0, '_', 1, '_', 0],
+  ]}
+/>
+
+$$
+B_1 = (Q / 2) \% 2
+\newline
+F_0 = F_1 = 2
+\newline
+Q_r = F_0 * F_1 = 4
+$$
+
+where Qr is the total length of the pattern until it repeats (dotted line).
+
+### Nested + Variable Branching Factor
+
+`<<A B> C D>`
+
+<TidalTree
+  pattern="<<A B> C D>"
+  mapFn={(node) => (node.type === 'onestep' ? { ...node, children: node.children[0].children } : node)}
+/>
+
+<QueryTable
+  values={['A', 'C', 'D', 'B', 'C', 'D', 'A']}
+  length={6}
+  cols={[
+    [0, 1, 2, 0, 1, 2, 0],
+    [0, '_', '_', 1, '_', '_', 0],
+  ]}
+/>
+
+$$
+B_1 = (Q / 3) \% 2
+\newline
+F_0 = 3, F_1 = 2
+\newline
+Q_r = F_0 * F_1 = 6
+$$
+
+`<<A B C> D>`
+
+<TidalTree
+  pattern="<<A B C> D>"
+  mapFn={(node) => (node.type === 'onestep' ? { ...node, children: node.children[0].children } : node)}
+/>
+
+<QueryTable
+  values={['A', 'D', 'B', 'D', 'C', 'D', 'A']}
+  length={6}
+  cols={[
+    [0, 1, 0, 1, 0, 1, 0],
+    [0, '_', 1, '_', 2, '_', 0],
+  ]}
+/>
+
+$$
+B_1 = (Q / 2) \% 3
+\newline
+F_0 = 2, F_1 = 3
+\newline
+Q_r = F_0 * F_1 = 6
+$$
+
+From the two examples, we can deduce:
+
+$$
+B_1 = (Q / F_0) \% F_1
+$$
+
+### Nested with offset
+
+`<A <B C>>`
+
+<TidalTree
+  pattern="<A <B C>>"
+  mapFn={(node) => (node.type === 'onestep' ? { ...node, children: node.children[0].children } : node)}
+/>
+
+<QueryTable
+  values={['A', 'B', 'A', 'C', 'A']}
+  length={4}
+  cols={[
+    [0, 1, 0, 1, 0],
+    ['_', 0, '_', 1, '_'],
+  ]}
+/>
+
+$$
+B_1 = ((Q - 1) / 2) \% 2
+$$
+
+`<A B <C D>>`
+
+<TidalTree
+  pattern="<A B <C D>>"
+  mapFn={(node) => (node.type === 'onestep' ? { ...node, children: node.children[0].children } : node)}
+/>
+
+<QueryTable
+  values={['A', 'B', 'C', 'A', 'B', 'D', 'A']}
+  length={6}
+  cols={[
+    [0, 1, 2, 0, 1, 2, 0],
+    ['_', '_', 0, '_', '_', 1, '_'],
+  ]}
+/>
+
+$$
+B_1 = ((Q - 2) / 3) \% 2
+$$
+
+`<A <B C D>>`
+
+<TidalTree
+  pattern="<A <B C D>>"
+  mapFn={(node) => (node.type === 'onestep' ? { ...node, children: node.children[0].children } : node)}
+/>
+
+<QueryTable
+  values={['A', 'B', 'A', 'C', 'A', 'D', 'A']}
+  length={6}
+  cols={[
+    [0, 1, 0, 1, 0, 1, 0],
+    ['_', 0, '_', 1, '_', 2, '_'],
+  ]}
+/>
+
+$$
+B_1 = ((Q - 1) / 2) \% 3
+$$
+
+From the above, we can deduce:
+
+$$
+B_1 = ((Q - I_1) / F_0) \% F_1
+$$
+
+where I1 is the index of B1 inside B0.
+
+### Nesting even more
+
+`<<<A B> C> D>`
+
+<TidalTree
+  pattern="<<<A B> C> D>"
+  mapFn={(node) => (node.type === 'onestep' ? { ...node, children: node.children[0].children } : node)}
+/>
+
+<QueryTable
+  values={['A', 'D', 'C', 'D', 'B', 'D', 'C', 'D', 'A']}
+  length={8}
+  cols={[
+    [0, 1, 0, 1, 0, 1, 0, 1, 0],
+    [0, '_', 1, '_', 0, '_', 1, '_', 0],
+    [0, '_', '_', '_', 1, '_', '_', '_', 0],
+  ]}
+/>
+
+$$
+B_1 = (Q / 2) \% 2
+\newline
+B_2 = (Q / 4) \% 2
+$$
+
+`<<<A B> C> D E>`
+
+<TidalTree
+  pattern="<<<A B> C> D E>"
+  mapFn={(node) => (node.type === 'onestep' ? { ...node, children: node.children[0].children } : node)}
+/>
+
+<QueryTable
+  values={['A', 'D', 'E', 'C', 'D', 'E', 'B', 'D', 'E', 'C', 'D', 'E', 'A']}
+  length={12}
+  cols={[
+    [0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0],
+    [0, '_', '_', 1, '_', '_', 0, '_', '_', 1, '_', '_', 0],
+    [0, '_', '_', '_', '_', '_', 1, '_', '_', '_', '_', '_', 0],
+  ]}
+/>
+
+$$
+B_1 = (Q / 3) \% 2
+\newline
+B_2 = (Q / 6) \% 2
+\newline
+F_0 = 3, F_1 = 2, F_2 = 2
+$$
+
+From that, we can deduce:
+
+$$
+B_2 = (Q / (F_0*F_1)) \% F_2
+$$
+
+`<A <B <C D>>>`
+
+<TidalTree
+  pattern="<A <B <C D>>>"
+  mapFn={(node) => (node.type === 'onestep' ? { ...node, children: node.children[0].children } : node)}
+/>
+
+<QueryTable
+  values={['A', 'B', 'A', 'C', 'A', 'B', 'A', 'D', 'A']}
+  length={8}
+  cols={[
+    [0, 1, 0, 1, 0, 1, 0, 1, 0],
+    ['_', 0, '_', 1, '_', 0, '_', 1, '_'],
+    ['_', '_', '_', 0, '_', '_', '_', 1, '_'],
+  ]}
+/>
+
+$$
+B_2 = ((Q-3) / 4) \% 2
+$$
+
+`<A <<B C> D>>`
+
+<TidalTree
+  pattern="<A <<B C> D>>"
+  mapFn={(node) => (node.type === 'onestep' ? { ...node, children: node.children[0].children } : node)}
+/>
+
+<QueryTable
+  values={['A', 'B', 'A', 'D', 'A', 'C', 'A', 'D', 'A']}
+  length={8}
+  cols={[
+    [0, 1, 0, 1, 0, 1, 0, 1, 0],
+    ['_', 0, '_', 1, '_', 0, '_', 1, '_'],
+    ['_', 0, '_', '_', '_', 1, '_', '_', '_'],
+  ]}
+/>
+
+$$
+B_2 = ((Q-1) / 4) \% 2
+$$
+
+`<A <B <C <D E>>>>`
+
+<TidalTree
+  pattern="<A <B <C <D E>>>>"
+  mapFn={(node) => (node.type === 'onestep' ? { ...node, children: node.children[0].children } : node)}
+/>
+
+<QueryTable
+  values={'A B A C A B A D A B A C A B A E A'.split(' ')}
+  length={16}
+  cols={[
+    [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+    ['_', 0, '_', 1, '_', 0, '_', 1, '_', 0, '_', 1, '_', 0, '_', 1, '_'],
+    ['_', '_', '_', 0, '_', '_', '_', 1, '_', '_', '_', 0, '_', '_', '_', 1, '_'],
+    ['_', '_', '_', '_', '_', '_', '_', 0, '_', '_', '_', '_', '_', '_', '_', 1, '_'],
+  ]}
+/>
+
+$$
+B_0 = Q \% 2
+\newline
+B_1 = ((Q-1)/2) \% 2
+\newline
+B_2 = ((Q-3)/4) \% 2
+\newline
+B_3 = ((Q-7)/8) \% 2
+\newline
+F_0 = F_1 = F_2 = F_3 = 2
+\newline
+I_1 = I_2 = I_3 = 1
+$$
+
+## General Formula
+
+The above example can be deduced to:
+
+$$
+B_0 = Q \% F_0
+\newline
+B_1 = ((Q-I_1)/F_0) \% F_1
+\newline
+B_2 = ((Q-(I_1*F_1+I_2))/F_0*F_1) \% F_2
+\newline
+B_3 = ((Q-(I_1*F_1+I_2*F_2+F_3))/F_0*F_1*F_2) \% F_3
+$$
+
+Even more general:
+
+$$
+P_n = \prod_{\substack{0<k<n-1}} F_k = F_0*F_1* \dots  * F_{n-1} ; P_0 = 1
+\newline
+O_n = \sum_{\substack{1<k<n}} I_k*P_{k-1} = I_1*P_0 + I_2*P_1 + \dots + I_n*F_{n-1}; O_0 = 0
+\newline
+B_n = ((Q - O_n)/P_n) \% F_n
+$$
+
+In the example:
+
+$$
+P_0 = 1
+\newline
+P_1 = F_0 = 2
+\newline
+P_2 = P_1 * F_1 = 2 * 2 = 4
+\newline
+P_3 = P_2 * F_2 = 4 * 2 = 8
+\newline
+\newline
+O_0 = 0;
+\newline
+O_1 = I_1*P_0 = 1*1 = 1
+\newline
+O_2 = O_1 + I_2*P_1  = 1 + 1*2 = 3
+\newline
+O_3 = O_2 + I_3*P_2  = 3 + 1*4 = 7
+\newline
+\newline
+B_0 = ((Q - 0)/1) \% 2
+\newline
+B_1 = ((Q - 1)/2) \% 2
+\newline
+B_2 = ((Q - 3)/4) \% 2
+\newline
+B_3 = ((Q - 7)/8) \% 2
+$$
+
+## Conclusion
+
+With the above general formula, we are able to know which branch will be selected at any query, without needing to calculate all preceeding query states.
+In a future post, I want to implement this + look at alternative ways to represent this.
+I think tidal cycles is doing this differently, using the slow function, which might be- simpler..

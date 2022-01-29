@@ -5,6 +5,15 @@ keywords: ['rhythmical', 'draft']
 draft: true
 ---
 
+visions:
+
+- create simple typings for Morph<From, To>
+- create simpler functions for sequential / parallel / onstep, that just work with one layer of children => multiply with parent duration later?
+- try to make nodes immutable. don't keep start / end state on nodes. move it to state
+- try to make state immutable. Use Object.freeze?
+- try to move unifyAST logic to just another morph step (before all others).
+- try to make morph functions work on whole tree => move tree traversal to "user land" (like unify)? Is that better?
+
 In the [last post](./tidal-pegjs), we saw that tidal.pegjs parses a rhythm string into an [AST](./abstract-syntax-trees), which is then used to query events.
 For the query implementation, the target AST is independent of the original string.
 This means, we could also unify a [rhythmical object](./rhythmical-objects) to the same AST structure and be able to generate events from both inputs with a single function.
@@ -48,19 +57,33 @@ const rename = {
   group: 'sequential',
   layers: 'parallel',
 };
-
-export const unifyPatternData = (patternData: Pattern, shouldRename = false) => {
-  return unifyAST((node) => {
-    const { type, value, values, ...data } = node;
-    const children = values || (value?.type ? [value] : null);
-    return {
-      type: shouldRename ? rename[type] || type : type,
-      ...data,
-      ...(children ? { children } : { value }),
-    };
-  }, patternData);
+export const unifyPatternAST = (patternData, shouldRename = false) => {
+  return (
+    unifyAST < any,
+    Node |
+      (Parent >
+        ((node) => {
+          const { type, value, values, left, right, ...data } = node;
+          let children;
+          if (values) {
+            children = values;
+          } else if (value?.type) {
+            // some types have a single object as value, which is like a single child
+            children = [value];
+          } else if (left && right) {
+            // polymeter
+            children = [left, right];
+          }
+          return {
+            type: shouldRename ? rename[type] || type : type,
+            ...data,
+            ...(children ? { children } : { value }),
+          };
+        },
+        patternData))
+  );
 };
-export const unifyPattern = (pattern: string, rename = true) => unifyPatternData(Pattern(pattern).__data, rename); // with rename
+export const unifyPattern = (pattern: string, rename = true) => unifyPatternAST(Pattern(pattern).__data, rename); // with rename
 ```
 
 The shouldRename flag makes renames the types to be consistent with rhythmical. I could've done the renaming the other way around but I wanted less confusion while implementing. I might rename the types in the future to something tidally.
@@ -95,6 +118,8 @@ Looking at the [tidal.pegjs grammar](https://github.com/gibber-cc/tidal.pegjs/bl
 - polymeter
 - string
 - number
+
+TODO: add examples with tree viz + sound demo
 
 ### From a rhythmical object
 
@@ -141,56 +166,3 @@ into:
 We can now write a query function that generates events from an AST, and it will work with rhythmical and with tidal.pegjs as well!
 
 TBD
-
-now, we can visit each tree node and call the respective function:
-
-```js
-const state = {};
-mapAST(ast, (node) => {
-  node.start = node.start || 0;
-  node.end = node.start || 1;
-  node.duration = node.end - node.start; // for easier calculation in child
-  return types[node.type](node, state);
-});
-```
-
-add function for each type:
-
-```js
-const types = {
-  parallel(node) {
-    // returns children with start end (from 0 to 1)
-  },
-  sequential(node, state) {
-    // returns children with start end (from 0 to 1)
-    state.time = 0;
-    node.children = node.children.map((child, i) => {
-      const duration = child.duration || 1;
-      child.start = state.time * node.duration;
-      child.end = (state.time + duration) * node.duration;
-      state.time += duration;
-      // could also multiply with node.duration here
-      return child;
-    });
-  },
-};
-```
-
-yields:
-
-```js
-// [A [B C]]
-const ast = {
-  type: 'sequential',
-  children: [
-    { type: 'text', value: 'A' },
-    {
-      type: 'sequential',
-      children: [
-        { type: 'text', value: 'B' },
-        { type: 'text', value: 'C' },
-      ],
-    },
-  ],
-};
-```
