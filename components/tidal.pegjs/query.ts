@@ -61,8 +61,8 @@ export function onestep(node, state) {
   const start = node.start ?? 0; // default to 0 for root note
   const end = node.end ?? 1; // default to 1 for root note
   const factor = node.children[0].children.length; // onestep -> [seqential]
-  state.branches ??= [];
-  state.query ??= 0; // q
+  state.branches = state.branches ?? [];
+  state.query = state.query ?? 0; // q
   const branchProduct = state.branches.reduce((acc, f) => f * acc, 1); // f
   state.branches.push(factor);
   const offset = node.index ?? 0; // i // TODO: find way to get index without having to pass it in
@@ -81,7 +81,7 @@ export function string(node, state) {
   if (state.isPost || !['string', 'leaf'].includes(node.type)) {
     return node;
   }
-  state.events ??= [];
+  state.events = state.events ?? [];
   state.events.push(node);
   return node;
 }
