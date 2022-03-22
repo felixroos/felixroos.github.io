@@ -1,0 +1,166 @@
+---
+title: Bending JavaScript with shift-ast
+date: '2022-03-21'
+tags: ['code']
+description: Let's talk about JavaScript code transformations.
+image: ./img/bender.png
+---
+
+Let's talk more about abstract syntax trees (ASTs). This time, about those representing JavaScript syntax.
+
+## Table of Contents
+
+## shift-ast
+
+One of the more recent AST formats for JS is `shift-ast`.
+It allows parsing, manipulating and generating JavaScript code.
+
+### Parse
+
+We can parse a string into an AST using `shift-parser`:
+
+```js
+import { parseScriptWithLocation } from 'shift-parser';
+
+let { tree } = parseScriptWithLocation(`const x = 'a';`);
+```
+
+which yields:
+
+import {
+  ShiftTree,
+  exampleAST,
+  exampleASTshifted,
+  before,
+  after,
+  codeIn,
+  codeOut,
+  exampleLocation,
+} from '../components/shift/ShiftTree.tsx';
+import JSONViewer from '../components/common/JSONViewer';
+
+<DiffViewer
+  splitView={false}
+  showDiffOnly={false}
+  hideLineNumbers={false}
+  {...{
+    oldValue: before,
+    newValue: before,
+  }}
+/>
+This is how the AST looks visualized:
+
+<ShiftTree code={`const x = 'a';`} />
+
+### Manipulate
+
+To transform code, we can walk over nodes with `shift-traverser` and construct new nodes using `shift-ast`:
+
+```js
+import { replace } from 'shift-traverser';
+import { BindingIdentifier } from 'shift-ast';
+
+let bindingIdentifiers = 0;
+tree = replace(tree, {
+  enter(node, parent) {
+    if (node.type === 'BindingIdentifier') {
+      return new BindingIdentifier({
+        name: `v${bindingIdentifiers++}`,
+      });
+    }
+    return node;
+  },
+});
+```
+
+This will rename all variables in the AST to `v0`, `v1`, etc, creating the following diff:
+
+import DiffViewer from '../components/common/DiffViewer';
+
+<DiffViewer
+  splitView={false}
+  showDiffOnly={true}
+  hideLineNumbers={false}
+  {...{
+    oldValue: before,
+    newValue: after,
+  }}
+/>
+
+### Generate
+
+To go full circle, we can take the manipulated AST and generate code from it:
+
+```js
+import generate from 'shift-codegen';
+
+generate(tree);
+```
+
+which creates the following diff:
+
+<DiffViewer
+  splitView={false}
+  showDiffOnly={true}
+  hideLineNumbers={false}
+  {...{
+    oldValue: codeIn,
+    newValue: codeOut,
+  }}
+/>
+
+### Source Locations
+
+Together with the ast, we will also get source location information for each node:
+
+```js
+import { parseScriptWithLocation } from 'shift-parser';
+
+let { tree, locations } = parseScriptWithLocation(`const x = 'a';`);
+
+locations.get(tree.statements.declaration.declarators.binding);
+```
+
+With that, we get the exact location of the binding `x` in our input code:
+
+```json
+{
+  "start": {
+    "line": 1,
+    "column": 6,
+    "offset": 6
+  },
+  "end": {
+    "line": 1,
+    "column": 7,
+    "offset": 7
+  }
+}
+```
+
+## What now?
+
+With this tool, sky is the limit, as we can basically take any valid JavaScript code and transform it to suit our needs.
+
+Some things that we can do, which can't be done with regular javascript:
+
+- Rename variables
+- Operator overloading
+- Simplification of user code
+- ... you name it
+
+### Workflow
+
+A good workflow to find out how you want to manipulate your code is
+
+1. go to [astexplorer.net](https://astexplorer.net/)
+2. entering your input code and copy AST JSON to file `input.json`
+3. entering your target output code and copy AST JSON to file `output.json`
+4. compare both files with the diff viewer of choice, e.g. `compare active file with...` in VSCode
+5. write the code that turns creates that diff!
+
+## Outlook
+
+In a future post, I want to show how I used `shift-ast` to create some useful transforms for my new pet project [strudel](https://strudel.tidalcycles.org/).
+
+Until then, cheers 🍷

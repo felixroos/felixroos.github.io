@@ -72,6 +72,7 @@
     "remark-gfm": "^1.0.0",
     "remark-math": "^4.0.0",
     "rhythmical": "^0.1.6",
+    "shift-parser": "^7.0.3",
     "sitemap": "^7.1.0",
     "svg-piano": "^0.3.1",
     "tailwind-styled-components": "^2.1.0",
@@ -117,6 +118,9 @@
     "rehype": "^11.0.0",
     "remark-cli": "^10.0.1",
     "remark-toc": "^8.0.1",
+    "shift-ast": "^6.1.0",
+    "shift-codegen": "^7.0.3",
+    "shift-traverser": "^1.0.0",
     "tailwindcss": "^3.0.7",
     "ts-node": "^10.2.0",
     "typescript": "^4.3.4"
