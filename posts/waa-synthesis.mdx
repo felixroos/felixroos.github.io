@@ -1,0 +1,226 @@
+---
+title: Web Audio Synthesis
+date: '2021-06-10'
+keywords: ['web audio']
+tags: ['web audio', 'code']
+draft: true
+---
+
+import AudioWorklet from '../components/synthesis/AudioWorklet';
+import Knob from '../components/common/Knob';
+import { State } from 'react-powerplug';
+import Slider from '@material-ui/core/Slider';
+
+Generic glue code for AudioWorklet + React:
+
+```js
+import { Button } from 'gatsby-theme-material-ui';
+import React, { useEffect, useState } from 'react';
+import canUseDOM from '../canUseDOM';
+
+const audioContext = canUseDOM() ? new AudioContext() : null;
+
+export default function AudioWorklet({ src, name, output }) {
+  const [workletNode, setWorkletNode] = useState<any>();
+
+  async function start() {
+    audioContext.resume();
+    try {
+      await audioContext.audioWorklet.addModule(src);
+      const _workletNode = new AudioWorkletNode(audioContext, name);
+      _workletNode.connect(output || audioContext.destination);
+      setWorkletNode(_workletNode);
+    } catch (error) {
+      console.log('error', error);
+    }
+  }
+  function stop() {
+    workletNode?.disconnect();
+    setWorkletNode(null);
+  }
+  const button = !workletNode ? (
+    <Button color="primary" onClick={() => start()}>start</Button>
+  ) : (
+    <Button color="primary" onClick={() => stop()}>stop</Button>
+  );
+
+  return button;
+}
+```
+
+More info [here](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor#examples).
+
+# White noise
+
+A really simple example of an AudioWorkletProcessor is white noise:
+
+```js
+// white-noise-processor.js
+class WhiteNoiseProcessor extends AudioWorkletProcessor {
+  process(inputs, outputs, parameters) {
+    const output = outputs[0];
+    output.forEach((channel) => {
+      for (let i = 0; i < channel.length; i++) {
+        channel[i] = Math.random() * 2 - 1;
+      }
+    });
+    return true;
+  }
+}
+registerProcessor('white-noise-processor', WhiteNoiseProcessor);
+```
+
+Using the above react component, we just have to place the [file in a public directory](../waa/white-noise-processor.js) and pass the relative path to our component,
+together with the identifier of the processor:
+
+```js
+<AudioWorklet src="../waa/white-noise-processor.js" name="white-noise-processor" />
+```
+
+Result:
+
+<AudioWorklet src="../waa/white-noise-processor.js" name="white-noise-processor" />
+<br />
+<br />
+
+# Sine
+
+A little more practical example is the sine wave:
+
+```js
+// sine-processor.js
+class SineProcessor extends AudioWorkletProcessor {
+  phase = 0;
+  frequency = 440;
+  inverseSampleRate = 1 / 44100;
+  process(inputs, outputs, parameters) {
+    const output = outputs[0];
+    this.frequency = parameters['frequency'];
+
+    for (let i = 0; i < output[0].length; i++) {
+      const out = Math.sin(this.phase);
+      this.phase += 2 * Math.PI * this.frequency * this.inverseSampleRate;
+      output.forEach((channel) => {
+        channel[i] = out;
+      });
+    }
+    return true;
+  }
+  static get parameterDescriptors() {
+    return [
+      {
+        name: 'frequency',
+        defaultValue: 220,
+        minValue: 55,
+        maxValue: 10000,
+        automationRate: 'k-rate',
+      },
+    ];
+  }
+}
+registerProcessor('sine-processor', SineProcessor);
+```
+
+<AudioWorklet src="../waa/sine-processor.js" name="sine-processor" />
+
+Now it would be practical to be able to control the frequency param that we already exposed from our processor..
+
+# Adding Param Support
+
+To make the params controllable from the outside, we can plug them through our component and update the node via useEffect:
+
+```js
+export default function AudioWorklet({ src, name, output, params }) {
+  useEffect(() => {
+    applyParams(params, workletNode);
+  }, [params, workletNode]);
+
+  /* ... */
+}
+
+function applyParams(params, node) {
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      const param = node?.parameters?.get(key);
+      if (param) {
+        param.value = value;
+      }
+    });
+  }
+}
+```
+
+Now, to make the frequency controllable from within MDX, we can use react-powerplug's State + a Slider like this:
+
+```js
+<State initial={{ frequency: 440 }}>
+  {({ state, setState }) => (
+    <>
+      <AudioWorklet src="../waa/sine-processor.js" name="sine-processor" params={state} />
+      <Slider
+        min={55}
+        max={880}
+        step={0.1}
+        value={state.frequency}
+        onChange={(e, v) => setState({ ...state, frequency: +v })}
+      />
+    </>
+  )}
+</State>
+```
+
+<State initial={{ frequency: 440 }}>
+  {({ state, setState }) => (
+    <>
+      <AudioWorklet src="../waa/sine-processor.js" name="sine-processor" params={state} />
+      <Slider
+        min={55}
+        max={880}
+        step={0.1}
+        value={state.frequency}
+        onChange={(e, v) => setState({ ...state, frequency: +v })}
+      />
+      {/* <Knob
+        min={55}
+        max={880}
+        step={0.1}
+        value={state.frequency}
+        onChange={(v) => setState({ ...state, frequency: +v })}
+      /> */}
+    </>
+  )}
+</State>
+
+## Wavetable
+
+<State initial={{ midi: 57 }}>
+  {({ state, setState }) => {
+    const frequency = 440 * Math.pow(2, (state.midi - 69) / 12);
+    return (
+      <>
+        <AudioWorklet src="../waa/wavetable-processor.js" name="wavetable-processor" params={{ frequency }} />
+        <br />
+        <Knob min={36} max={72} value={state.midi} onChange={(midi) => setState({ ...state, midi })} />
+      </>
+    );
+  }}
+</State>
+
+## Notes from javascriptaudioworklet
+
+```js
+import { AudioWorkletProcessorSequencerModule } from './midisequencer/audioworkletprocessorsequencer.js';
+
+await context.audioWorklet.addModule(getAudioWorkletModuleUrl(AudioWorkletProcessorSequencerModule));
+
+const urlMap = {};
+
+export function getAudioWorkletModuleUrl(audioWorkletModuleFunction) {
+    if (!urlMap[audioWorkletModuleFunction.name]) {
+        const functionSource = audioWorkletModuleFunction.toString();
+        const functionSourceUnwrapped = functionSource.substring(functionSource.indexOf('{') + 1, functionSource.lastIndexOf('}'));
+        urlMap[audioWorkletModuleFunction.name] = URL.createObjectURL(new Blob([functionSourceUnwrapped], { type: 'text/javascript' }));
+    }
+    return urlMap[audioWorkletModuleFunction.name];
+}
+```
