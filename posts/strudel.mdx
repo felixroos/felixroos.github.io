@@ -1,0 +1,139 @@
+---
+title: Introducting Strudel
+date: '2022-04-03'
+tags: ['code', 'strudel']
+description: Writing a live coding music environment in the browser
+draft: true
+---
+
+The last couple of months, I've been hacking on [Strudel](https://strudel.tidalcycles.org/),
+which is a live coding environment that brings the ideas of [Tidal Cycles](https://tidalcycles.org/) to the browser:
+
+import MiniRepl from '../components/strudel/MiniRepl';
+
+<MiniRepl
+  tune={`"<0 2 [4 6](3,4,1) 3*2>"
+.scale('D minor')
+.off(1/4, scaleTranspose(2))
+.off(1/2, scaleTranspose(6))
+.legato(.5)
+.echo(4, 1/8, .5)`}
+/>
+
+## How it started
+
+When I wrote the [post about tidal.pegjs](./tidal-pegjs), I already messed with tidal mini notation,
+with the original plan of using the mini notation as part of my rhythmical project.
+While working with tidal.pegjs, I had some problems with the event querying, so I filed an issue.
+
+There, I came into contact with yaxu, the creator of Tidal Cycles. He had already started to port
+tidal's patterns to Javascript under the name of strudel. This "port" originated in a rewrite of
+tidal (remake), which was ported to python (vortex), and then ported again to JavaScript.
+
+I was highly interested in using strudel as part of my own endeavor to write dynamic music pieces.
+After jumping on the Tidal Discord Server, I thought it would be a good idea to have a REPL,
+where strudel patterns can be entered and played back. After some weeks of pretty active collaboration,
+we were able to develop a pretty amazing live coding environment.
+
+## About Patterns
+
+Let's first talk about the basic entity of strudel (and tidal): Patterns.
+A Pattern basically translates a timespan into a set of events:
+
+```js
+const pattern = sequence('a', ['b', 'c']); // create pattern
+const events = pattern.querySpan(0, 1);
+// const events = pattern.firstCycle();
+const readable = events.map((e) => e.showWholes());
+console.log(readable);
+```
+
+Let's break down what happens here:
+
+1. We create a pattern, using `sequence`, which is one of many ways to create a pattern.
+2. We query the pattern from `0` to `1`. Those numbers are units of time, called cycles.
+3. We convert the queried events to a readable format
+
+This is the output:
+
+```js
+(0/1 -> 1/2, a)
+(1/2 -> 3/4, b)
+(3/4 -> 1,   c)
+```
+
+Here, each line represents the timespan and value of each event.
+
+That list of events could now be given to any type of scheduler to play them back.
+
+### Pattern factories
+
+In our example, `sequence` is a function that creates a pattern, which I also like to call pattern factories. Each pattern factory will treat the flow of time differently.
+
+#### sequence
+
+In a sequence, elements are played one after the other, and each element is divided equally over the whole time. A sequence also supports nested groups, using arrays.
+Each array acts as one element, and the contents of the array are treated as a nested sequence.
+
+In our example `['b', 'c']` is a nested sequence. The array itself takes `1/2` of the whole sequence, while each element inside takes `1/2` of the array. So each element of the array takes 1/4 of the whole sequence.
+
+```js
+a = 1 / 2;
+b = ((1 / 2) * 1) / 2;
+c = ((1 / 2) * 1) / 2;
+```
+
+This behaviour is equivalent to how sequential works in rhythmical, as I've already described in much detail in my post about [rhythmical trees](./rhythmical-trees).
+
+#### stack
+
+Another way to create a pattern is `stack`. In a stack, each element is arranged in parallel:
+
+```js
+const pattern = stack('a', 'b', 'c');
+// querying is the same as above
+```
+
+This is the output:
+
+```js
+(0/1 -> 1, a)
+(0/1 -> 1, b)
+(0/1 -> 1, c)
+```
+
+Here, all elements have the timespan, as they are parallel.
+This is equivalent to the `parallel` node in rhythmical.
+
+#### more
+
+There are many more pattern factories. Without going too much into detail, here's a sneek peek:
+
+- `pure(element)`: repeats the given element inside one cycle
+- `slowcat(...elements)`: each element takes one cycle
+- `fastcat(...elements)` / `cat`: element are divided over cycle (like sequence but without nesting)
+- `timeCat(...[weight, element])`: like fastcat, but the duration of each element is determined by its weight
+
+### Combining and Nesting
+
+The real fun starts when we combine and nest functions:
+
+```js
+const pattern = stack(sequence('c3', ['eb3', 'g3']), sequence('kick', 'snare'), sequence('hh hh hh hh'));
+```
+
+This will create a basic backbeat with a little melody on top.
+
+### Pattern modifiers
+
+Each pattern can be modified to change it's behaviour.
+
+## About the REPL
+
+My focus at strudel was the REPL (Read + Evaluate + Play + Loop), which allows playing and editing strudel patterns in real time,
+inside the browser. The basic flow looks like this:
+
+1. Read: Edit a strudel pattern in the code editor
+2. Evaluate: Run it to create a pattern instance
+3. Play: Listen to the patterns output
+4. Loop: Go back to 1

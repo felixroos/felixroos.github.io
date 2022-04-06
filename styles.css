@@ -89,3 +89,7 @@ svg.dagre-d3-react path {
   width: 800px;
   font-size: 14px;
 }
+
+.cm-editor {
+  background: white;
+}

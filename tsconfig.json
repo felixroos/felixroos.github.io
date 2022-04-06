@@ -15,5 +15,5 @@
     "jsx": "preserve"
   },
   "exclude": ["node_modules", ".nextt", "out"],
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.js", "lib/mdx.test.ts"]
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "**/*.js", "lib/mdx.test.ts", "components/strudel/useCycle.mjs", "components/strudel/useRepl.mjs", "components/strudel/CodeMirror.jsx", "components/strudel/MiniRepl.jsx"]
 }

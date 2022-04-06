@@ -1,5 +1,8 @@
 # Links
 
+- https://dev.to/alexeagleson/how-to-create-and-publish-a-react-component-library-2oe
+- https://nirmalyaghosh.com/articles/create-package-react-publish-npm
+- https://www.w3schools.com/nodejs/nodejs_raspberrypi_gpio_intro.asp
 - https://cswr.github.io/JsonSchema/
 
 ## react stuff
