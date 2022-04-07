@@ -93,3 +93,8 @@ svg.dagre-d3-react path {
 .cm-editor {
   background: white;
 }
+
+#table-of-contents + ul > li > p {
+  padding: 0px;
+  margin: 0px;
+}

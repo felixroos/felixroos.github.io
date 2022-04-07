@@ -1,5 +1,5 @@
 ---
-title: Introducting Strudel
+title: Introducing Strudel
 date: '2022-04-03'
 tags: ['code', 'strudel']
 description: Writing a live coding music environment in the browser
@@ -20,24 +20,46 @@ import MiniRepl from '../components/strudel/MiniRepl';
 .echo(4, 1/8, .5)`}
 />
 
+In this post, I want to write about how it all started, and describe the general features of strudel.
+
+## Table of Contents
+
 ## How it started
 
 When I wrote the [post about tidal.pegjs](./tidal-pegjs), I already messed with tidal mini notation,
 with the original plan of using the mini notation as part of my rhythmical project.
-While working with tidal.pegjs, I had some problems with the event querying, so I filed an issue.
+While working with tidal.pegjs, I had some problems with the event querying, so I filed an [issue](https://github.com/gibber-cc/tidal.pegjs/issues/7).
 
 There, I came into contact with yaxu, the creator of Tidal Cycles. He had already started to port
 tidal's patterns to Javascript under the name of strudel. This "port" originated in a rewrite of
-tidal (remake), which was ported to python (vortex), and then ported again to JavaScript.
+tidal ([remake](https://github.com/yaxu/remake)), which was ported to python ([vortex](https://github.com/tidalcycles/vortex)), and then ported again to JavaScript.
+
+![strudel port](./img/strudel-port.png)
 
 I was highly interested in using strudel as part of my own endeavor to write dynamic music pieces.
-After jumping on the Tidal Discord Server, I thought it would be a good idea to have a REPL,
+So far the Tidal Discord Server was the main communication channel in the development of strudel,
+and we had many fruitful discussions. I thought it would be a good idea to have a REPL,
 where strudel patterns can be entered and played back. After some weeks of pretty active collaboration,
 we were able to develop a pretty amazing live coding environment.
 
+## About the REPL
+
+My main focus at strudel was the [REPL](https://strudel.tidalcycles.org/) (Read + Evaluate + Play + Loop), which allows playing and editing strudel patterns in real time,
+inside the browser. The basic flow looks like this:
+
+1. Read: Edit a strudel pattern in the code editor
+2. Evaluate: Run it to create a pattern instance
+3. Play: Listen to the patterns output
+4. Loop: Go back to 1
+
+![strudel repl](./img/strudel-repl.png)
+
+There is also a Mini REPL, which can be used to play strudel patterns inside the [tutorial](https://strudel.tidalcycles.org/tutorial/),
+or as part of this post.
+
 ## About Patterns
 
-Let's first talk about the basic entity of strudel (and tidal): Patterns.
+Let's talk about the basic entity of strudel (and tidal): Patterns.
 A Pattern basically translates a timespan into a set of events:
 
 ```js
@@ -48,13 +70,13 @@ const readable = events.map((e) => e.showWholes());
 console.log(readable);
 ```
 
-Let's break down what happens here:
+This is what happens here:
 
 1. We create a pattern, using `sequence`, which is one of many ways to create a pattern.
 2. We query the pattern from `0` to `1`. Those numbers are units of time, called cycles.
 3. We convert the queried events to a readable format
 
-This is the output:
+The following output will be logged:
 
 ```js
 (0/1 -> 1/2, a)
@@ -62,15 +84,22 @@ This is the output:
 (3/4 -> 1,   c)
 ```
 
-Here, each line represents the timespan and value of each event.
+Each line represents one event, showing the start and end time, followed by the value.
 
 That list of events could now be given to any type of scheduler to play them back.
+Example:
 
-### Pattern factories
+<MiniRepl tune={`sequence('a3', ['b3', 'c4'])`} />
+
+Here, we only need to write down the pattern itself, and the strudel player will handle the rest.
+Internally, it will repeatedly query the pattern and play back the generated events.
+The pattern can also be edited and updated while it is playing!
+
+## Pattern factories
 
 In our example, `sequence` is a function that creates a pattern, which I also like to call pattern factories. Each pattern factory will treat the flow of time differently.
 
-#### sequence
+### sequence
 
 In a sequence, elements are played one after the other, and each element is divided equally over the whole time. A sequence also supports nested groups, using arrays.
 Each array acts as one element, and the contents of the array are treated as a nested sequence.
@@ -79,13 +108,13 @@ In our example `['b', 'c']` is a nested sequence. The array itself takes `1/2` o
 
 ```js
 a = 1 / 2;
-b = ((1 / 2) * 1) / 2;
-c = ((1 / 2) * 1) / 2;
+b = ((1 / 2) * 1) / 2 = 1 / 4
+c = ((1 / 2) * 1) / 2 = 1 / 4
 ```
 
-This behaviour is equivalent to how sequential works in rhythmical, as I've already described in much detail in my post about [rhythmical trees](./rhythmical-trees).
+This behaviour is equivalent to how `sequential` works in rhythmical, as I've already described in much detail in my post about [rhythmical trees](./rhythmical-trees).
 
-#### stack
+### stack
 
 Another way to create a pattern is `stack`. In a stack, each element is arranged in parallel:
 
@@ -105,7 +134,7 @@ This is the output:
 Here, all elements have the timespan, as they are parallel.
 This is equivalent to the `parallel` node in rhythmical.
 
-#### more
+### more
 
 There are many more pattern factories. Without going too much into detail, here's a sneek peek:
 
@@ -114,26 +143,251 @@ There are many more pattern factories. Without going too much into detail, here'
 - `fastcat(...elements)` / `cat`: element are divided over cycle (like sequence but without nesting)
 - `timeCat(...[weight, element])`: like fastcat, but the duration of each element is determined by its weight
 
-### Combining and Nesting
+To find out more, check out the [Strudel Tutorial](https://strudel.tidalcycles.org/tutorial/)
 
-The real fun starts when we combine and nest functions:
-
-```js
-const pattern = stack(sequence('c3', ['eb3', 'g3']), sequence('kick', 'snare'), sequence('hh hh hh hh'));
-```
-
-This will create a basic backbeat with a little melody on top.
-
-### Pattern modifiers
+## Pattern modifiers
 
 Each pattern can be modified to change it's behaviour.
 
-## About the REPL
+### fast / slow
 
-My focus at strudel was the REPL (Read + Evaluate + Play + Loop), which allows playing and editing strudel patterns in real time,
-inside the browser. The basic flow looks like this:
+With fast and slow, the playback speed of a pattern can be controlled.
 
-1. Read: Edit a strudel pattern in the code editor
-2. Evaluate: Run it to create a pattern instance
-3. Play: Listen to the patterns output
-4. Loop: Go back to 1
+<MiniRepl tune={`sequence('c3', 'eb3').fast(2)`} />
+
+With `.fast(2)`, the pattern will be twice as fast. Contrary to fast, slow will do the opposite:
+
+<MiniRepl tune={`sequence('c3', 'eb3').slow(2)`} />
+
+### add / sub
+
+With `add` and `sub`, we can add or subtract numbers. Using it with notes will transpose them:
+
+<MiniRepl
+  tune={`slowcat(
+  sequence('c3', 'eb3'),
+  sequence('c3', 'eb3').add(2),
+  sequence('c3', 'eb3'),
+  sequence('c3', 'eb3').sub(2)
+)`}
+/>
+
+### more
+
+There are MANY more pattern modifier methods. A little taste:
+
+- early / late: move pattern backwards and forwards in time
+- rev: reverse playback order
+- mul / div: multiply and subtract
+- struct: change temporal structure
+- echo: repetition effect
+
+To find out more, check out the [Strudel Tutorial](https://strudel.tidalcycles.org/tutorial/)
+
+## Patterns as Inputs
+
+One of the most interesting features of tidal is that you can use patterns itself as inputs to pattern methods!
+The above snippet can also be written like this:
+
+<MiniRepl tune={`sequence('c3', 'eb3').add(slowcat(0, 2, 0, -2))`} />
+
+Instead of passing a primitive number to `add`, we pass a pattern of numbers!
+This will call the add function with a different number each cycle, adding the current number to the sequence.
+
+Most of strudel's pattern methods can be `patternified`!
+
+## Mini Notation
+
+Another handy feature of Tidal is the mini notation. It is an alternative, more compact way to express patterns, using a domain specific language.
+The last snippet can be minified like this:
+
+<MiniRepl tune={`"c3 eb3".add("<0 2 0 -2>")`} />
+
+Mini notation only supports a subset of pattern functions:
+
+| mini notation syntax | function syntax             |
+| -------------------- | --------------------------- |
+| `c3 e3`              | `sequence(c3, e3)`          |
+| `c3 [e3 g3]`         | `sequence(c3, [e3, g3])`    |
+| `c3,e3`              | `stack(c3, e3)`             |
+| `<c3 e3>`            | `slowcat(c3, e3)`           |
+| `c3\*2`              | `stack(c3, e3).fast(2)`     |
+| `c3/2`               | `stack(c3, e3).slow(2)`     |
+| `c3(3, 8)`           | `pure(c3).euclid(3, 8)`     |
+| `c3@3 e3`            | `timeCat([3, c3], [1, e3])` |
+| `~`                  | `silence`                   |
+
+You can write entire "songs" in mini notation:
+
+<MiniRepl
+  tune={`\`[[e5 [b4 c5] d5 [c5 b4]]
+[a4 [a4 c5] e5 [d5 c5]]
+[b4 [~ c5] d5 e5]
+[c5 a4 a4 ~]
+[[~ d5] [~ f5] a5 [g5 f5]]
+[e5 [~ c5] e5 [d5 c5]]
+[b4 [b4 c5] d5 e5]
+[c5 a4 a4 ~]],
+[[e2 e3]*4]
+[[a2 a3]*4]
+[[g#2 g#3]*2 [e2 e3]*2]
+[a2 a3 a2 a3 a2 a3 b1 c2]
+[[d2 d3]*4]
+[[c2 c3]*4]
+[[b1 b2]*2 [e2 e3]*2]
+[[a1 a2]*4]\`.slow(16)
+`}
+/>
+
+As always, to find out more, check out the [Strudel Tutorial](https://strudel.tidalcycles.org/tutorial/)
+
+### About the mini parser
+
+The mini notation parser comes from a project called [krill](https://github.com/Mdashdotdashn/krill), which contains a
+peg.js grammar that turns mini notation into an AST. By walking over the AST nodes, a pattern can be constructed.
+I decided against using tidal.pegjs, as the krill parser had more features and the AST was easier to process.
+
+If we parse the following mini notation:
+
+```js
+'c3 [e3 g3*2]';
+```
+
+... we get this ast:
+
+```json
+{
+  "type_": "pattern",
+  "arguments_": {
+    "alignment": "h"
+  },
+  "source_": [
+    {
+      "type_": "element",
+      "source_": "c3"
+    },
+    {
+      "type_": "element",
+      "source_": {
+        "type_": "pattern",
+        "arguments_": {
+          "alignment": "h"
+        },
+        "source_": [
+          {
+            "type_": "element",
+            "source_": "e3"
+          },
+          {
+            "type_": "element",
+            "source_": "g3",
+            "options_": {
+              "operator": {
+                "type_": "stretch",
+                "arguments_": {
+                  "amount": "1/2"
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
+To get a pattern from the AST, we can walk over all nodes, and construct the following call:
+
+```js
+sequence('c3', ['e3', pure('g3').fast(2)]);
+```
+
+I won't go into the implementation details here, but it's essentially just a recursive node walker.
+If you're curious, you can read the source [here](https://github.com/tidalcycles/strudel/blob/main/packages/mini/mini.mjs#L70).
+
+### Why the mini notation works
+
+If you know JavaScript, you might be confused by the fact that we call `.add` on a string, which normally does not exist.
+In the REPL, there is a little convention:
+
+> Use double quotes for mini notation, use single quotes for strings
+
+With this convention, mixing mini notation and regular function calls is much easier.
+
+Note: This convention will only work if the input code is transpiled using some AST magic!
+
+## Syntax Sugar
+
+The mini notation, and other forms of syntax sugar are possible thanks to `shift-ast`.
+Check out my [little post about shift](./shift-ast) for more info on that.
+
+Before the user code is evaluated, it is transpiled using shift-ast. This allows hacking JavaScript to a greater extent.
+
+### Double Quotes
+
+To make the mini notation work, strings with double quotes are converted to `mini` function calls:
+
+<MiniRepl
+  tune={`"c3 e3"
+// mini('c3 e3')`}
+/>
+
+### Pseudo Variables
+
+Variables that have note format are rewritten to strings:
+
+<MiniRepl
+  tune={`cat(c3, r, e3)
+// cat('c3', silence, 'e3')`}
+/>
+
+### Operator Overloading
+
+In regular JS, overloading operators is not possible. With shift, it's trivial.
+This allows rewriting multiplications to fast calls:
+
+<MiniRepl
+  tune={`sequence(c3, e3) * 4
+// sequence("c3","e3").fast(4)`}
+/>
+
+So far, just multiplications and divisions are overloaded, but there are much more planned in the future.
+
+### Source Locations
+
+This is not really syntax sugar, but also a transpilation handled by shift.
+It allows passing source location information to the pattern:
+
+<MiniRepl
+  tune={`cat(c3, e3)
+/* 
+cat(
+  reify("c3").withLocation([1,4,4],[1,6,6]),
+  reify("e3").withLocation([1,8,8],[1,10,10])
+)
+*/`}
+/>
+
+Using those locations, we can display the current event in the editor!
+
+## Evolving Patterns
+
+If you look at the examples so far, you might know wonder why we have to query again and again as time progresses.
+For simple repeating patterns, this might not be necessary, but the amazing property of tidal patterns is that
+they can evolve over time! This allows creating less repretitive music.
+
+### Signals
+
+One way to make patterns more dynamic is using signals. Signals are continuous and will be "sampled" for events that use them:
+
+<MiniRepl tune={`"c3*16".add(sine.mul(12).slow(4))`} />
+
+So far, there are `sin`, `cos`, `tri` and `saw`. More will be added in the future.
+I found signals especially useful to control note length (.legato) and velocity (.velocity).
+
+### Irrational Numbers
+
+To make a pattern more irregular, irrational numbers can be used:
+
+<MiniRepl tune={`stack("c3 e3","c2 g2".slow(Math.PI))`} />
