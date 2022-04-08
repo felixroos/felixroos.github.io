@@ -64,7 +64,7 @@
     "react": "^17.0.2",
     "react-audio-player": "^0.17.0",
     "react-codemirror2": "^7.2.1",
-    "react-codemirror6": "^1.0.2",
+    "react-codemirror6": "^1.1.0",
     "react-color": "^2.19.3",
     "react-d3-tree": "^3.1.1",
     "react-diff-viewer": "^3.1.1",

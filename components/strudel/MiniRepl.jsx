@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Tone, getDefaultSynth } from '@strudel.cycles/tone';
 import useRepl from './useRepl.mjs';
-import CodeMirror /* , { markEvent } */ from './CodeMirror';
+import CodeMirror, { highlightEvent } from './CodeMirror';
 
 // eval stuff start
 import { extend } from '@strudel.cycles/eval';
@@ -44,13 +44,13 @@ extend(
 const defaultSynth = canUseDOM() && getDefaultSynth();
 
 function MiniRepl({ tune = '"c3"', maxHeight = 500 }) {
-  const [editor, setEditor] = useState();
+  const [view, setView] = useState();
   const { code, setCode, activateCode, activeCode, setPattern, error, cycle, dirty, log, togglePlay, hash, pending } =
     useRepl({
       tune,
       defaultSynth,
       autolink: false,
-      // onDraw: useCallback(markEvent(editor), [editor]),
+      onDraw: useCallback((_, e) => highlightEvent(e, view, code), [view]),
     });
   const lines = code.split('\n').length;
   const lineHeight = 20;
@@ -131,7 +131,7 @@ function MiniRepl({ tune = '"c3"', maxHeight = 500 }) {
           value={code}
           onChange={(e) => setCode(e.target.value)}
         /> */}
-        <CodeMirror value={code} onChange={setCode} />
+        <CodeMirror value={code} onChange={setCode} onViewChanged={setView} />
       </div>
     </div>
   );

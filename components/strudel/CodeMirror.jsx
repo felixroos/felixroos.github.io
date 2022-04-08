@@ -2,56 +2,75 @@ import React from 'react';
 import { CodeMirror as _CodeMirror } from 'react-codemirror6';
 import { EditorView, Decoration, keymap } from '@codemirror/view';
 import { StateField, StateEffect } from '@codemirror/state';
+import { javascript } from '@codemirror/lang-javascript';
 
-const addUnderline = StateEffect.define();
-
-const underlineField = StateField.define({
+const highlightMark = Decoration.mark({ class: 'cm-highlight' });
+const addHighlight = StateEffect.define();
+const removeHighlight = StateEffect.define();
+const highlightTheme = EditorView.baseTheme({
+  // '.cm-highlight': { outline: '1px solid #FFCA28' },
+  '.cm-highlight': { background: '#FFCA28' },
+});
+const highlightField = StateField.define({
   create() {
     return Decoration.none;
   },
-  update(underlines, tr) {
-    underlines = underlines.map(tr.changes);
-    for (let e of tr.effects)
-      if (e.is(addUnderline)) {
-        underlines = underlines.update({
-          add: [underlineMark.range(e.value.from, e.value.to)],
+  update(highlights, tr) {
+    highlights = highlights.map(tr.changes);
+    for (let e of tr.effects) {
+      if (e.is(addHighlight)) {
+        highlights = highlights.update({
+          add: [highlightMark.range(e.value.from, e.value.to)],
         });
       }
-    return underlines;
+      if (e.is(removeHighlight)) {
+        highlights = highlights.update({
+          filter: (f, t, value) => {
+            if (f === e.value.from && t === e.value.to) {
+              return false;
+            }
+            return true;
+            // console.log('filter', f,t,value, e.value.from, e.value.to);
+          },
+        });
+      }
+    }
+    return highlights;
   },
   provide: (f) => EditorView.decorations.from(f),
 });
 
-const underlineMark = Decoration.mark({ class: 'cm-underline' });
-const underlineTheme = EditorView.baseTheme({
-  '.cm-underline': { textDecoration: 'underline 3px red' },
-});
-export const underlineKeymap = keymap.of([
-  {
-    key: 'Mod-h',
-    preventDefault: true,
-    run: underlineSelection,
-  },
-]);
+// let timeouts = [];
 
-export function underlineSelection(view) {
-  let effects = view.state.selection.ranges
-    .filter((r) => !r.empty)
-    .map(({ from, to }) => addUnderline.of({ from, to }));
+export const highlightEvent = (event, view, code) => {
+  if (!view) {
+    return;
+  }
+  const ranges = event.context?.locations?.map(({ start, end }) => {
+    return [start, end].map(({ line, column }) => positionToOffset({ line: line - 1, ch: column }, code));
+  });
+  const effects = ranges.map(([from, to]) => addHighlight.of({ from, to }));
+
   if (!effects.length) return false;
-
-  if (!view.state.field(underlineField, false))
-    effects.push(StateEffect.appendConfig.of([underlineField, underlineTheme]));
+  if (!view.state.field(highlightField, false)) {
+    effects.push(StateEffect.appendConfig.of([highlightField, highlightTheme]));
+  }
   view.dispatch({ effects });
-  return true;
-}
+  // const index = timeouts.length;
+  // timeouts = timeouts.filter(time)
+  /* const timeout =  */ setTimeout(() => {
+    const effects = ranges.map(([from, to]) => removeHighlight.of({ from, to }));
+    view.dispatch({ effects });
+    // timeouts.splice(index, 1);
+  }, event.duration * 1000);
+  // timeouts.pusn({timeout,);
+};
 
-import { javascript } from '@codemirror/lang-javascript';
-
-export default function CodeMirror({ value, onChange, onCursor, options, editorDidMount }) {
+export default function CodeMirror({ value, onChange, onViewChanged, onCursor, options, editorDidMount }) {
   return (
     <>
       <_CodeMirror
+        onViewChange={onViewChanged}
         style={{
           display: 'flex',
           flexDirection: 'column',
@@ -61,36 +80,12 @@ export default function CodeMirror({ value, onChange, onCursor, options, editorD
         onChange={onChange}
         extensions={[
           javascript(),
-          underlineKeymap,
           // theme, language, ...
         ]}
       />
     </>
   );
 }
-/* 
-export const markEvent = (editor) => (time, event) => {
-  const locs = event.context.locations;
-  if (!locs || !editor) {
-    return;
-  }
-  const col = event.context?.color || '#FFCA28';
-  // mark active event
-  const marks = locs.map(({ start, end }) =>
-    editor.getDoc().markText(
-      { line: start.line - 1, ch: start.column },
-      { line: end.line - 1, ch: end.column },
-      //{ css: 'background-color: #FFCA28; color: black' } // background-color is now used by parent marking
-      { css: 'outline: 1px solid ' + col + '; box-sizing:border-box' },
-      //{ css: `background-color: ${col};border-radius:5px` },
-    ),
-  );
-  //Tone.Transport.schedule(() => { // problem: this can be cleared by scheduler...
-  setTimeout(() => {
-    marks.forEach((mark) => mark.clear());
-    // }, '+' + event.duration * 0.5);
-  }, event.duration * 1000);
-}; */
 
 let parenMark;
 export const markParens = (editor, data) => {
@@ -163,3 +158,27 @@ export function getCurrentParenArea(code, caretPosition) {
   end = i;
   return [begin, end].map((o) => offsetToPosition(o, code));
 }
+
+/* 
+export const markEvent = (editor) => (time, event) => {
+  const locs = event.context.locations;
+  if (!locs || !editor) {
+    return;
+  }
+  const col = event.context?.color || '#FFCA28';
+  // mark active event
+  const marks = locs.map(({ start, end }) =>
+    editor.getDoc().markText(
+      { line: start.line - 1, ch: start.column },
+      { line: end.line - 1, ch: end.column },
+      //{ css: 'background-color: #FFCA28; color: black' } // background-color is now used by parent marking
+      { css: 'outline: 1px solid ' + col + '; box-sizing:border-box' },
+      //{ css: `background-color: ${col};border-radius:5px` },
+    ),
+  );
+  //Tone.Transport.schedule(() => { // problem: this can be cleared by scheduler...
+  setTimeout(() => {
+    marks.forEach((mark) => mark.clear());
+    // }, '+' + event.duration * 0.5);
+  }, event.duration * 1000);
+}; */
