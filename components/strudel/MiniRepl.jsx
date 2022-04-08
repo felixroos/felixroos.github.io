@@ -56,7 +56,7 @@ function MiniRepl({ tune = '"c3"', maxHeight = 500 }) {
   const lineHeight = 20;
   const height = Math.min(lines * lineHeight + lineHeight, maxHeight);
   return (
-    <div className="rounded-md overflow-hidden bg-slate-500">
+    <div className="rounded-md overflow-hidden bg-slate-500 border border-gray-500">
       <div className="flex justify-between bg-slate-700 border-t border-slate-500">
         <div className="flex">
           <button
