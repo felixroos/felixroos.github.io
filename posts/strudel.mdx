@@ -20,7 +20,7 @@ import MiniRepl from '../components/strudel/MiniRepl';
 .echo(4, 1/8, .5)`}
 />
 
-In this post, I want to write about how it all started, and describe the general features of strudel.
+In this post, I want to write about how it all started, and describe the general features of strudel from a technical point of view.
 
 ## Table of Contents
 
@@ -391,3 +391,147 @@ I found signals especially useful to control note length (.legato) and velocity 
 To make a pattern more irregular, irrational numbers can be used:
 
 <MiniRepl tune={`stack("c3 e3","c2 g2".slow(Math.PI))`} />
+
+## Scheduling
+
+After understanding the many facets of patterns, let's talk about how to actually generate music from them.
+
+### Scheduling with Tone.js
+
+Until now, the event scheduling in the REPL is based on the Tone.js Transport.
+This is a stripped down version of the scheduler:
+
+```js
+const activeCycle = Math.floor(Tone.getTransport().seconds / cycleDuration);
+const query = (cycle = activeCycle()) => {
+  Tone.getTransport().schedule(() => query(cycle + 1), cycle + 0.5);
+  pattern.query(cycle, cycle + 1).forEach((e) => {
+    /* play event... */
+  });
+};
+```
+
+In essence, we have a function that calls itself in the future. You can read the full code [here](https://github.com/tidalcycles/strudel/blob/80393bf765f6ee0b90ee27026a189c17037ed477/repl/src/useCycle.mjs#L22).
+While the scheduling with Tone.js works, I wanted to implement a simpler scheduling system that doesn't depend on Tone.js.
+
+### Scheduling with the Web Audio API
+
+I already have a solution that works, but I have not yet integrated it in the REPL. The solution is based on the
+[Tale of two clocks](https://www.html5rocks.com/en/tutorials/audio/scheduling/), which is the de facto standard of Web Audio Scheduling.
+Basically, a setInterval loop runs in a web worker. On each callback, the worker will emit a `tick` message, in which
+the next time span is calculated:
+
+```js
+this.worker.onmessage = (e) => {
+  if (e.data === 'tick') {
+    const begin = this.lastEnd || this.audioContext.currentTime;
+    const end = this.audioContext.currentTime + this.interval;
+    this.lastEnd = end;
+    this.pattern.query(begin, end).forEach((e) => {
+      /* play event... */
+    });
+  }
+};
+```
+
+The above snippet is simplified for didactic reasons. In the actual implementation, I seperated the [worker](https://github.com/tidalcycles/strudel/blob/5a03386ad5d08dee516151980779982c2838f6df/packages/webaudio/clockworker.mjs#L48) from the [scheduler](https://github.com/tidalcycles/strudel/blob/5a03386ad5d08dee516151980779982c2838f6df/packages/webaudio/scheduler.mjs#L9).
+
+## Playback
+
+In the Strudel REPL there are multiple ways to play back events:
+
+### Playback with Tone.js
+
+The first way to play events was using Tone.js instruments, via `.tone`:
+
+<MiniRepl
+  tune={`"f2 f2 ab2 bb2".slow(2)
+.tone(new Tone.Synth({oscillator:{type:'sawtooth8'}}).toDestination())`}
+/>
+
+As constructing Tone Instruments is rather verbose, I added some helper functions:
+
+<MiniRepl
+  tune={`"f#2 f#2 a2 b2".slow(2)
+.tone(synth(osc('sawtooth8')).toDestination())`}
+/>
+
+Behind the scenes, the `.tone` method will define a `onTrigger` function on each event.
+When the scheduler plays the event, it will just call that function.
+
+While Tone.js is really comprehensive, I experienced some performance problems with it.
+It seems like some Tone.js instruments or effects suffer from memory leaks, which results in a large amount of garbage being created.
+Depending on the complexity of the song, this will sooner or later result in cracks and crashes.
+
+### Playback with MIDI
+
+It was a matter of copy pasting code from [my previous post about MIDI in JS](./webmidi) to get MIDI output working.
+Midi is currently not supported by the mini repl used here, but you can [open the midi example in the repl](https://strudel.tidalcycles.org/#c3RhY2soIjxDXjcgQTcgRG03IEc3PiIubS52b2ljaW5ncygpLCAnPEMzIEEyIEQzIEcyPicubSkKICAubWlkaSgp).
+
+### Playback with OSC
+
+The original tidal uses OSC messages to talk to Super Collider, which runs Super Dirt.
+Though sending OSC messages via WebSockets is possible in the browser, Super Collider does not support it yet.
+But we were able to make it work by running a local node server that forwards Websocket messages to Super Collider via UDP.
+This feature is still a work in progress, but it will be available on the REPL soon.
+
+### Playback with the Web Audio API
+
+While experimenting with the scheduling, I also wanted to try playing events with bare Web Audio nodes, to keep
+Tone.js out of the picture completely. Like the scheduler, this is not yet part of the REPL, but you can already
+play with it [here](https://raw.githack.com/tidalcycles/strudel/package-examples/packages/core/examples/metro.html).
+
+The great advantage over Tone.js is that everything can be created dynamically, allowing sound params itself to be patterned.
+So for each event, we can create a new audio node. I tried the same with Tone.js, but it will break down quickly.
+It's something that is [not intended by design](https://github.com/Tonejs/Tone.js/issues/656#issuecomment-619661453).
+
+## Strudel Packages
+
+After an initial hacking phase, I split up strudel into multiple npm packages:
+
+- [@strudel.cycles/core](https://github.com/tidalcycles/strudel/tree/main/packages/core#strudelcyclescore)
+- [@strudel.cycles/eval](https://github.com/tidalcycles/strudel/tree/main/packages/eval#strudelcycleseval)
+- [@strudel.cycles/mini](https://github.com/tidalcycles/strudel/tree/main/packages/mini#strudelcyclesmini)
+- [@strudel.cycles/midi](https://github.com/tidalcycles/strudel/tree/main/packages/midi#strudelcyclesmidi)
+- [@strudel.cycles/midi](https://github.com/tidalcycles/strudel/tree/main/packages/midi#strudelcyclesmidi)
+- [@strudel.cycles/tonal](https://github.com/tidalcycles/strudel/tree/main/packages/tonal#strudelcyclestonal)
+- [@strudel.cycles/tonal](https://github.com/tidalcycles/strudel/tree/main/packages/tonal#strudelcyclestonal)
+- [@strudel.cycles/tone](https://github.com/tidalcycles/strudel/tree/main/packages/tone)
+- [@strudel.cycles/xen](https://github.com/tidalcycles/strudel/tree/main/packages/xen#strudelcyclesxen)
+
+In this post, I've scratched the surface of most of those, except `tonal` and `xen`, which will be the topic of a future post.
+
+## Strudel in Action
+
+I was happy to take part on the 10th birthday of [Algorave](https://algorave.com/), using Strudel for
+a 10 minute live coding performance:
+
+<iframe
+  width="560"
+  height="315"
+  src="https://www.youtube.com/embed/IcMSocdKwvw"
+  title="YouTube video player"
+  frameborder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+  allowfullscreen
+></iframe>
+
+In this stream, I used Strudel to emit MIDI messages to different synths + drums on different midi channels.
+
+Check out the [Eulerroom Youtube Channel](https://www.youtube.com/channel/UC_N48pxd05dX53_8vov8zqA) for all the other performances!
+
+## The Future of Rhythmical
+
+> rhythmical is dead, long live strudel!
+
+So far, I've written many posts about [rhythmical](./rhythmical-objects), which was my attempt to create a dynamic music sequencer.
+I am now certain that I will stop developing it and shift my attention to Strudel, as it has proven to be much more powerful.
+In retrospect, it seems almost dumb to have chosen JSON as the primary "language", as it's pretty limited.
+Nevertheless, rhythmical was an important stepping stone for me to get into music coding. Based on the experience with it,
+I could reuse some implementation ideas, which sped up the development. I even ported some tunes from the [rhythmical REPL](https://felixroos.github.io/rhythmical).
+
+## Conclusion
+
+This post was an overview of what happened so far in the development of Strudel and it will definetly not be the last.
+I am very happy how Strudel evolved so far, and I like the fact that I am not alone hacking in a vacuum!
+Thanks to all the people involved, especially yaxu for writing the core logic, distilling his years of experience with tidal.
