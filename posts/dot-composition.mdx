@@ -1,0 +1,98 @@
+---
+title: Dot Composition
+date: '2022-04-10'
+tags: ['code', 'functional programming','draft']
+---
+
+## Currying
+
+This is how currying looks like in javascript:
+
+```js
+const add = curry((a, b) => a + b);
+add(1, 2); // 3
+const add1 = add(1);
+add1(2); // 3
+```
+
+## Composition
+
+Another technique is to compose functions together.
+
+```js
+const add2and3 = compose(add(2), add(3));
+add2and3(1); // 6
+```
+
+## Adding compose as a function property method
+
+In javascript, everything is an object, so you can event add properties to a function.
+This allows adding compose implicitly as a function property:
+
+```js
+const add1 = add(1);
+add1.add = (n) => compose(add1, add(n));
+const add3 = add1.add(2);
+add3(1); // 4
+```
+
+This is still not very helpful, as we cannot chain endlessly.
+
+## Extending curry
+
+To make this dynamic, we must extend curry:
+
+```js
+export function curry(func, overload) {
+  const fn = function curried(...args) {
+    if (args.length >= func.length) {
+      return func.apply(this, args);
+    } else {
+      const partial = function (...args2) {
+        return curried.apply(this, args.concat(args2));
+      };
+      if (overload) {
+        overload(partial, args);
+      }
+      return partial;
+    }
+  };
+  if (overload) {
+    overload(fn, []);
+  }
+  return fn;
+}
+```
+
+Now we can do this:
+
+```js
+const add = curry(
+  (a, b) => a + b,
+  function (fn) {
+    fn.add = curry((...args) => compose(fn, add(...args)), this);
+    return fn;
+  },
+);
+```
+
+const add = curry(
+(a, b) => a + b,
+(fn) => {
+fn.add = (...args) => compose(fn, add(...args));
+return fn;
+},
+);
+
+const x = compose(add(2), add(3));
+console.log(x(1)); // 6
+const y = add(2).add(3);
+console.log(y(2)); // 7
+
+//console.log(add(1).add(1)(1))
+
+('c3');
+
+```
+
+```

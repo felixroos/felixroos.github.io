@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Tone, getDefaultSynth } from '@strudel.cycles/tone';
 import useRepl from './useRepl.mjs';
 import CodeMirror, { highlightEvent } from './CodeMirror';
@@ -45,13 +45,17 @@ const defaultSynth = canUseDOM() && getDefaultSynth();
 
 function MiniRepl({ tune = '"c3"', maxHeight = 500 }) {
   const [view, setView] = useState();
-  const { code, setCode, activateCode, activeCode, setPattern, error, cycle, dirty, log, togglePlay, hash, pending } =
-    useRepl({
-      tune,
-      defaultSynth,
-      autolink: false,
-      onDraw: useCallback((_, e) => highlightEvent(e, view, code), [view]),
-    });
+  const [codeToHighlight, setCodeToHighlight] = useState(); // for draw callback deps
+  useEffect(() => {});
+  const { code, setCode, activateCode, activeCode, error, cycle, dirty, togglePlay, pending } = useRepl({
+    tune,
+    defaultSynth,
+    autolink: false,
+    onDraw: useCallback((_, e) => highlightEvent(e, view, codeToHighlight), [view, codeToHighlight]),
+  });
+  useEffect(() => {
+    setCodeToHighlight(activeCode);
+  }, [activeCode]);
   const lines = code.split('\n').length;
   const lineHeight = 20;
   const height = Math.min(lines * lineHeight + lineHeight, maxHeight);
