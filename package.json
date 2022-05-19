@@ -34,7 +34,7 @@
     "@strudel.cycles/eval": "^0.1.0",
     "@strudel.cycles/midi": "^0.1.0",
     "@strudel.cycles/mini": "^0.1.0",
-    "@strudel.cycles/react": "^0.1.0",
+    "@strudel.cycles/react": "^0.1.1",
     "@strudel.cycles/tonal": "^0.1.0",
     "@strudel.cycles/tone": "^0.1.0",
     "@strudel.cycles/webaudio": "^0.1.0",

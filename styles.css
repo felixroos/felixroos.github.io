@@ -4,11 +4,6 @@
 
 @import '@strudel.cycles/react/dist/style.css';
 
-.cm-editor {
-  background-color: transparent !important;
-}
-
-
 h1::before,
 h2::before,
 h3::before,
@@ -89,16 +84,6 @@ svg.dagre-d3-react path {
     #384d6a 60px,
     #384d6a 80px
   );
-}
-
-.CodeMirror {
-  height: 600px !important;
-  width: 800px;
-  font-size: 14px;
-}
-
-.cm-editor {
-  background: white;
 }
 
 #table-of-contents + ul > li > p {
