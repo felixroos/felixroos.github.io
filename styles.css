@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+@import '@strudel.cycles/react/dist/style.css';
+
+.cm-editor {
+  background-color: transparent !important;
+}
+
+
 h1::before,
 h2::before,
 h3::before,
