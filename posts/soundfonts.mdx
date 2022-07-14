@@ -1,17 +1,188 @@
 ---
-title: Soundfonts
-date: '2021-04-15'
-tags: ['rhythmical', 'draft']
+title: Playing Soundfonts with the Web Audio API
+date: '2022-07-14'
+tags: ['strudel']
+draft: true
 ---
 
-https://tambien.github.io/Piano/
-https://github.com/danigb/webmidi
-https://github.com/danigb/soundfont-player
+<figure>
+  <img
+    alt="printing letters"
+    className="mb-0"
+    src="https://upload.wikimedia.org/wikipedia/commons/5/55/Cassetto-caratteri-mobili-fusi-in-piombo-corpo-grande-tipografia.jpg?20160109161346"
+  />
+  <figcaption>
+    <a
+      href="https://commons.wikimedia.org/w/index.php?curid=46251347"
+      target="_blank"
+      rel="noreferrer"
+    >
+      {'by Andrea.C.Fi, CC BY-SA 3.0'}
+    </a>
+  </figcaption>
+</figure>
 
+In this post, I want to implement a way to load and play soundfonts with the Web Audio API.
 
-## groove mining
+## About Soundfonts and General MIDI
 
-https://magenta.tensorflow.org/datasets/e-gmd
+To get the whole story check out [Soundfonts on Wikipedia](https://en.wikipedia.org/wiki/SoundFont).
+Essentially, soundfonts are for sound what normal fonts are for typography:
+A collection of interchangeable sounds that can be used to play different types of music.
 
-- native instruments
-- drumgenius
+The so called [General MIDI specification](https://en.wikipedia.org/wiki/General_MIDI) (GM) is a standard set of
+sounds that a soundfont should have. You might know those from any old keyboard with 128 (or more) programs.
+
+Besides General MIDI, the file format sf2 can also contain any collection of sounds, unrelated to GM.
+They were quite popular in computer games, when file sizes were limited.
+
+The fact that soundfonts are not huge, and also because there are many [soundfonts floating around](https://musical-artifacts.com/artifacts?utf8=%E2%9C%93&formats=sf2),
+I think they are a good fit to be used on the web.
+
+## Loading Soundfonts
+
+Luckily, other people have already figured out how to parse sf2 files on the web.
+After some digging, I found the lib [soundfont2](https://www.npmjs.com/package/soundfont2) being the best option:
+
+import { loadSoundfont } from '../lib/sf2js/sf2js.js';
+
+```js
+import { SoundFont2 } from 'soundfont2';
+
+async function loadSoundfont(url) {
+  // load some sf2 file into an array buffer:
+  const buffer = await fetch(url).then((res) => res.arrayBuffer());
+  // convert buffer to Uint8Array:
+  const data = new Uint8Array(buffer);
+  // parse the sf2 file:
+  return SoundFont2.from(data);
+}
+// let's try it out:
+loadSoundfont(
+  'https://raw.githubusercontent.com/felixroos/felixroos.github.io/main/public/Earthbound_NEW.sf2'
+).then((font) => {
+  console.log('font loaded', font);
+});
+```
+
+What comes back is a huuuuuge object containing all the soundfont data! The top level properties are:
+
+- banks
+- chunk
+- instruments
+- metaData
+- presetData
+- presets
+- sampleData
+- samples
+
+## The SF2 Onion
+
+So there is a whole lot of different data types in there. So far, I am too lazy to read the spec,
+but one really insightful diagram about the structure of soundfonts is this:
+
+![sf2 structure](https://i.imgur.com/c2Gud3u.png)
+
+I think the best idea to understand all of this is to work through layer by layer
+
+## Playing Samples
+
+In the diagram, we can see the samples are the smallest entity of the system.
+Why not list all available samples and make them playable first?
+
+### The Sample Object
+
+A sample object returned from the parser looks like this:
+
+```json
+{
+  "data": [
+    /* Lots of values between -32768 and 32768 */
+  ], // Int16Array
+  "header": {
+    "name": "accordian 2",
+    "start": 6142, // first sample
+    "end": 9758, // last sample
+    "startLoop": 9566, // loop begin
+    "endLoop": 9758, // loop end
+    "sampleRate": 32000, // samples / second
+    "originalPitch": 64, // midi number
+    "pitchCorrection": -19, // cents
+    "link": 0, // ?
+    "type": 1 // ?
+  }
+}
+```
+
+Here we see an important feature of soundfonts: loop points!
+These allow notes to sustain endlessly while the file size can remain small.
+
+### Getting the Buffer Source
+
+The get a playable [AudioBufferSourceNode](https://developer.mozilla.org/en-US/docs/Web/API/AudioBufferSourceNode) from a sample object,
+I did the following:
+
+```js
+export function getBufferSourceFromSample(ctx, sample, pitch) {
+  const { header, data: int16 } = sample;
+  // convert Int16Array to Float32Array:
+  const float32 = new Float32Array(int16.length);
+  for (let i = 0; i < int16.length; i++) {
+    float32[i] = int16[i] / 32768; // convert to [-1, 1]
+  }
+  const buffer = ctx.createBuffer(1, float32.length, header.sampleRate);
+  const channelData = buffer.getChannelData(0);
+  channelData.set(float32);
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+  // calculate playbackRate
+  const baseDetune = header.originalPitch - header.pitchCorrection / 100.0;
+  const playbackRate =
+    1.0 * Math.pow(2, (100.0 * (pitch - baseDetune)) / 1200.0);
+  source.playbackRate.value = playbackRate;
+  // set loop!
+  if (header.endLoop > header.startLoop) {
+    const loopStart = header.startLoop - header.start;
+    source.loopStart = loopStart / header.sampleRate;
+    source.loopEnd = (header.endLoop - header.start) / header.sampleRate;
+    source.loop = true;
+  }
+  return source;
+}
+```
+
+### Playing the Sample
+
+To conveniently start and stop the sample without pops, I used this function:
+
+```js
+export const startSample = (ctx, sample, pitch, time = ctx.currentTime) => {
+  let source = getBufferSourceFromSample(ctx, sample, pitch);
+  let gain = ctx.createGain();
+  gain.connect(ctx.destination);
+  source.connect(gain);
+  source.start(time);
+  // return stop handle
+  return () => {
+    if (!gain || !source) {
+      // already stopped / not started
+      return;
+    }
+    const end = ctx.currentTime + 0.1; // fade out
+    gain.gain.linearRampToValueAtTime(0, end);
+    source.stop(end);
+    source = undefined;
+    gain = undefined;
+  };
+};
+```
+
+### Result
+
+Throwing all of that together, we can listen to all samples of the sf2 file!
+
+import Soundfont from '../lib/sf2js/Soundfont';
+
+<Soundfont url="./Donkey Kong Country 2014.sf2" />
+
+And there we go! The core entitiy of the soundfonts seems to work, what's left is all the onion layers around..
