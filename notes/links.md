@@ -1,12 +1,18 @@
 # Links
 
-- https://dev.to/alexeagleson/how-to-create-and-publish-a-react-component-library-2oe
-- https://nirmalyaghosh.com/articles/create-package-react-publish-npm
-- https://www.w3schools.com/nodejs/nodejs_raspberrypi_gpio_intro.asp
-- https://cswr.github.io/JsonSchema/
+## FRP
+
+- https://medium.com/codex/reactive-functional-core-programming-in-javascript-da02c1fa819e
+- https://gist.github.com/staltz/868e7e9bc2a7b8c1f754
+- https://www.sitepoint.com/functional-reactive-programming-rxjs/
+- https://modernweb.com/functional-reactive-programming-in-javascript/
+
 
 ## react stuff
 
+- https://dev.to/alexeagleson/how-to-create-and-publish-a-react-component-library-2oe
+- https://nirmalyaghosh.com/articles/create-package-react-publish-npm
+- https://www.npmjs.com/package/next-image-export-optimizer
 - https://kentcdodds.com/blog/fix-the-slow-render-before-you-fix-the-re-render
 - https://alexsidorenko.com/blog/react-render-cheat-sheet/
 - https://mastery.games/
@@ -21,8 +27,11 @@
 
 ## other
 
+- https://www.ableton.com/de/packs/microtuner/
+- https://www.w3schools.com/nodejs/nodejs_raspberrypi_gpio_intro.asp
+- https://cswr.github.io/JsonSchema/
 - https://betterexplained.com/cheatsheet/
-
+- https://marian42.de/article/wfc/
 <!--
 - https://github.com/christophhart/HISE
 - https://autotel.co/blog/sample-slicing-in-tone-js/
