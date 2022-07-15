@@ -79,9 +79,9 @@ What comes back is a huuuuuge object containing all the soundfont data! The top 
 ## The SF2 Onion
 
 So there is a whole lot of different data types in there. So far, I am too lazy to read the spec,
-but one really insightful diagram about the structure of soundfonts is this:
+but the general structure looks like this:
 
-![sf2 structure](https://i.imgur.com/c2Gud3u.png)
+![sf2 structure](./img/sf2flow.png)
 
 I think the best idea to understand all of this is to work through layer by layer
 
@@ -183,6 +183,214 @@ Throwing all of that together, we can listen to all samples of the sf2 file!
 
 import Soundfont from '../lib/sf2js/Soundfont';
 
-<Soundfont url="./Donkey Kong Country 2014.sf2" />
+<Soundfont url="./Donkey Kong Country 2014.sf2" type="sample" />
 
-And there we go! The core entitiy of the soundfonts seems to work, what's left is all the onion layers around..
+And there we go! The core entity of the soundfonts seems to work, what's left is all the onion layers around..
+
+## Instruments
+
+Let's peel the next layer: Instruments are a collection of samples:
+
+<Soundfont url="./SuperMarioWorld.sf2" type="instrument" />
+
+### Properties
+
+Here is an example of an instrument object:
+
+```json
+{
+  "header": {
+    "bagIndex": 0,
+    "name": "Boombox Kit"
+  },
+  "zones": [
+    {
+      "keyRange": { "lo": 48, "hi": 51 }, // can also be undefined
+      "generators": {
+        "43": { "id": 43, "range": { "lo": 48, "hi": 51 } },
+        "53": { "id": 53, "amount": 32 },ƒ
+        "58": { "id": 58, "amount": 65 }
+      },
+      "modulators": {}, // i have yet to find an instrument with something in here
+      "sample": {
+        /* sample object */
+      }
+    }
+    /* more zones */
+  ]
+}
+```
+
+So basically, each instrument has one or more zones where each contains a sample for a specific key range.
+Each zone can also define generators and modulators, whatever that is...
+
+## Generators
+
+At this point, I have to find out what those generators are, by looking at the [spec](http://www.synthfont.com/SFSPEC21.PDF).
+We can find out what those numbers mean in the Section "8.1.2 Generator Enumerators Defined":
+
+<div className="border border-white p-2 rounded-xl max-h-[400px] overflow-auto">
+
+```js
+const generators = {
+  // sample control
+  0: 'startAddrsOffset', // moves sample start point
+  1: 'endAddrOffset', // moves sample end point
+  // loop control
+  2: 'startloopAddrsOffset', // moves loop start point
+  3: 'endloopAddrsOffset', // moves loop end point
+  4: 'startAddrsCoarseOffset', // ?
+  // pitch modulation
+  5: 'modLfoToPitch', // modulation lfo pitch modulation in cents
+  6: 'vibLfoToPitch', // vibrato lfo pitch modulation in cents
+  7: 'modEnvToPitch', // modulation envelope pitch modulation in cents
+  // filter
+  8: 'initialFilterFc', // lowpass filter cutoff in cents
+  9: 'initialFilterQ', // lowpass filter resonance
+  // filter modulation
+  10: 'modLfoToFilterFc', // modulation lfo lowpass filter cutoff in cents
+  11: 'modEnvToFilterFc', // modulation envelope lowpass filter cutoff in cents
+  //
+  12: 'endAddrsCoarseOffset', // ?
+  13: 'modLfoToVolume', // modulation lfo volume (tremolo), where 100 = 10dB
+  14: 'unused1',
+  15: 'chorusEffectsSend', // how much is sent to chorus 0 - 1000
+  16: 'reverbEffectsSend', // how much is sent to reverb 0 - 1000
+  17: 'pan', // panning, where -500 = left, 0 = center, 500 = right
+  18: 'unused2',
+  19: 'unused3',
+  20: 'unused4',
+  // mod lfo
+  21: 'delayModLFO', // delay for mod lfo to start from zero (weird scale)
+  22: 'freqModLFO', // frequency of mod lfo, 0 = 8.176Hz, unit: f => 1200log2(f/8.176)
+  // vib lfo
+  23: 'delayVibLFO', // delay for vibrato lfo to start from zero (weird scale)
+  24: 'freqVibLFO', // frequency of vibrato lfo, 0 = 8.176Hz, unit: f => 1200log2(f/8.176)
+  // mod env
+  25: 'delayModEnv', // 0 = 1s declay till mod env starts
+  26: 'attackModEnv', // attack of mod env
+  27: 'holdModEnv', // hold of mod env
+  28: 'decayModEnv', // decay of mod env
+  29: 'sustainModEnv', // sustain of mod env
+  30: 'releaseModEnv', // release of mod env
+  31: 'keyNumToModEnvHold', // also modulating mod envelope hold with key number
+  32: 'keyNumToModEnvDecay', // also modulating mod envelope decay with key number
+  // vol env
+  33: 'delayVolEnv', // delay of envelope from zero (weird scale)
+  34: 'attackVolEnv', // attack of envelope
+  35: 'holdVolEnv', // hold of envelope
+  36: 'decayVolEnv', // decay of envelope
+  37: 'sustainVolEnv', // sustain of envelope
+  38: 'releaseVolEnv', // release of envelope
+  39: 'keyNumToVolEnvHold',
+  40: 'keyNumToVolEnvDecay',
+  // zone
+  41: 'instrument', // instrument index to use for preset zone
+  42: 'reserved1',
+  43: 'keyRange', // key range for which preset / instrument zone is active
+  44: 'velRange', // velocity range for which preset / instrument zone is active
+  45: 'startloopAddrsCoarseOffset', // ?
+  46: 'keyNum', // instrument only: always use this midi number (ignore whats pressed)
+  // gain
+  47: 'velocity', // instrument only: always use this velocity (ignore whats pressed)
+  48: 'initialAttenuation', // allows turning down the volume, 10 = -1dB
+  49: 'reserved2',
+  50: 'endloopAddrsCoarseOffset', // ?
+  // tune
+  51: 'coarseTune', // pitch offset in semitones
+  52: 'fineTune', // pitch offset in cents
+  // sample
+  53: 'sampleID', // instrument zone only: which sample to use
+  54: 'sampleModes', // 0 = no loop, 1 = loop, 2 = reserved, 3 = loop and play till end in release phase
+  55: 'reserved3',
+  56: 'scaleTuning', // the degree to which MIDI key number influences pitch, 100 = default
+  57: 'exclusiveClass', // = cut = choke group
+  58: 'overridingRootKey', // can override the sample's originalPitch
+  59: 'unused5',
+  60: 'endOper',
+};
+```
+
+</div>
+
+This is quite a list, though I am not sure if it makes sense to implement all of those.
+
+<div className="hidden">
+
+To simplify things a little bit, let's loosely categorize them:
+
+- buffer source
+  - 0: 'startAddrOffset', // moves sample start point
+  - 1: 'endAddrOffset', // moves sample end point
+  - 2: 'startloopAddrsOffset', // moves loop start point
+  - 3: 'endloopAddrsOffset', // moves loop end point
+  - 4: 'startAddrsCoarseOffset', // ?
+  - 12: 'endAddrsCoarseOffset', // ?
+  - 45: 'startloopAddrsCoarseOffset', // ?
+  - 50: 'endloopAddrsCoarseOffset', // ?
+  - 54: 'sampleModes', // 0 = no loop, 1 = loop, 2 = reserved, 3 = loop and play till end in release phase
+  - 57: 'exclusiveClass', // = cut = choke group
+- buffer playbackRate
+  - 51: 'coarseTune', // pitch offset in semitones
+  - 52: 'fineTune', // pitch offset in cents
+  - 5: 'modLfoToPitch', // modulation lfo pitch modulation in cents
+  - 6: 'vibLfoToPitch', // vibrato lfo pitch modulation in cents
+  - 7: 'modEnvToPitch', // modulation envelope pitch modulation in cents
+  - 46: 'keyNum', // instrument only: always use this midi number (ignore whats pressed)
+  - 56: 'scaleTuning', // the degree to which MIDI key number influences pitch, 100 = default
+  - 58: 'overridingRootKey', // can override the sample's originalPitch
+- filter
+  - 8: 'initialFilterFc', // lowpass filter cutoff in cents
+  - 9: 'initialFilterQ', // lowpass filter resonance
+  - 10: 'modLfoToFilterFc', // modulation lfo lowpass filter cutoff in cents
+  - 11: 'modEnvToFilterFc', // modulation envelope lowpass filter cutoff in cents
+- gain
+  - 13: 'modLfoToVolume', // modulation lfo volume (tremolo), where 100 = 10dB
+  - 47: 'velocity', // instrument only: always use this velocity (ignore whats pressed)
+  - 48: 'initialAttenuation', // allows turning down the volume, 10 = -1dB
+- effects
+  - 15: 'chorusEffectsSend', // how much is sent to chorus 0 - 1000
+  - 16: 'reverbEffectsSend', // how much is sent to reverb 0 - 1000
+  - 17: 'pan', // panning, where -500 = left, 0 = center, 500 = right
+- lfos
+  - 21: 'delayModLFO', // delay for mod lfo to start from zero (weird scale)
+  - 22: 'freqModLFO', // frequency of mod lfo, 0 = 8.176Hz, unit: f => 1200log2(f/8.176)
+  - 23: 'delayVibLFO', // delay for vibrato lfo to start from zero (weird scale)
+  - 24: 'freqVibLFO', // frequency of vibrato lfo, 0 = 8.176Hz, unit: f => 1200log2(f/8.176)
+- mod envelope
+  - 25: 'delayModEnv', // 0 = 1s declay till mod env starts
+  - 26: 'attackModEnv', // attack of mod env
+  - 27: 'holdModEnv', // hold of mod env
+  - 28: 'decayModEnv', // decay of mod env
+  - 29: 'sustainModEnv', // sustain of mod env
+  - 30: 'releaseModEnv', // release of mod env
+  - 31: 'keyNumToModEnvHold', // also modulating mod envelope hold with key number
+  - 32: 'keyNumToModEnvDecay', // also modulating mod envelope decay with key number
+- vol envelope
+  - 33: 'delayVolEnv', // delay of envelope from zero (weird scale)
+  - 34: 'attackVolEnv', // attack of envelope
+  - 35: 'holdVolEnv', // hold of envelope
+  - 36: 'decayVolEnv', // decay of envelope
+  - 37: 'sustainVolEnv', // sustain of envelope
+  - 38: 'releaseVolEnv', // release of envelope
+  - 39: 'keyNumToVolEnvHold',
+  - 40: 'keyNumToVolEnvDecay',
+- zone
+  - 41: 'instrument', // instrument index to use for preset zone
+  - 43: 'keyRange', // key range for which preset / instrument zone is active
+  - 44: 'velRange', // velocity range for which preset / instrument zone is active
+
+</div>
+
+## Presets
+
+So far, we've looked at samples, instruments and instrument zones. Let's look at the last 2 layers of the onion: presets and preset zones.
+
+<div className="border border-white p-2 rounded-xl max-h-[600px] overflow-auto">
+
+<Soundfont url="./Vintage Dreams Waves v2.sf2" type="preset" slice={5} />
+
+</div>
+
+Here we see that each preset can have one or multiple zones containing an instrument.
+Each preset zone can define generators, which probably override the instrument generators.
