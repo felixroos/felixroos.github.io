@@ -393,7 +393,36 @@ So far, we've looked at samples, instruments and instrument zones. Let's look at
 </div>
 
 Here we see that each preset can have one or multiple zones containing an instrument.
-Like with instrument zones, each preset zone can define generators to set certain properties.
+Like with instrument zones, each preset zone can define generators to set certain properties:
+
+```json
+{
+  "header": {
+    "name": "FM Carillion",
+    "preset": 1,
+    "bank": 0,
+    "bagIndex": 594,
+    "library": 0,
+    "genre": 0,
+    "morphology": 0
+  },
+  "zones": [
+    {
+      "generators": {
+        "41": {
+          "id": 41,
+          "amount": 236
+        }
+      },
+      "instrument": {
+        /*instrument object */
+      },
+      // "keyRange": undefined,
+      "mondulators": {}
+    }
+  ]
+}
+```
 
 ## From Note on to Sound
 

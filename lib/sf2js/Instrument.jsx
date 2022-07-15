@@ -12,7 +12,7 @@ const isZoneActive = (zone, midi) => {
 
 function Instrument({ instrument, ctx, midi }) {
   return (
-    <div className="bg-lime-500 border-2 border-lime-800 text-white rounded-lg m-1 p-1">
+    <div className="bg-lime-500 border-2 border-lime-700 text-slate-700 rounded-lg m-1 p-1">
       <span>
         {/* #{instrument.header.bagIndex}  */}
         {instrument.header.name}
