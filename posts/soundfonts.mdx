@@ -181,7 +181,7 @@ export const startSample = (ctx, sample, pitch, time = ctx.currentTime) => {
 
 Throwing all of that together, we can listen to all samples of the sf2 file!
 
-import Soundfont from '../lib/sf2js/Soundfont';
+import Soundfont, { KeySelect } from '../lib/sf2js/Soundfont';
 
 <Soundfont url="./Donkey Kong Country 2014.sf2" type="sample" />
 
@@ -393,4 +393,21 @@ So far, we've looked at samples, instruments and instrument zones. Let's look at
 </div>
 
 Here we see that each preset can have one or multiple zones containing an instrument.
-Each preset zone can define generators, which probably override the instrument generators.
+Like with instrument zones, each preset zone can define generators to set certain properties.
+
+## From Note on to Sound
+
+After knowing the structure of a soundfont, let's think about what happens when we play a note.
+
+0. Select a preset
+1. Press a key (defines midi number + velocity)
+2. Use all preset zones with matching keyRange and velRange
+3. For each active preset zone, decide which instrument zones to use, based on keyRange and velRange
+4. Play the sample of each active instrument zones
+5. Shape the sound using the generators of the preset zone, as well as the instrument zone
+
+I made these steps up, without checking the spec, but I think this is the way it should work. We will find out later...
+
+Let's now implement each of those steps!
+
+<Soundfont url="./Vintage Dreams Waves v2.sf2" type="preset-select" />

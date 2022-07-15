@@ -1,7 +1,13 @@
 import { Note } from '@tonaljs/tonal';
 import React from 'react';
 
-function getClaviature({ options, onClick }) {
+function getClaviature({
+  options,
+  onClick,
+  onMouseDown,
+  onMouseUp,
+  onMouseLeave,
+}) {
   const {
     range = ['A1', 'C6'],
     scaleX = 1,
@@ -49,9 +55,19 @@ function getClaviature({ options, onClick }) {
 
   const blackX = (index) => (index - offset) * topWidth + blackOffset;
 
-  const colorizedMidi = colorize.map((c) => ({ ...c, keys: c.keys.map((key) => Note.midi(key)) }));
-  const getColor = (midi) => colorizedMidi.find(({ keys }) => keys.includes(midi))?.color;
+  const colorizedMidi = colorize.map((c) => ({
+    ...c,
+    keys: c.keys.map((key) => Note.midi(key)),
+  }));
+  const getColor = (midi) =>
+    colorizedMidi.find(({ keys }) => keys.includes(midi))?.color;
   const handleClick = (midi) => () => onClick?.(Note.fromMidi(midi), midi);
+  const handleMouseDown = (midi) => () =>
+    onMouseDown?.(Note.fromMidi(midi), midi);
+  const handleMouseUp = (midi) => () => onMouseUp?.(Note.fromMidi(midi), midi);
+  const handleMouseLeave = (midi) => () =>
+    onMouseLeave?.(Note.fromMidi(midi), midi);
+
   const isBlack = (midi) => blackPattern[midi % 12] === 1;
   // format similar to https://www.npmjs.com/package/svgson
   return {
@@ -79,6 +95,9 @@ function getClaviature({ options, onClick }) {
           stroke,
           strokeWidth: `${strokeWidth}px`,
           onClick: handleClick(midi),
+          onMouseDown: handleMouseDown(midi),
+          onMouseUp: handleMouseUp(midi),
+          onMouseLeave: handleMouseLeave(midi),
         },
       })),
       ...black.map((midi) => ({
@@ -96,13 +115,21 @@ function getClaviature({ options, onClick }) {
           stroke: 'black',
           strokeWidth: `${strokeWidth}px`,
           onClick: handleClick(midi),
+          onMouseDown: handleMouseDown(midi),
+          onMouseUp: handleMouseUp(midi),
+          onMouseLeave: handleMouseLeave(midi),
         },
       })),
       ...Object.entries(labels || {}).reduce((textElements, [key, value]) => {
         const midi = Note.midi(key);
         const black = isBlack(midi);
-        const y = topLabels ? topWidth * 0.7 : (black ? blackHeight : whiteHeight) - topWidth * 0.7;
-        const x = black || topLabels ? blackX(midi) + topWidth / 2 : whiteX(midi) + whiteWidth(midi) / 2;
+        const y = topLabels
+          ? topWidth * 0.7
+          : (black ? blackHeight : whiteHeight) - topWidth * 0.7;
+        const x =
+          black || topLabels
+            ? blackX(midi) + topWidth / 2
+            : whiteX(midi) + whiteWidth(midi) / 2;
         return textElements.concat([
           {
             name: 'circle',
@@ -132,8 +159,20 @@ function getClaviature({ options, onClick }) {
   };
 }
 
-export default function Claviature({ options, onClick }: any) {
-  const svg = getClaviature({ options, onClick });
+export default function Claviature({
+  options,
+  onClick,
+  onMouseDown,
+  onMouseUp,
+  onMouseLeave,
+}: any) {
+  const svg = getClaviature({
+    options,
+    onClick,
+    onMouseDown,
+    onMouseUp,
+    onMouseLeave,
+  });
   return (
     <svg {...svg.attributes}>
       {svg.children.map((el, i) => {
@@ -154,7 +193,8 @@ export function ClaviatureOctave() {
   const whiteHeight = 145;
   const [r1, r2] = [5 / 3, 7 / 4]; // 2 different ratios for white key bottoms
   const whiteWidth = (index) => (index < 3 ? r1 : r2) * topWidth;
-  const whiteX = (index) => (Math.min(index, 3) * r1 + Math.max(index - 3, 0) * r2) * topWidth;
+  const whiteX = (index) =>
+    (Math.min(index, 3) * r1 + Math.max(index - 3, 0) * r2) * topWidth;
   // const whiteX = (index) => Array.from({ length: index }, (_, i) => i).reduce((sum, w) => sum + whiteWidth(w), 0);
   return (
     <svg>
@@ -171,7 +211,16 @@ export function ClaviatureOctave() {
         />
       ))}
       {[0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0].map(
-        (place, index) => place && <rect key={index} x={index * topWidth} y={0} width={topWidth} height={blackHeight} />
+        (place, index) =>
+          place && (
+            <rect
+              key={index}
+              x={index * topWidth}
+              y={0}
+              width={topWidth}
+              height={blackHeight}
+            />
+          )
       )}
     </svg>
   );
