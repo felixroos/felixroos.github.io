@@ -136,7 +136,8 @@ export function getBufferSourceFromSample(ctx, sample, pitch) {
   const source = ctx.createBufferSource();
   source.buffer = buffer;
   // calculate playbackRate
-  const baseDetune = header.originalPitch - header.pitchCorrection / 100.0;
+  const baseDetune =
+    header.originalPitch - header.pitchCorrection / 100.0 - zone.fineTune;
   const playbackRate =
     1.0 * Math.pow(2, (100.0 * (pitch - baseDetune)) / 1200.0);
   source.playbackRate.value = playbackRate;

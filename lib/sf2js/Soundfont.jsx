@@ -20,7 +20,12 @@ function Soundfont({ url, type, slice }) {
         {font?.samples
           ?.filter((sample) => sample.data.length > 0)
           ?.map((sample, i) => (
-            <SampleButton sample={sample} key={i} ctx={ctx} />
+            <SampleButton
+              sample={sample}
+              key={i}
+              ctx={ctx}
+              options={{ sampleModes: 1 }}
+            />
           ))}
       </div>
     );

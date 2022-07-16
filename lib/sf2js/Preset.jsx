@@ -27,12 +27,14 @@ function Preset({ preset, ctx, activeKey }) {
               <Generator entry={generator} key={k} />
             ))}
           </div>
-          <Instrument
-            instrument={zone.instrument}
-            key={j}
-            ctx={ctx}
-            midi={midi}
-          />
+          {zone.instrument && (
+            <Instrument
+              instrument={zone.instrument}
+              key={j}
+              ctx={ctx}
+              midi={midi}
+            />
+          )}
         </div>
       ))}
     </div>

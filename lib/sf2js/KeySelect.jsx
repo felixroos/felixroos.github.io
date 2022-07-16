@@ -27,10 +27,10 @@ export function KeySelect({ children, onChange, onNoteOn, onNoteOff }) {
     <>
       <Claviature
         options={{
-          range: ['A2', 'C8'],
+          range: ['C0', 'C8'],
           colorize,
-          scaleX: 0.8,
-          scaleY: 0.8,
+          scaleX: 0.5,
+          scaleY: 0.5,
         }}
         onClick={(key) => {
           if (selected.has(key)) {

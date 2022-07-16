@@ -1,6 +1,7 @@
 import SampleButton from './SampleButton';
 import Generator from './Generator';
 import { classNames } from '../../components/layout/classNames';
+import { readableGenerators } from './sf2js';
 
 const isZoneActive = (zone, midi) => {
   return (
@@ -35,7 +36,13 @@ function Instrument({ instrument, ctx, midi }) {
                   <Generator entry={entry} key={k} />
                 ))}
               </div>
-              <SampleButton sample={zone.sample} ctx={ctx} />
+              {zone.sample && (
+                <SampleButton
+                  sample={zone.sample}
+                  ctx={ctx}
+                  options={readableGenerators(zone.generators)}
+                />
+              )}
             </div>
           );
         })}
