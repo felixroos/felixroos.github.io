@@ -17,6 +17,13 @@ function Preset({ preset, ctx, activeKey }) {
           {preset.header.morphology}
         </small>
       </div>
+      {preset.globalZone && (
+        <div className="flex flex-wrap items-center">
+          {Object.entries(preset.globalZone.generators).map((entry, k) => (
+            <Generator entry={entry} key={k} />
+          ))}
+        </div>
+      )}
       {preset.zones.map((zone, j) => (
         <div
           key={j}

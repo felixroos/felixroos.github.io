@@ -18,6 +18,13 @@ function Instrument({ instrument, ctx, midi }) {
         {/* #{instrument.header.bagIndex}  */}
         {instrument.header.name}
       </span>
+      {instrument.globalZone && (
+        <div className="flex flex-wrap items-center">
+          {Object.entries(instrument.globalZone.generators).map((entry, k) => (
+            <Generator entry={entry} key={k} />
+          ))}
+        </div>
+      )}
       <div className="space-y-1">
         {instrument.zones.map((zone, j) => {
           return (
