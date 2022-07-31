@@ -1,7 +1,7 @@
 import { toArray, toObject, AgnosticChild } from '../helpers/objects';
 import { curry } from 'ramda';
-// import { zip } from 'zippa';
-// import { walkRhythm } from '../tree/RhythmZipper';
+import { zip } from 'zippa';
+import { walkRhythm } from '../tree/RhythmZipper';
 
 export function inheritProperty<T>(property) {
   return (_parent: AgnosticChild<T>): AgnosticChild<T> => {
@@ -37,7 +37,7 @@ function objectify(item) {
 }
 
 // this is the new shit
-/* export const inheritProp = curry((property, rhythm) => walkRhythm(
+export const inheritProp = curry((property, rhythm) => walkRhythm(
   zipper => {
     const parentValue = zipper.up?.()?.value();
     if (parentValue?.[property] === undefined) {
@@ -51,4 +51,4 @@ function objectify(item) {
   rhythm
 ))
 
-export default inheritProp; */
+export default inheritProp;
