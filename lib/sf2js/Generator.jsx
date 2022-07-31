@@ -1,4 +1,4 @@
-import { generators } from './sf2js';
+import { generators } from './generators';
 
 function Generator({ entry }) {
   const [key, value] = entry;
