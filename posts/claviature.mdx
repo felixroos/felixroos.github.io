@@ -1,9 +1,10 @@
 ---
-title: SVG Piano Revisited
-date: '2021-07-04'
-tags: ['tools', 'web audio', 'draft']
+title: 'Claviature: SVG Piano Revisited'
+date: '2022-07-31'
+tags: ['tools', 'web audio']
 image: ./img/equal-piano.svg
 description: In this post, I want to investigate an alternative piano keyboard sizing that is better suited for digital applications.
+loadKatex: true
 ---
 
 import Claviature, { ClaviatureOctave } from '../components/common/Claviature';
@@ -48,11 +49,13 @@ It's a little more complicated:
 So, keys C, D and E (=3w) must have a total width of 5b:
 
 $$$3w = 5b$$$
+
 $$$w = \frac{5}{3}b$$$
 
 Also, keys F, G, A and B (=4w) must have a bottom width of 7b:
 
 $$$4w = 7b$$$
+
 $$$w = \frac{7}{4}b$$$
 
 Now we have two different solutions for _w_:
@@ -78,7 +81,11 @@ export function Claviature() {
   const blackHeight = 100;
   const whiteHeight = 145;
   const whiteWidth = (index) => (index > 2 ? 7 / 4 : 5 / 3) * topWidth;
-  const whiteX = (index) => Array.from({ length: index }, (_, i) => i).reduce((sum, w) => sum + whiteWidth(w), 0);
+  const whiteX = (index) =>
+    Array.from({ length: index }, (_, i) => i).reduce(
+      (sum, w) => sum + whiteWidth(w),
+      0
+    );
   return (
     <svg>
       {Array.from({ length: 7 }, (_, i) => i).map((index) => (
@@ -94,7 +101,16 @@ export function Claviature() {
         />
       ))}
       {[0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0].map(
-        (place, index) => place && <rect key={index} x={index * topWidth} y={0} width={topWidth} height={blackHeight} />
+        (place, index) =>
+          place && (
+            <rect
+              key={index}
+              x={index * topWidth}
+              y={0}
+              width={topWidth}
+              height={blackHeight}
+            />
+          )
       )}
     </svg>
   );
@@ -227,6 +243,6 @@ Using the above Code as a basis, I added all the [options from svg-piano](https:
   }}
 />
 
-### visibleKeys
+## The library
 
-i ditched this option
+You can use this by installing `claviature` from npm. Check out the [claviature github repo](https://github.com/felixroos/claviature).
