@@ -70,3 +70,4 @@ export function renderEvents(rhythm) {
   return events;
 }
  */
+export {};
