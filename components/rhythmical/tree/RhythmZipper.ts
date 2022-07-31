@@ -1,4 +1,4 @@
-import { makeZipper, zip } from 'zippa';
+/* import { makeZipper, zip } from 'zippa';
 import { pathTimeDuration, makeRhythmParent, rhythmFraction, getRhythmChildren, editLeafValue } from '../util';
 import { Path, rhythmEvents } from './hierarchy';
 import pipe from 'ramda/src/pipe';
@@ -69,3 +69,4 @@ export function renderEvents(rhythm) {
   }, tree);
   return events;
 }
+ */
