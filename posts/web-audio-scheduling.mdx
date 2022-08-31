@@ -1,0 +1,262 @@
+---
+title: Web Audio Scheduling
+date: '2022-09-28'
+keywords: ['web audio']
+tags: ['web audio', 'code']
+draft: true
+---
+
+This post is a search for different ways to control events in time when working with the Web Audio API.
+
+## Built-In Web Audio Scheduling Methods
+
+In Web Audio, any node that is a child of the [AudioScheduledSourceNode](https://developer.mozilla.org/en-US/docs/Web/API/AudioScheduledSourceNode)
+can be scheduled using the inherited methods `start` and `stop`. For example, we can schedule an oscillator like this:
+
+```js
+const ctx = new AudioContext();
+const o = ctx.createOscillator();
+o.frequency.value = 440;
+o.connect(ctx.destination);
+o.start(ctx.currentTime + 0.1);
+o.stop(ctx.currentTime + 1.1);
+```
+
+<button
+  className="text-white bg-sky-600 border-2 border-sky-800 p-2 m-1 rounded-md"
+  onClick={() => {
+    const ctx = new AudioContext();
+    const o = ctx.createOscillator();
+    o.frequency.value = 440;
+    o.connect(ctx.destination);
+    o.start(ctx.currentTime + 0.1);
+    o.stop(ctx.currentTime + 1.1);
+  }}
+>
+  <span>play</span>
+</button>
+
+Another scheduling mechanism is using an [AudioParam](https://developer.mozilla.org/en-US/docs/Web/API/AudioParam), like the frequency of our oscillator:
+
+```js
+// following the code above:
+o.frequency.setValueAtTime(440, 0.1);
+o.frequency.linearRampToValueAtTime(880, 1.1);
+```
+
+<button
+  className="text-white bg-sky-600 border-2 border-sky-800 p-2 m-1 rounded-md"
+  onClick={() => {
+    const ctx = new AudioContext();
+    const o = ctx.createOscillator();
+    o.frequency.value = 440;
+    o.connect(ctx.destination);
+    o.start(ctx.currentTime + 0.1);
+    o.stop(ctx.currentTime + 1.1);
+    o.frequency.setValueAtTime(440, 0.1);
+    o.frequency.linearRampToValueAtTime(880, 1.1);
+  }}
+>
+  <span>play</span>
+</button>
+
+Fine! With those methods, we can control any node and its parameters in time. Why write an extra post about it?
+
+### Problem: Fire and forget
+
+With the built-in methods, everything follows the _fire and forget_ approach, where once scheduled, an event cannot be canceled or changed anymore.
+This is fine for short sequences, but is problematic when we expect the user wanting to change the flow of events.
+
+## Scheduling in JavaScript
+
+In JS, there are three methods to schedule things:
+
+- setTimeout
+- setInterval
+- requestAnimationFrame
+
+Let's be really naive and use those to schedule:
+
+```js
+const ctx = new AudioContext();
+let period = 0.2;
+setInterval(() => {
+  const o = ctx.createOscillator();
+  o.frequency.value = 440;
+  o.connect(ctx.destination);
+  o.start(ctx.currentTime + 0.1);
+  o.stop(ctx.currentTime + period / 2 + 0.1);
+}, period * 1000);
+```
+
+export let intervalID;
+
+<button
+  className="text-white bg-sky-600 border-2 border-sky-800 p-2 m-1 rounded-md"
+  onClick={() => {
+    const ctx = new AudioContext();
+    let period = 0.2;
+    let last;
+    intervalID && clearInterval(intervalID);
+    intervalID = setInterval(() => {
+      const o = ctx.createOscillator();
+      o.frequency.value = 440;
+      o.connect(ctx.destination);
+      o.start(ctx.currentTime + 0.1);
+      o.stop(ctx.currentTime + period / 2 + 0.1);
+    }, period * 1000);
+  }}
+>
+  <span>play</span>
+</button>
+<button
+  className="text-white bg-sky-600 border-2 border-sky-800 p-2 m-1 rounded-md"
+  onClick={() => {
+    clearInterval(intervalID);
+  }}
+>
+  <span>stop</span>
+</button>
+<button
+  className="text-white bg-sky-600 border-2 border-sky-800 p-2 m-1 rounded-md"
+  onClick={() => {
+    const start = performance.now();
+    let a = [];
+    for (let i = 0; i < 1500; i++) {
+      a = [...a].sort().concat(Math.sin(i));
+    }
+    const took = performance.now() - start;
+    console.log(`work took ${took.toFixed(2)}ms`);
+  }}
+>
+  <span>do some work</span>
+</button>
+
+You might already notice that the timing is not perfect all of the time, and it gets worse if you mash that "do some work" button.
+The button just runs a dummy computation that is designed to make the JS thread busy:
+
+```js
+const start = performance.now();
+let a = [];
+for (let i = 0; i < 1500; i++) {
+  a = [...a].sort().concat(Math.sin(i));
+}
+const took = performance.now() - start;
+console.log(`work took ${took.toFixed(2)}ms`);
+```
+
+On my machine, this takes on on average 100ms and causes the beeps to stumble quite a bit.
+
+### Error Measurement
+
+Let's measure how far off setInterval is:
+
+<button
+  className="text-white bg-sky-600 border-2 border-sky-800 p-2 m-1 rounded-md"
+  onClick={() => {
+    const ctx = new AudioContext();
+    let period = 0.2;
+    intervalID && clearInterval(intervalID);
+    let start = ctx.currentTime;
+    let last = ctx.currentTime;
+    let diffs = [];
+    intervalID = setInterval(() => {
+      const o = ctx.createOscillator();
+      o.frequency.value = 440;
+      o.connect(ctx.destination);
+      o.start(ctx.currentTime + 0.1);
+      o.stop(ctx.currentTime + period / 2 + 0.1);
+      const diff = ctx.currentTime - last - period;
+      last = ctx.currentTime;
+      console.log((diff * 1000).toFixed(2) + 'ms');
+      diffs.push(diff);
+      diffs = diffs.slice(-50, diffs.length);
+      const canvas = document.getElementById('error-plot');
+      const context = canvas.getContext('2d');
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      context.clearRect(0, 0, w, h);
+      const slice = w / diffs.length;
+      const block = 5;
+      context.fillStyle = 'steelblue';
+      context.fillRect(0, h / 2 - block / 2, w, block);
+      context.fillStyle = 'gray';
+      diffs.forEach((d, i, a) => {
+        context.fillRect(slice * i, h / 2 - (d / period / 4) * h, slice, block);
+      });
+    }, period * 1000);
+  }}
+>
+  <span>play</span>
+</button>
+<button
+  className="text-white bg-sky-600 border-2 border-sky-800 p-2 m-1 rounded-md"
+  onClick={() => {
+    clearInterval(intervalID);
+  }}
+>
+  <span>stop</span>
+</button>
+<button
+  className="text-white bg-sky-600 border-2 border-sky-800 p-2 m-1 rounded-md"
+  onClick={() => {
+    const start = performance.now();
+    let a = [];
+    for (let i = 0; i < 1500; i++) {
+      a = [...a].sort().concat(Math.sin(i));
+    }
+    const took = performance.now() - start;
+    console.log(`work took ${took.toFixed(2)}ms`);
+  }}
+>
+  <span>do some work</span>
+</button>
+<canvas id="error-plot" height="400" width="600" />
+
+Here, the gray bars plot the time error compared to the audio context. Bars above the blue line are too late, while those below are too early.
+Interestingly, for much workload, there is a difference between Firefox:
+
+![firefox](./img/scheduling/firefox.png)
+
+... and Chrome:
+
+![chrome](./img/scheduling/chrome.png)
+
+Here, we see that Chrome will try to "balance" errors by firing the next ones earlier, while Firefox will just delay all upcoming callbacks.
+
+### Another way to visualize
+
+Here is another way to visualize the same problem:
+
+import { IntervalPlot } from '../components/scheduling/IntervalPlot';
+
+<IntervalPlot hideOutput />
+
+- the blue bars visualize the actual length of each interval
+- the black boxes visualize the expected length of each interval
+- the vertical black lines visualize the grid that emerges
+
+When the "do some work" button is pressed, the blue bar will overshoot the black box.
+
+On Chrome, we see again how the next interval will be made shorter to compensate for the overshoot:
+
+![chrome2](./img/scheduling/chrome2.png)
+
+While on Firefox, the next interval will be normal again:
+
+![firefox2](./img/scheduling/firefox2.png)
+
+## Revisiting the Tale of Two Clocks
+
+So far, we've found out that:
+
+- Built-In Web Audio Scheduling is accurate, but unflexible
+- JavaScript Scheduling is sloppy, but flexible
+
+So it seems that a combination of both would solve our problem. This is exactly what the famous [Tale of Two Clocks](https://web.dev/audio-scheduling/) is about.
+
+The basic idea is that each interval callback looks a little bit further into the future, creating some overlap with the next callback:
+
+<IntervalPlot overlap={0.25} />
+
+<IntervalPlot overlap={0.5} period={0.05} />
