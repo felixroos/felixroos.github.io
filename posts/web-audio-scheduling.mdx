@@ -285,7 +285,7 @@ import { WorkletPlot } from '../components/scheduling/WorkletPlot';
 ## Conclusion
 
 After looking at `setInterval`, `requestAnimationFrame` and `AudioWorklet`s, I found out that the error is pretty similar among all of them.
-The best choice seems to be the good old `setInterva`, because
+The best choice seems to be the good old `setInterval`, because
 
 - requestAnimationFrame won't work with inactive tabs + has a fixed interval
 - AudioWorklet is firing too often + seems pretty hacky + has a fixed interval
