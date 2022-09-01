@@ -6,7 +6,7 @@ tags: ['web audio', 'code']
 draft: true
 ---
 
-This post is a search for different ways to control events in time when working with the Web Audio API.
+In this post, I want to test out different ways of controlling events in time when working with the Web Audio API.
 
 ## Built-In Web Audio Scheduling Methods
 
@@ -65,7 +65,7 @@ Fine! With those methods, we can control any node and its parameters in time. Wh
 ### Problem: Fire and forget
 
 With the built-in methods, everything follows the _fire and forget_ approach, where once scheduled, an event cannot be canceled or changed anymore.
-This is fine for short sequences, but is problematic when we expect the user wanting to change the flow of events.
+This is fine for short sequences, but it's problematic when we want to change the flow of events, or even create open ended loops.
 
 ## Scheduling in JavaScript
 
@@ -75,7 +75,7 @@ In JS, there are three methods to schedule things:
 - setInterval
 - requestAnimationFrame
 
-Let's be really naive and use those to schedule:
+Let's be really naive and use setInterval to schedule audio:
 
 ```js
 const ctx = new AudioContext();
@@ -145,106 +145,35 @@ const took = performance.now() - start;
 console.log(`work took ${took.toFixed(2)}ms`);
 ```
 
-On my machine, this takes on on average 100ms and causes the beeps to stumble quite a bit.
+On my machine, this takes roughly 70 - 100ms and causes the beeps to stumble quite a bit.
 
-### Error Measurement
+### Interval Visualization
 
-Let's measure how far off setInterval is:
+Let's visualize how far off setInterval is:
 
-<button
-  className="text-white bg-sky-600 border-2 border-sky-800 p-2 m-1 rounded-md"
-  onClick={() => {
-    const ctx = new AudioContext();
-    let period = 0.2;
-    intervalID && clearInterval(intervalID);
-    let start = ctx.currentTime;
-    let last = ctx.currentTime;
-    let diffs = [];
-    intervalID = setInterval(() => {
-      const o = ctx.createOscillator();
-      o.frequency.value = 440;
-      o.connect(ctx.destination);
-      o.start(ctx.currentTime + 0.1);
-      o.stop(ctx.currentTime + period / 2 + 0.1);
-      const diff = ctx.currentTime - last - period;
-      last = ctx.currentTime;
-      console.log((diff * 1000).toFixed(2) + 'ms');
-      diffs.push(diff);
-      diffs = diffs.slice(-50, diffs.length);
-      const canvas = document.getElementById('error-plot');
-      const context = canvas.getContext('2d');
-      const w = canvas.clientWidth;
-      const h = canvas.clientHeight;
-      context.clearRect(0, 0, w, h);
-      const slice = w / diffs.length;
-      const block = 5;
-      context.fillStyle = 'steelblue';
-      context.fillRect(0, h / 2 - block / 2, w, block);
-      context.fillStyle = 'gray';
-      diffs.forEach((d, i, a) => {
-        context.fillRect(slice * i, h / 2 - (d / period / 4) * h, slice, block);
-      });
-    }, period * 1000);
-  }}
->
-  <span>play</span>
-</button>
-<button
-  className="text-white bg-sky-600 border-2 border-sky-800 p-2 m-1 rounded-md"
-  onClick={() => {
-    clearInterval(intervalID);
-  }}
->
-  <span>stop</span>
-</button>
-<button
-  className="text-white bg-sky-600 border-2 border-sky-800 p-2 m-1 rounded-md"
-  onClick={() => {
-    const start = performance.now();
-    let a = [];
-    for (let i = 0; i < 1500; i++) {
-      a = [...a].sort().concat(Math.sin(i));
-    }
-    const took = performance.now() - start;
-    console.log(`work took ${took.toFixed(2)}ms`);
-  }}
->
-  <span>do some work</span>
-</button>
-<canvas id="error-plot" height="400" width="600" />
-
-Here, the gray bars plot the time error compared to the audio context. Bars above the blue line are too late, while those below are too early.
-Interestingly, for much workload, there is a difference between Firefox:
-
-![firefox](./img/scheduling/firefox.png)
-
-... and Chrome:
-
-![chrome](./img/scheduling/chrome.png)
-
-Here, we see that Chrome will try to "balance" errors by firing the next ones earlier, while Firefox will just delay all upcoming callbacks.
-
-### Another way to visualize
-
-Here is another way to visualize the same problem:
-
-import { IntervalPlot } from '../components/scheduling/IntervalPlot';
+import {
+  IntervalPlot,
+  IntervalPlayground,
+} from '../components/scheduling/IntervalPlot';
 
 <IntervalPlot hideOutput />
 
-- the blue bars visualize the actual length of each interval
-- the black boxes visualize the expected length of each interval
-- the vertical black lines visualize the grid that emerges
+- the gray vertical lines represent callbacks of setInterval
+- the length of the gray boxes is determined by the interval between each callback
+- if the boxes overlap, it means the next callback came too early, if they are apart, it means the callback was delayed
+- delayed callbacks are shown in red
 
-When the "do some work" button is pressed, the blue bar will overshoot the black box.
+We can clearly see how pressing "do some work" influences the interval structure in a bad way (and the beeping).
 
-On Chrome, we see again how the next interval will be made shorter to compensate for the overshoot:
+### Browser Differences
 
-![chrome2](./img/scheduling/chrome2.png)
+On Chrome, the next interval will be made shorter to compensate for the delay:
+
+![chrome error](./img/scheduling/chrome2.png)
 
 While on Firefox, the next interval will be normal again:
 
-![firefox2](./img/scheduling/firefox2.png)
+![firefox error](./img/scheduling/firefox2.png)
 
 ## Revisiting the Tale of Two Clocks
 
@@ -259,4 +188,61 @@ The basic idea is that each interval callback looks a little bit further into th
 
 <IntervalPlot overlap={0.25} />
 
-<IntervalPlot overlap={0.5} period={0.05} />
+- Here, the intervals will overlap by default (interval = 0.5, overlap = 0.25)
+- The green part of each box represents the slice of time that is handled by the current callback
+- The green vertical lines represent the scheduled beeps
+- Red vertical lines represent missed beeps
+- If the next callback is delayed for some reason, we have the overlap as a safety net to not miss any portion of time
+
+The basic idea looks like this in code:
+
+```js
+const ctx = new AudioContext();
+let phase = ctx.currentTime; // playhead
+const interval = 0.5; // interval time in seconds
+const period = 0.5; // schedule period in seconds
+const overlap = 0.25; // margin for errors
+setInterval(() => {
+  // time slice for this callback:
+  const lookahead = ctx.currentTime + interval + overlap;
+  // step through each slice of time for this callback
+  while (phase < lookahead) {
+    const [begin, end] = [phase, phase + period];
+    console.log(begin, end);
+    phase += period;
+  }
+}, interval * 1000);
+```
+
+- Note that we could set a different time for scheduling (period) than we use for the callbacks (interval)
+- Instead of console logging, we can schedule any events that should happen between `begin` and `end`.
+
+### Playground
+
+Here you can play around with the 3 period, interval and overlap:
+
+<IntervalPlayground />
+
+For example, turning the interval down shows beatifully how this way of scheduling turns a sequence of loosely timed intervals into a perfect grid:
+
+![short interval](./img/scheduling/shortinterval.png)
+
+## Scheduling with requestAnimationFrame
+
+While the above approach works, it can still take a long time for the setInterval callback to be fired.
+Let's find out if we can get less delay with requestAnimationFrame:
+
+import { FramePlot } from '../components/scheduling/FramePlot';
+
+<FramePlot overlap={0.5} period={1 / 10} />
+
+With requestAnimationFrame, the callback interval will always be 1/60. Let's compare it to setInterval with the same interval:
+
+<IntervalPlot overlap={0.5} period={1 / 10} interval={1 / 60} />
+
+For my machine, the above seem to behave pretty much the same, so requestAnimationFrame does not seem to bring a huge benefit.
+
+### Inactive Tabs
+
+When a tab running a `requestAnimationFrame` loop is running in the background, browsers will actually throttle the callback rate down to roughly 1fps,
+which will also hurt our audio scheduling loop. `setInterval` seems to be continue happily in the background.

@@ -1,5 +1,5 @@
 import { scaleLinear } from 'd3-scale';
-import { useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import canUseDOM from '../canUseDOM';
 import useFrame from '../common/useFrame';
 
@@ -32,82 +32,21 @@ function beep(t = ctx.currentTime + 0.01, duration = 0.1, frequency = 440) {
   o.stop(t + duration);
 }
 
-const rangeValue = function (e, min, max) {
-  return min + (Number(e.target.value) / 100) * (max - min);
-};
-
-export function IntervalPlayground() {
-  const [interval, setInterval] = useState(0.5);
-  const [overlap, setOverlap] = useState(0.25);
-  const [period, setPeriod] = useState(0.5);
-  return (
-    <>
-      <div className="flex justify-start">
-        <label>
-          period {period.toFixed(2)}
-          <br />
-          <input
-            type="range"
-            value={period}
-            min={0.05}
-            max={2}
-            step={0.1}
-            onChange={(e) => setPeriod(Number(e.target.value))}
-          />
-        </label>
-        <label>
-          interval {interval.toFixed(2)}
-          <br />
-          <input
-            type="range"
-            value={interval}
-            min={0.05}
-            max={2}
-            step={0.1}
-            onChange={(e) => setInterval(Number(e.target.value))}
-          />
-        </label>
-        <label>
-          overlap {overlap.toFixed(2)}
-          <br />
-          <input
-            type="range"
-            value={overlap}
-            min={0}
-            max={2}
-            step={0.1}
-            onChange={(e) => setOverlap(Number(e.target.value))}
-          />
-        </label>
-      </div>
-      <IntervalPlot
-        interval={interval}
-        overlap={overlap}
-        period={period}
-        hideOutput={false}
-      />
-    </>
-  );
-}
-
-export function IntervalPlot({
-  overlap = 0,
-  period = 0.5,
-  interval,
-  hideOutput,
-}) {
-  interval = interval || period;
-  useEffect(() => {
-    if (intervalRef.current) {
-      run();
-    }
-  }, [interval, period, overlap]);
-  const intervalRef = useRef<any>();
+let phase;
+let minLatency = 0.01;
+export function FramePlot({ overlap = 0, period = 0.5, hideOutput }) {
   const times = useRef<number[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>();
   const maxSeconds = 4;
-  const maxBars = maxSeconds / interval + 1;
+  const drawPeriod = 1 / 60;
+  const maxBars = maxSeconds / drawPeriod + 1;
   const frame = useFrame(() => {
+    times.current.push(ctx.currentTime);
+    phase = phase || ctx.currentTime;
+    while (phase < ctx.currentTime + period + overlap) {
+      phase >= ctx.currentTime && beep(phase + minLatency, period * 0.5);
+      phase += period;
+    }
     draw(canvasRef.current, (context, w, h) => {
       const timeRange = [ctx.currentTime - maxSeconds, ctx.currentTime];
       const x = scaleLinear().domain(timeRange).range([0, w]);
@@ -152,39 +91,20 @@ export function IntervalPlot({
       });
     });
   });
-  function run() {
-    frame.start();
-    let phase;
-    let minLatency = 0.01;
-    intervalRef.current && clearInterval(intervalRef.current);
-    intervalRef.current = setInterval(() => {
-      times.current.push(ctx.currentTime);
-      if (!hideOutput) {
-        phase = phase || ctx.currentTime;
-        while (phase < ctx.currentTime + period + overlap) {
-          phase >= ctx.currentTime && beep(phase + minLatency, period * 0.5);
-          phase += period;
-        }
-      } else {
-        beep(ctx.currentTime + minLatency, period * 0.5);
-      }
-    }, interval * 1000);
-  }
   return (
     <>
       <button
         className="text-white bg-sky-600 border-2 border-sky-800 p-2 m-1 rounded-md"
-        onClick={() => run()}
+        onClick={() => {
+          frame.start();
+        }}
       >
         <span>play</span>
       </button>
       <button
         className="text-white bg-sky-600 border-2 border-sky-800 p-2 m-1 rounded-md"
         onClick={() => {
-          times.current = [];
-          clearInterval(intervalRef.current);
           frame.stop();
-          delete intervalRef.current;
         }}
       >
         <span>stop</span>
