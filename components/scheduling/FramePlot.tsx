@@ -3,12 +3,12 @@ import { beep, ctx, usePlot, work } from './util';
 
 let phase;
 let minLatency = 0.01;
-export function FramePlot({ overlap = 0, interval, period = 0.5, hideOutput }) {
+export function FramePlot({ overlap = 0, period = 0.5, hideOutput }) {
   const { frame, canvasRef } = usePlot({
     overlap,
     period,
     hideOutput,
-    interval,
+    interval: 1 / 60,
     onFrame: (times) => {
       times.current.push(ctx.currentTime);
       phase = phase || ctx.currentTime;

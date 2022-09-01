@@ -3,10 +3,13 @@ title: Web Audio Scheduling
 date: '2022-09-28'
 keywords: ['web audio']
 tags: ['web audio', 'code']
-draft: true
+image: ./img/scheduling/shortinterval.png
+description: Comparing different approaches to schedule Web Audio
 ---
 
 In this post, I want to test out different ways of controlling events in time when working with the Web Audio API.
+
+## Table of Contents
 
 ## Built-In Web Audio Scheduling Methods
 
@@ -147,7 +150,7 @@ console.log(`work took ${took.toFixed(2)}ms`);
 
 On my machine, this takes roughly 70 - 100ms and causes the beeps to stumble quite a bit.
 
-### Interval Visualization
+### setInterval Visualization
 
 Let's visualize how far off setInterval is:
 
@@ -164,16 +167,6 @@ import {
 - delayed callbacks are shown in red
 
 We can clearly see how pressing "do some work" influences the interval structure in a bad way (and the beeping).
-
-### Browser Differences
-
-On Chrome, the next interval will be made shorter to compensate for the delay:
-
-![chrome error](./img/scheduling/chrome2.png)
-
-While on Firefox, the next interval will be normal again:
-
-![firefox error](./img/scheduling/firefox2.png)
 
 ## Revisiting the Tale of Two Clocks
 
@@ -242,13 +235,60 @@ With requestAnimationFrame, the callback interval will always be 1/60. Let's com
 
 For my machine, the above seem to behave pretty much the same, so requestAnimationFrame does not seem to bring a huge benefit.
 
-### Inactive Tabs
+### Problem: Inactive Tabs
 
 When a tab running a `requestAnimationFrame` loop is running in the background, browsers will actually throttle the callback rate down to roughly 1fps,
 which will also hurt our audio scheduling loop. `setInterval` seems to be continue happily in the background.
 
 ## Scheduling via AudioWorklet
 
+While looking around how other people do this, I found [a hack](https://github.com/sebpiq/WAAClock/issues/20#issuecomment-1043403891) that uses an AudioWorklet as clock:
+
+```js
+const processor = `registerProcessor('tick', class Tick extends AudioWorkletProcessor {
+    constructor(...args) {
+      super(...args)
+      this.port.onmessage = (e) => {
+        this.ended = true;
+      }
+    }
+    process () {
+      this.port.postMessage('tick');
+      return true;
+    }
+  })`;
+const blob = new Blob([processor], { type: 'application/javascript' });
+const url = URL.createObjectURL(blob);
+await ctx.audioWorklet.addModule(url);
+clockNode = new AudioWorkletNode(ctx, 'tick');
+let phase;
+clockNode.port.onmessage = () => {
+  phase = phase || ctx.currentTime;
+  while (phase < ctx.currentTime + interval + overlap) {
+    phase >= ctx.currentTime && beep(phase + minLatency, period * 0.5);
+    phase += period;
+  }
+  times.current.push(ctx.currentTime);
+};
+// stop with clockNode.port.postMessage('stop');
+```
+
+- The process callback is fired for each block of 128 samples, which is 2.6ms at a sample rate of 48khz, so it would be pretty nice if we would get that callback frequency.
+- Unfortunately, the process callback is executed slower than that, most likely through the rapid fire of postMessage.
+- Also, as the postMessage is going to the main thread anyway, the blocking is pretty similar to the other methods.
+- the stopping is only indirect, as it sets ended to false and waits till the node is garbage collected.
+
 import { WorkletPlot } from '../components/scheduling/WorkletPlot';
 
 <WorkletPlot />
+
+## Conclusion
+
+After looking at `setInterval`, `requestAnimationFrame` and `AudioWorklet`s, I found out that the error is pretty similar among all of them.
+The best choice seems to be the good old `setInterva`, because
+
+- requestAnimationFrame won't work with inactive tabs + has a fixed interval
+- AudioWorklet is firing too often + seems pretty hacky + has a fixed interval
+- setInterval works in inactive tabs and has a variable interval
+
+That's it for today! I'll probably write another post about using this technique to schedule strudel events.
