@@ -246,3 +246,9 @@ For my machine, the above seem to behave pretty much the same, so requestAnimati
 
 When a tab running a `requestAnimationFrame` loop is running in the background, browsers will actually throttle the callback rate down to roughly 1fps,
 which will also hurt our audio scheduling loop. `setInterval` seems to be continue happily in the background.
+
+## Scheduling via AudioWorklet
+
+import { WorkletPlot } from '../components/scheduling/WorkletPlot';
+
+<WorkletPlot />
