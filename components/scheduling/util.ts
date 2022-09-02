@@ -4,10 +4,11 @@ import useFrame from '../common/useFrame';
 import canUseDOM from '../canUseDOM';
 
 export function draw(canvas: HTMLCanvasElement, callback) {
-  // const canvas = document.getElementById(canvasID) as HTMLCanvasElement;
+  const w = Math.round(canvas.clientWidth);
+  const h = Math.round(canvas.clientHeight);
+  canvas.width = w;
+  canvas.height = h;
   const context = canvas.getContext('2d');
-  const w = canvas.clientWidth;
-  const h = canvas.clientHeight;
   context.clearRect(0, 0, w, h);
   callback(context, w, h);
 }

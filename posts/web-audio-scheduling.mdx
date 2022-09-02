@@ -254,7 +254,7 @@ const processor = `registerProcessor('tick', class Tick extends AudioWorkletProc
     }
     process () {
       this.port.postMessage('tick');
-      return true;
+      return !this.ended;
     }
   })`;
 const blob = new Blob([processor], { type: 'application/javascript' });

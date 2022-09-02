@@ -69,7 +69,7 @@ export function WorkletPlot({ overlap = 0.5, period = 0.1 }) {
       <Button onClick={() => work(3000)}>
         <span>do hard work</span>
       </Button>
-      <canvas width="750" height="500" ref={canvasRef} />
+      <canvas width="750" height="500" className="max-w-full" ref={canvasRef} />
     </>
   );
 }

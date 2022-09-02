@@ -40,7 +40,7 @@ export function FramePlot({ overlap = 0, period = 0.5, hideOutput }) {
       <Button onClick={() => work(3000)}>
         <span>do hard work</span>
       </Button>
-      <canvas width="750" height="500" ref={canvasRef} />
+      <canvas width="750" height="500" ref={canvasRef} className="max-w-full" />
     </>
   );
 }
