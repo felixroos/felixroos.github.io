@@ -43,6 +43,7 @@ export default function RhythmicalEditor({ rhythm }) {
       ],
     }
   );
+
   const format = (_json) => prettier.format(JSON.stringify(_json), { parser: 'json', plugins: [jsonParser] });
   const [string, setString] = useState(format(json));
   return (
