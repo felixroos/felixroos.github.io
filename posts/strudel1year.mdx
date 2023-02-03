@@ -1,0 +1,224 @@
+---
+title: 1 Year of Strudel
+date: '2022-02-03'
+tags: ['code', 'strudel']
+description: Looking back at one year of development
+image: ./img/tidal.png
+---
+
+I already wrote a [post about Strudel in April 2022](https://loophole-letters.vercel.app/strudel),
+which told the history of how it started, and the basic ideas.
+Now that my beloved project is in existence for over a year, it's time to recap..
+
+## Strudel in the wild
+
+Shortly after the introductory post, there was an [article about strudel on CDM](https://cdm.link/2022/04/musical-powerful-live-coding-in-the-browser-is-near-with-strudel-usable-now/),
+which was a pleasant surprise. Also, strudel was shared in [Web Audio Weekly 129](https://www.webaudioweekly.com/129).
+
+There was also a bit of coverage on forums & social media, I was especially delighted to see some people using strudel as part of [#patternuary](https://post.lurk.org/tags/patternuary)!
+
+### Conferences and Workshops
+
+![me at wac](./img/strudel/strudel-wac.jpeg)
+
+I was happy to present [a paper I wrote with Alex](https://zenodo.org/record/6768844) at the Web Audio Conference 2022.
+It was the first time for me to attend a tech conference in person, which was a nice experience talking to other like minded freaks.
+For the upcoming [ICLC](https://iclc.toplap.org/2023/), we will present a second paper!
+There were also [several](https://www.emfcamp.org/schedule/2022/212-live-coding-algorithmic-patterns-with-strudel) [workshops](https://musichackspace.org/product/live-coding/) [teaching](https://www.peckhamdigital.org/events/2023/saturday/alex_workshop/) [strudel](https://thentrythis.org/events/algorithmic-pattern-meetup-in-sheffield/)!
+
+### Performances
+
+These are some performances using strudel:
+
+- [myself at algo10 stream](https://www.youtube.com/watch?v=IcMSocdKwvw&t=175s)
+- [yaxu at algo10 Berlin](https://www.youtube.com/live/4nAWumhvwYc?feature=share&t=17594)
+- [olivia + alex / hydra + strudel using flok](https://www.youtube.com/watch?v=Jvs7Q4cdLy4)
+- [myself at WAC2022](https://www.youtube.com/watch?v=KWIotFWVOi4)
+- [myself at Solstice Night Dec 2022](https://www.youtube.com/watch?v=P1DDsOvcyco)
+- [namdlog at Algorave Brasil 2022](https://www.youtube.com/live/S0_iRd8Uu1Y?feature=share&t=16284)
+
+At least these are the ones I got a hold of.. If you want to share yours, please drop me a link!
+
+<iframe
+  width="560"
+  height="315"
+  src="https://www.youtube.com/embed/Jvs7Q4cdLy4"
+  title="YouTube video player"
+  frameborder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+  allowfullscreen
+></iframe>
+
+## New Features
+
+Let's talk about some of the major features that landed.
+I'll start with the ones that are most noticeable on the surface, gradually going deeper into the internals..
+
+### REPL Design Overhaul
+
+The most obvious change is the overhaul of [the REPL](https://strudel.tidalcycles.org/) style.
+
+Before:
+
+![repl before](https://camo.githubusercontent.com/5ae8a565c9828875edc89f7a9dc39c02191b84d1763c5ca92f2e4eea0db04f45/68747470733a2f2f692e696d6775722e636f6d2f596166573071582e706e67)
+
+After:
+
+![repl after](https://camo.githubusercontent.com/479ea4484af18ae89b45b7cea6eccfee538662268b996232a4c59164dd82b179/68747470733a2f2f692e696d6775722e636f6d2f674475484b32332e706e67)
+
+Besides the less noisy color scheme, there is now a bottom section with a welcome screen, a sample list, a console and a quick reference. See [this issue for more screenshots](https://github.com/tidalcycles/strudel/pull/255)
+
+Even though Strudel persists the current state of your pattern code in the URL, it can get quite long.
+To avoid that, there is now a `share` button that will generate a short link for the pattern!
+
+### New Docs
+
+Before:
+
+![docs before](./img/strudel/strudel-docs-old.png)
+
+After:
+
+![docs after](./img/strudel/strudel-docs.png)
+
+Instead of a gigantic single page, [the new docs](https://strudel.tidalcycles.org/learn/getting-started/) are now split up into multiple pages + the style is similar to the REPL.
+To aid understanding patterns visually, MiniREPLs now support animated piano rolls!
+
+Content wise, the Tutorial has been overhauled by [jarmitage](https://jarmitage.github.io/), originally used for an online workshop.
+In general, many more functions are now documented, as well a partly description of the internals.
+
+### New Examples Page
+
+![examples](./img/strudel/examples-swatch.png)
+
+You can now browse all the patterns that are shuffled through on the [new examples page](https://strudel.tidalcycles.org/examples/).
+The layout is inspired by [swatches / textile samples](https://en.wikipedia.org/wiki/Textile_sample).
+
+### Personal Swatch Page
+
+There is now a straightforward way to create your personal strudel page to collect patterns, using the same layout as the examples page.
+For example, this is [my page](https://felixroos.github.io/strudel/swatch/). You can find the [setup instructions here](https://github.com/tidalcycles/strudel/tree/main/my-patterns).
+
+### Webaudio Output is now default
+
+Because strudel aims to provide an install free, ready to use live coding environment, it was important to have an audio system
+that runs entirely in the browser and is able to handle the dynamicness of tidal patterns. Since Tone.js did not prove to
+be a viable option, I started to implement a basic synth engine with the Web Audio API.
+
+In parallel, I added support for [WebDirt](https://github.com/dktr0/WebDirt), which is the sampler used in [estuary](https://github.com/dktr0/estuary).
+While WebDirt worked great as a sampler, it was not interoperable with the synth engine, so I decided to also implement a custom sampler from scratch,
+inspired by the functions WebDirt provides.
+This allowed using the same effects for synths and samples, as well as a tighter integration into Strudel.
+
+After reaching feature parity with WebDirt and making sure the API
+was compatible with SuperDirt, the webaudio output [became the new standard](https://github.com/tidalcycles/strudel/pull/232).
+You can read more about those features in the docs:
+
+- [Sampler](https://strudel.tidalcycles.org/learn/samples/)
+- [Synth](https://strudel.tidalcycles.org/learn/synths/)
+- [Effects](https://strudel.tidalcycles.org/learn/effects/)
+
+### Sample Library
+
+Strudel now has a set of default samples, based on the [vcsl sample library](https://github.com/sgossner/VCSL), as well as
+a [large selection of drum machine sounds](https://github.com/ritchse/tidal-drum-machines).
+It is also easy to [load custom samples](https://strudel.tidalcycles.org/learn/samples/#loading-custom-samples).
+If you can handle surprises, another cool way to load samples is by using [shabda](https://strudel.tidalcycles.org/learn/samples/#shabda).
+
+### Many more tidal functions ported
+
+Many more tidal functions are now available, see [this long list](https://github.com/tidalcycles/strudel/issues/31).
+
+### Talking to SuperDirt via OSC
+
+As an alternative to the default webaudio output, it is now also possible to let strudel control SuperDirt, which is tidal's default sound system.
+This is especially interesting for tidal users with an existing setup that want to try strudel.
+The communication is based on OSC and requires an additional server running locally, [more in the docs](https://strudel.tidalcycles.org/learn/input-output/#superdirt-api).
+
+### Embedding Strudel
+
+There are now a few ways to embed strudel:
+
+- [discourse plugin](https://github.com/tidalcycles/discourse-strudel) as used in the [strudel pattern thread](https://club.tidalcycles.org/t/strudel-pattern-thread/4044/6) (some patterns are broken there...)
+- [embed web component](https://github.com/tidalcycles/strudel/tree/main/packages/embed), to get a strudel repl iframe
+- [strudel browser extension for strudel in mastodon "topfenstrudel"](https://github.com/mortuosplango/topfenstrudel)
+- [strudel packages](https://github.com/tidalcycles/strudel/tree/main/packages) for a more custom integration, e.g. [vanilla JS example](https://codesandbox.io/s/strudel-vanilla-repl-24i0wk?file=/src/index.js) or [react example](https://github.com/tidalcycles/strudel/tree/main/packages/react/examples/nano-repl)
+
+This is how strudel looks in mastodon:
+
+![mastodon topfenstrudel](./img/strudel/mastodon-embed.png)
+
+### More Cool Things
+
+- Strudel is now integrated into [flok](https://flok.cc/), a collaborative live coding editor!
+- With the new serial package, you can send signals to your serial gear, allowing you to [control robots](https://www.youtube.com/shorts/9Yu86UcgyMg).
+- [Strudel has experimental support for csound](https://strudel.tidalcycles.org/learn/csound/)
+
+### Changes under the hood
+
+I don't want this post to get too technical, but generally speaking, a **lot** changed under the hood, basically everything..
+I mostly spent my commits refactoring the frontend tooling, while Alex worked on the pattern core.
+
+- the project is now [independent of tone.js](https://github.com/tidalcycles/strudel/issues/71)
+- the [scheduler has been rewritten](https://loophole-letters.vercel.app/web-audio-scheduling)
+- the transpiler has been refactored from [shift to acorn](https://github.com/tidalcycles/strudel/pull/249), fyi [JS parser shootout](https://github.com/tidalcycles/strudel/issues/174#issuecomment-1242821243)
+- the testing has been refactored from [mocha to vitest](https://github.com/tidalcycles/strudel/issues/145), now using [snapshot tests](https://strudel.tidalcycles.org/technical-manual/testing/) extensively
+- codemirror is now in version 6
+- the REPL and the docs are now [unified in one project](https://github.com/tidalcycles/strudel/pull/315), using the wonderful astro
+  - the REPL has been refactored from create-react-app to vite to astro
+  - the docs have been refactored from parcel to vite to astro
+- the monorepo has been refactored from [npm workspaces to pnpm](https://github.com/tidalcycles/strudel/pull/396)
+- the packages are [now built as CJS and ESM](https://github.com/tidalcycles/strudel/pull/396)
+- [euclidean rhythms are now compatible with tidal](https://github.com/tidalcycles/strudel/pull/343)
+- [in-source-documentation](https://strudel.tidalcycles.org/technical-manual/docs/#writing-jsdoc) via jsdoc that autogenerates parts of the docs + feeds tests
+- [registering strudel functions is now much more straightforward](https://github.com/tidalcycles/strudel/pull/286)
+- [aligning patterns is now much more logical](https://github.com/tidalcycles/strudel/pull/285)
+- [the mini parser has been refactored](https://github.com/tidalcycles/strudel/pull/336)
+- a lot of things I am forgetting here..
+
+While refactoring the tooling was a lot of work, I found it really satisfying to try out all the different tools available, picking the best one.
+The project now feels really well organized and settled (said the JS developer 2 weeks before refactoring it all again).
+Giving this much focus and attention to tooling is something I rarely have time for in my daily work, so there was maybe some overcompensation happening...
+
+## Some Stats
+
+This would not be complete without looking at naked numbers..
+
+### Releases
+
+- 0.0.2 Schwindlig
+- 0.1.0 Stürmisch
+- 0.0.3 Maelstrom &lt;- state of last strudel post
+- 0.0.4 Gischt
+- 0.3.0 Donauwelle
+- 0.4.0 Brandung
+- 0.5.0 Wirbel
+- 0.6.0 Zimtschnecke
+
+[See Releases on Github](https://github.com/tidalcycles/strudel/releases)
+
+### Repo Stats
+
+- 1878 commits = roughly 5 commits a day...
+- 184 stars
+- 45 forks
+- 53 open issues / 86 closed
+- 6 open PRs / 223 closed
+- 15 contributors
+- 8 releases
+
+## Future Plans
+
+Here is a little selection of features that especially interesting for the end-user:
+
+- [Ableton Link Support](https://github.com/tidalcycles/strudel/pull/394)
+- [block based evaluation](https://github.com/tidalcycles/strudel/issues/34)
+- Collaborative Editing
+- Context Aware Documentation / Code Completion
+- [better midi support](https://github.com/tidalcycles/strudel/issues/192)
+
+## Thanks
+
+Last but not least, a huge thanks to all the people involved in whichever way!
+Building things is much more fun with others + it is a pleasure to see people having fun with it,
+even if it's just a handful. Peace!

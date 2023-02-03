@@ -1,19 +1,19 @@
 const steps = [1, 0, 2, 0, 3, 4, 0, 5, 0, 6, 0, 7];
-const notes = ["C", "", "D", "", "E", "F", "", "G", "", "A", "", "B"];
-const noteLetters = ["C", "D", "E", "F", "G", "A", "B"];
+const notes = ['C', '', 'D', '', 'E', 'F', '', 'G', '', 'A', '', 'B'];
+const noteLetters = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 
 const accidentalOffset = (accidentals) => {
-  return accidentals.split("#").length - accidentals.split("b").length;
+  return accidentals.split('#').length - accidentals.split('b').length;
 };
 
 const accidentalString = (offset) => {
   if (offset < 0) {
-    return "b".repeat(-offset);
+    return 'b'.repeat(-offset);
   }
   if (offset > 0) {
-    return "#".repeat(offset);
+    return '#'.repeat(offset);
   }
-  return "";
+  return '';
 };
 
 const Step = {
@@ -26,11 +26,11 @@ const Step = {
   },
 };
 
-Step.tokenize("#11");
-Step.tokenize("b13");
-Step.tokenize("bb6");
-Step.accidentals("3");
-Step.accidentals("b3");
+Step.tokenize('#11');
+Step.tokenize('b13');
+Step.tokenize('bb6');
+Step.accidentals('3');
+Step.accidentals('b3');
 
 const Note = {
   tokenize(note) {
@@ -41,30 +41,31 @@ const Note = {
   },
 };
 
-Note.tokenize("C##");
-Note.accidentals("C#");
-Note.accidentals("C##");
-Note.accidentals("Eb");
-Note.accidentals("Bbb");
+Note.tokenize('C##');
+Note.accidentals('C#');
+Note.accidentals('C##');
+Note.accidentals('Eb');
+Note.accidentals('Bbb');
 
 function transpose(note, step) {
-  const stepNumber = Step.tokenize(step)[1];
-  const noteLetter = Note.tokenize(note)[0];
-  const noteIndex = noteLetters.indexOf(noteLetter);
-  const targetNote = noteLetters[(noteIndex + stepNumber - 1) % 8];
-  const rootIndex = notes.indexOf(noteLetter);
-  const targetIndex = notes.indexOf(targetNote);
-  const indexOffset = targetIndex - rootIndex;
-  const stepIndex = steps.indexOf(stepNumber);
+  // example: E, 3
+  const stepNumber = Step.tokenize(step)[1]; // 3
+  const noteLetter = Note.tokenize(note)[0]; // E
+  const noteIndex = noteLetters.indexOf(noteLetter); // 2 "E is C+2"
+  const targetNote = noteLetters[(noteIndex + stepNumber - 1) % 8]; // G "G is a third above E"
+  const rootIndex = notes.indexOf(noteLetter); // 4 "E is 4 semitones above C"
+  const targetIndex = notes.indexOf(targetNote); // 7 "G is 7 semitones above C"
+  const indexOffset = targetIndex - rootIndex; // 3 (E to G is normally a 3 semitones)
+  const stepIndex = steps.indexOf(stepNumber); // 4 ("3" is normally 4 semitones)
   const offsetAccidentals = accidentalString(
     Step.accidentals(step) + Note.accidentals(note) + stepIndex - indexOffset
-  );
-  return [targetNote, offsetAccidentals].join("");
+  ); // "we need to add a # to to the G to make it a major third from E"
+  return [targetNote, offsetAccidentals].join('');
 }
 
-transpose("F#", "3");
-transpose("C", "3");
-transpose("D", "3");
-transpose("E", "3");
-transpose("Eb", "3");
-transpose("Ebb", "3");
+transpose('F#', '3');
+transpose('C', '3');
+transpose('D', '3');
+transpose('E', '3');
+transpose('Eb', '3');
+transpose('Ebb', '3');
