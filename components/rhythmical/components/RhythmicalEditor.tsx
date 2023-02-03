@@ -48,7 +48,7 @@ export default function RhythmicalEditor({ rhythm }) {
   return (
     <>
       <Player instruments={{ drums, piano }} events={renderRhythm(json)} />
-      <CodeMirror
+      {/*<CodeMirror
         className="rhythmical-editor"
         value={string}
         onChange={(_, __, value) => {
@@ -65,7 +65,7 @@ export default function RhythmicalEditor({ rhythm }) {
           theme: 'material',
           lineNumbers: false,
         }}
-      />
+      />*/}
       <button
         onClick={() => {
           console.log('format', format(json));

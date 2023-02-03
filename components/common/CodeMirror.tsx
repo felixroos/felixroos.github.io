@@ -1,5 +1,5 @@
 import React from 'react';
-import { Controlled as CodeMirror2 } from 'react-codemirror2';
+// import { Controlled as CodeMirror2 } from 'react-codemirror2';
 import canUseDOM from '../canUseDOM';
 if (canUseDOM()) {
   try {
@@ -19,5 +19,6 @@ export default function CodeMirror({ value, onChange, options }: any) {
     theme: 'material',
     lineNumbers: true,
   };
-  return <CodeMirror2 value={value} options={options} onBeforeChange={onChange} />;
+  return null;
+  // return <CodeMirror2 value={value} options={options} onBeforeChange={onChange} />;
 }
