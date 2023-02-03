@@ -1,10 +1,10 @@
 import * as React from 'react';
-import { BbChordSymbolOptions, BbFormat } from 'bb-chord-symbol';
+// import { BbChordSymbolOptions, BbFormat } from 'bb-chord-symbol';
 import { useRef } from 'react';
 import { NestedArray } from '../rhythmical/helpers/arrays';
 import { mapNestedArray } from '../rhythmical/tree/mapNestedArray';
 import scaleColor from '../sets/scaleColor';
-
+/* 
 export default function ChordSymbol({ chord, margin, fontSize, fontFamily }: any) {
   margin = margin || 4;
   fontSize = fontSize || '30px';
@@ -65,3 +65,4 @@ export function renderChordSymbols(chords: NestedArray<string>, options?, scales
     return node;
   });
 }
+ */

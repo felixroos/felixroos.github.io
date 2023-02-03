@@ -4,7 +4,7 @@ import bestChordScales from '../graphs/bestChordScales';
 import NestedGrid from '../graphs/NestedGrid';
 import { mapNestedArray } from '../rhythmical/tree/mapNestedArray';
 import scaleColor from '../sets/scaleColor';
-import ChordSymbol from './ChordSymbol';
+// import ChordSymbol from './ChordSymbol';
 import scaleModes from '../sets/scaleModes';
 
 export default function SheetGrid({ measures, rows, rawText, noColors, innerBorders, loop, showScales }: any) {
@@ -26,7 +26,8 @@ export default function SheetGrid({ measures, rows, rawText, noColors, innerBord
     ++i;
     return (
       <div style={{ backgroundColor, minWidth: '100%', minHeight: '100%' }} title={label}>
-        {rawText ? label : <ChordSymbol chord={node} fontSize={'20px'} />}
+        {label}
+        {/* rawText ? label : <ChordSymbol chord={node} fontSize={'20px'} /> */}
       </div>
     );
   });

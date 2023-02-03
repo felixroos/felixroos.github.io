@@ -6,7 +6,7 @@ const { topNoteDiff } = VoiceLeading;
 const { lefthand } = VoicingDictionary;
 import { piano } from '../../../instruments/piano';
 import { Note, Range } from '@tonaljs/tonal';
-import ChordSymbol from '../../score/ChordSymbol';
+// import ChordSymbol from '../../score/ChordSymbol';
 import useStateRef from '../../common/useStateRef';
 import Keyboard from '../../music/Keyboard';
 
@@ -29,14 +29,26 @@ export default function DynamicSchedule() {
   const nextEvent = useRef<any>();
   const slice = 2;
   function query(time) {
-    const availableChords = ['C^7', 'Dm7', 'F^7', 'Fm7', 'Bb7', /* 'Db^7', 'Db7', */ 'G7', 'Am7' /*  'Dm7b5' */].filter(
-      (c) => c !== chord.current
-    );
+    const availableChords = [
+      'C^7',
+      'Dm7',
+      'F^7',
+      'Fm7',
+      'Bb7',
+      /* 'Db^7', 'Db7', */ 'G7',
+      'Am7' /*  'Dm7b5' */,
+    ].filter((c) => c !== chord.current);
     setChord(randomElement(availableChords));
     // console.log('chord', lastChord.current, voicingRange.current);
     const [root] = tokenizeChord(chord.current);
     const _activeNotes = [`${root}2`].concat(
-      Voicing.get(chord.current, range.current, dictionary, voiceLeading, activeNotes.current)
+      Voicing.get(
+        chord.current,
+        range.current,
+        dictionary,
+        voiceLeading,
+        activeNotes.current
+      )
     );
     setActiveNotes(_activeNotes);
     _activeNotes.forEach((note) => {
@@ -63,7 +75,10 @@ export default function DynamicSchedule() {
     setStarted(false);
   }
   function updateRange(e) {
-    const _range = [Note.fromMidi(+e.target.value), Note.fromMidi(+e.target.value + 29)];
+    const _range = [
+      Note.fromMidi(+e.target.value),
+      Note.fromMidi(+e.target.value + 29),
+    ];
     setRange(_range);
   }
   function invertedRange(_range, totalRange) {
@@ -72,9 +87,20 @@ export default function DynamicSchedule() {
   }
   return (
     <div>
-      {!started ? <button onClick={() => start()}>start</button> : <button onClick={() => stop()}>stop</button>}
+      {!started ? (
+        <button onClick={() => start()}>start</button>
+      ) : (
+        <button onClick={() => stop()}>stop</button>
+      )}
       <label>
-        <input type="range" onChange={updateRange} value={Note.midi(range.current[0])} min={48} max={67} step={1} />{' '}
+        <input
+          type="range"
+          onChange={updateRange}
+          value={Note.midi(range.current[0])}
+          min={48}
+          max={67}
+          step={1}
+        />{' '}
         {range.current.join('-')}
       </label>
       <Keyboard
@@ -92,7 +118,8 @@ export default function DynamicSchedule() {
           ],
         }}
       />
-      <ChordSymbol chord={chord.current} />
+      {chord.current}
+      {/*       <ChordSymbol chord={chord.current} /> */}
       <br />
     </div>
   );
