@@ -1,3 +1,4 @@
+// @ts-ignore
 AudioContext.prototype.createCycle = function (
   callback, // called slightly before each cycle
   duration, // duration of each cycle
@@ -41,7 +42,7 @@ AudioContext.prototype.createCycle = function (
   return { setDuration, start, stop, pause, duration };
 };
 let cycle;
-
+// @ts-ignore
 AudioContext.prototype.beep = function (t, duration, tick) {
   const latency = ((t - this.currentTime) * 1000).toFixed(2);
   console.log(tick, t.toFixed(2), duration, latency);
