@@ -1,8 +1,9 @@
 ---
 title: Playing Soundfonts with the Web Audio API
-date: '2022-07-14'
+date: '2023-03-19'
 tags: ['strudel']
-draft: true
+image: ./img/fontpress.png
+draft: false
 ---
 
 <figure>
@@ -23,6 +24,8 @@ draft: true
 </figure>
 
 In this post, I want to implement a way to load and play soundfonts with the Web Audio API.
+
+_Notes from the future: This post is originally from July 2022, but I never released it.._
 
 ## About Soundfonts and General MIDI
 
@@ -440,8 +443,13 @@ I made these steps up, without checking the spec, but I think this is the way it
 
 Let's now implement each of those steps!
 
-## This Post is not completed yet
+## Demo
 
-Here is the WIP version of the preset player:
+In the following demo, you can press a key on the piano and the soundfont player will play the appropriate sound,
+using the steps outlined above:
 
 <Soundfont url="./Vintage Dreams Waves v2.sf2" type="preset-select" />
+
+Because this got a little more involved, I started a library called [sfumato](https://github.com/felixroos/sfumato).
+You can check out the source code there! I will probably write another post about soundfonts in the future.
+It also has a separate [Demo](https://felixroos.github.io/sfumato/).

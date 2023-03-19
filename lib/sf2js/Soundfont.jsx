@@ -64,6 +64,22 @@ function Soundfont({ url, type, slice }) {
   if (type === 'preset-select') {
     return (
       <>
+        <KeySelect
+          onChange={(keys) => setSelectedKey(keys[0])}
+          onNoteOn={(key) => {
+            console.log('note on', key);
+            const midi = toMidi(key);
+            stopHandle.current = startPresetNote(
+              ctx,
+              presets[presetIndex],
+              midi
+            );
+          }}
+          onNoteOff={(key) => {
+            console.log('note off', key);
+            stopHandle.current?.();
+          }}
+        />
         <select
           className="border border-white p-2 rounded-lg text-black"
           value={presetIndex}
@@ -86,22 +102,6 @@ function Soundfont({ url, type, slice }) {
             activeKey={selectedKey}
           />
         )}
-        <KeySelect
-          onChange={(keys) => setSelectedKey(keys[0])}
-          onNoteOn={(key) => {
-            console.log('note on', key);
-            const midi = toMidi(key);
-            stopHandle.current = startPresetNote(
-              ctx,
-              presets[presetIndex],
-              midi
-            );
-          }}
-          onNoteOff={(key) => {
-            console.log('note off', key);
-            stopHandle.current?.();
-          }}
-        />
       </>
     );
   }
